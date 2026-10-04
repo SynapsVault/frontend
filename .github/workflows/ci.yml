@@ -18,7 +18,7 @@ jobs:
       - run: npm install --legacy-peer-deps
       - name: Build
         env:
-          VITE_API_URL: https://atriumindregistry-client-production.up.railway.app
+          VITE_API_URL: https://synapsvaultregistry-client-production.up.railway.app
           VITE_NETWORK: testnet
         run: npm run build
       - name: Upload dist

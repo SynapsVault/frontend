@@ -9,7 +9,7 @@ vi.mock("../api/agent.js", () => ({
 
 const mockStatus = {
   agent: {
-    name: "AtriumMind Verification Agent",
+    name: "SynapsVault Verification Agent",
     walletAddress: "GBAGENT000000000000000000000000000000000000000000000000",
     network: "testnet",
     endpoint: "https://api.example.com/verify-content",

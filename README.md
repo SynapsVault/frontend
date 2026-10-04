@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>⬡ AtriumMind — Frontend</h1>
+  <h1>⬡ SynapsVault — Frontend</h1>
   <p><strong>Advanced Stellar-powered knowledge vault marketplace</strong></p>
   <p>
-    <a href="https://github.com/bolu26/AtriumMind-frontend/actions"><img src="https://github.com/bolu26/AtriumMind-frontend/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://github.com/SynapsVault/SynapsVault-frontend/actions"><img src="https://github.com/SynapsVault/SynapsVault-frontend/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/React-18-61dafb" alt="React 18">
     <img src="https://img.shields.io/badge/TypeScript-5-blue" alt="TypeScript">
     <img src="https://img.shields.io/badge/Stellar-Soroban-7D00FF" alt="Stellar">
@@ -12,9 +12,9 @@
 
 ---
 
-## What is AtriumMind?
+## What is SynapsVault?
 
-AtriumMind is a decentralised marketplace where creators publish **paywalled digital resources** — APIs, datasets, documents, and research — secured by **x402 Stellar micropayments** and **Soroban smart contracts**. Buyers pay once (or subscribe) and get on-chain proof of access.
+SynapsVault is a decentralised marketplace where creators publish **paywalled digital resources** — APIs, datasets, documents, and research — secured by **x402 Stellar micropayments** and **Soroban smart contracts**. Buyers pay once (or subscribe) and get on-chain proof of access.
 
 This repo is the **React/Vite web UI**.
 
@@ -25,10 +25,10 @@ Browser (React/Vite)
     │  Freighter wallet (Stellar)
     │  x402/fetch — payment over HTTP
     ▼
-AtriumMind-backend  (Express + Supabase)
+SynapsVault-backend  (Express + Supabase)
     │  Stellar Horizon RPC
     ▼
-AtriumMind-contracts  (Soroban — vault-registry, access-lease, subscription)
+SynapsVault-contracts  (Soroban — vault-registry, access-lease, subscription)
 ```
 
 ## Tech stack
@@ -49,8 +49,8 @@ AtriumMind-contracts  (Soroban — vault-registry, access-lease, subscription)
 
 ```bash
 # Prerequisites: Node 20+, pnpm
-git clone https://github.com/bolu26/AtriumMind-frontend
-cd AtriumMind-frontend
+git clone https://github.com/SynapsVault/SynapsVault-frontend
+cd SynapsVault-frontend
 pnpm install
 
 # Environment
@@ -68,9 +68,9 @@ pnpm build     # production build → dist/
 docker build \
   --build-arg VITE_API_URL=https://api.yourdomain.com \
   --build-arg VITE_NETWORK=mainnet \
-  -t atriumind-frontend .
+  -t synapsvault-frontend .
 
-docker run -p 8080:80 atriumind-frontend
+docker run -p 8080:80 synapsvault-frontend
 ```
 
 ## Environment variables
@@ -102,10 +102,10 @@ All design tokens live as CSS custom properties in `src/index.css`.
 
 | Token | Value | Use |
 |---|---|---|
-| `--atrium-bg` | `#0a0d14` | Page background |
-| `--atrium-surface` | `#111622` | Cards, sidebar |
-| `--atrium-violet` | `#7c5cfc` | Primary accent |
-| `--atrium-cyan` | `#22d3ee` | Secondary accent |
+| `--synapse-bg` | `#0a0d14` | Page background |
+| `--synapse-surface` | `#111622` | Cards, sidebar |
+| `--synapse-violet` | `#7c5cfc` | Primary accent |
+| `--synapse-cyan` | `#22d3ee` | Secondary accent |
 | `--font-display` | Sora | Headings, brand |
 | `--font-body` | Inter | Body copy |
 | `--font-mono` | JetBrains Mono | Addresses, prices |
@@ -125,8 +125,8 @@ All design tokens live as CSS custom properties in `src/index.css`.
 
 | Repo | Description |
 |---|---|
-| [AtriumMind-backend](https://github.com/bolu26/AtriumMind-backend) | Express API + Supabase |
-| [AtriumMind-contracts](https://github.com/bolu26/AtriumMind-contracts) | Soroban smart contracts |
+| [SynapsVault-backend](https://github.com/SynapsVault/SynapsVault-backend) | Express API + Supabase |
+| [SynapsVault-contracts](https://github.com/SynapsVault/SynapsVault-contracts) | Soroban smart contracts |
 
 ## License
 

@@ -13,7 +13,7 @@ import { decodePaymentResponseHeader, wrapFetchWithPayment, x402Client } from "@
 import type { Network } from "@x402/fetch";
 import { ExactStellarScheme } from "@x402/stellar/exact/client";
 import type { ClientStellarSigner } from "@x402/stellar";
-// Inlined from @atriumind/registry-client
+// Inlined from @synapsvault/registry-client
 type ExplorerNetwork = "testnet" | "public";
 interface NetworkPreset { explorerNetwork: ExplorerNetwork; x402Network: string; networkPassphrase: string; sorobanRpcUrl: string; horizonUrl: string; usdcSacContractId: string; }
 const networks: Record<string, NetworkPreset> = {

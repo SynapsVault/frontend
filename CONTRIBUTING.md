@@ -1,4 +1,4 @@
-# Contributing to AtriumMind Frontend
+# Contributing to SynapsVault Frontend
 
 ## Setup
 
@@ -39,4 +39,4 @@ chore: bump soroban-sdk to 21.1
 ## Design tokens
 
 All colours and spacing live in `src/index.css` as CSS custom properties.
-Never hardcode hex values in components — use `var(--atrium-*)`.
+Never hardcode hex values in components — use `var(--synapse-*)`.

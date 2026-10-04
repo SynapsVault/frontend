@@ -10,7 +10,7 @@ export interface WalletState {
   disconnect: () => void;
 }
 
-const STORAGE_KEY = "atriumind-wallet";
+const STORAGE_KEY = "synapsvault-wallet";
 
 /**
  * Manages Freighter wallet connection with localStorage persistence.

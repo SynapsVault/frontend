@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export type Theme = "light" | "dark";
 
-const STORAGE_KEY = "atriumind-theme";
+const STORAGE_KEY = "synapsvault-theme";
 
 function getInitialTheme(): Theme {
   const stored = localStorage.getItem(STORAGE_KEY);

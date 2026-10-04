@@ -1,7 +1,7 @@
 import type { CatalogFilters } from "../api/resources.js";
 import { fetchCatalog } from "../api/resources.js";
 
-const CACHE_PREFIX = "atriumind-catalog:";
+const CACHE_PREFIX = "synapsvault-catalog:";
 
 export interface CatalogFetchResult {
   data: unknown[];
