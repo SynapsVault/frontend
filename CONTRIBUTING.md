@@ -1,42 +1,179 @@
 # Contributing to SynapsVault Frontend
 
-## Setup
+A Stellar-powered marketplace UI built with React, TypeScript, Vite, and Tailwind CSS.
+
+## Local Development
+
+### Prerequisites
+- Node.js 20+
+- npm (or pnpm)
+
+### Setup
 
 ```bash
-pnpm install
-cp .env.example .env   # fill in values
-pnpm dev
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env — set VITE_API_URL to your backend (default: http://localhost:3000)
+
+# Start dev server
+npm run dev
+# Open http://localhost:5173
 ```
 
-## Branch strategy
+Dev server includes hot module reload and TypeScript checking.
 
-| Branch | Purpose |
-|--------|---------|
-| `main` | Production — auto-deploys to Vercel |
-| `dev`  | Staging — PRs target this branch |
-| `feat/*` | Feature branches |
-| `fix/*`  | Bug fix branches |
+## Docker Development
 
-## Workflow
+```bash
+# Build image
+npm run docker:build
 
-1. Branch from `dev`: `git checkout -b feat/your-feature dev`
-2. Write code + tests
-3. `pnpm test` must pass
-4. `pnpm exec tsc --noEmit` must pass
-5. Open PR → `dev`
-6. After review + merge to `dev`, open PR → `main` for release
-
-## Commit format (Conventional Commits)
-
-```
-feat: add subscription plan UI
-fix: wallet disconnect race condition
-docs: update README setup steps
-refactor: extract ResourceCard component
-chore: bump soroban-sdk to 21.1
+# Run container
+npm run docker:run
+# Open http://localhost:8080
 ```
 
-## Design tokens
+## Branch Strategy
 
-All colours and spacing live in `src/index.css` as CSS custom properties.
-Never hardcode hex values in components — use `var(--synapse-*)`.
+| Branch | Purpose | Deploy Target |
+|--------|---------|----------------|
+| `main` | Production-ready | Vercel → production |
+| `dev` | Staging/integration | Vercel preview |
+| `feat/*` | Feature branches | PR to `dev` |
+| `fix/*` | Bug fixes | PR to `dev` |
+| `chore/*` | Maintenance | PR to `dev` |
+
+## Development Workflow
+
+1. **Create feature branch from dev:**
+   ```bash
+   git checkout -b feat/my-feature dev
+   ```
+
+2. **Make changes and test locally:**
+   ```bash
+   npm run dev
+   npm run test:watch
+   ```
+
+3. **Before committing, verify:**
+   ```bash
+   npm run typecheck   # Type safety
+   npm run test        # All tests pass
+   npm run build       # Production build works
+   ```
+
+4. **Commit with conventional format (see below)**
+
+5. **Push and create PR to `dev`**
+
+6. **After review + merge to `dev`:**
+   - Staging deploy to Vercel preview
+   - Create release PR to `main`
+
+## Testing
+
+```bash
+npm run test           # Run all tests once
+npm run test:watch    # Watch mode for development
+npm run test:ui       # Visual UI for test runner
+```
+
+Tests use Vitest + React Testing Library. Focus on user behavior, not implementation details.
+
+## Code Standards
+
+- **TypeScript**: Strict mode, no `any` without comment
+- **Components**: Functional components with hooks
+- **Styling**: Use CSS custom properties (`var(--synapse-*)`)
+- **Accessibility**: ARIA labels, keyboard navigation
+- **Performance**: Code-split routes, memoize expensive renders
+- **Errors**: Use Sentry for tracking, user-friendly error messages
+
+## Design System
+
+All design tokens live in `src/index.css` as CSS custom properties:
+
+```css
+/* Colors */
+--synapse-bg:      #0a0d14  /* Page background */
+--synapse-surface: #111622  /* Cards, sidebar */
+--synapse-violet:  #7c5cfc  /* Primary accent */
+--synapse-cyan:    #22d3ee  /* Secondary accent */
+
+/* Fonts */
+--font-display: Sora        /* Headings, brand */
+--font-body:    Inter       /* Body copy */
+--font-mono:    JetBrains Mono  /* Addresses, code */
+```
+
+**Never hardcode hex values** — use CSS variables instead. This ensures consistency and makes theme changes easy.
+
+## Adding a New Page
+
+1. **Create component:** `src/pages/MyPage.tsx`
+2. **Add route:** Update `src/App.tsx`
+3. **Add tests:** `src/pages/MyPage.test.tsx`
+4. **Update nav:** Add link in main navigation
+5. **Test:** `npm run dev` and verify routing works
+
+## Commit Format (Conventional Commits)
+
+```
+feat(ui): add subscription plan selector
+fix(wallet): handle Freighter disconnect race condition
+test(catalog): add search filter tests
+docs: update component library
+refactor(theme): extract color variables to custom properties
+chore: upgrade vite to 6.0
+perf(catalog): memoize ResourceCard component
+```
+
+**Types:** feat, fix, test, docs, refactor, chore, perf, style
+
+## Code Review Checklist
+
+- [ ] TypeScript compiles (`npm run typecheck`)
+- [ ] Tests pass (`npm run test`)
+- [ ] Bundle size acceptable (check Vite output)
+- [ ] No hardcoded colors/spacing (use CSS vars)
+- [ ] Accessible (keyboard nav, ARIA labels)
+- [ ] Mobile responsive (tested at 320px+)
+- [ ] Follows conventional commit format
+- [ ] PR description explains "why", not "what"
+
+## Wallet Integration
+
+Uses Stellar Freighter for wallet connection. See `src/api/agent.ts` for integration patterns.
+
+## Payment Integration
+
+Uses x402 protocol via `@x402/fetch` and `@x402/stellar`. See `src/api/payments.ts`.
+
+## Troubleshooting
+
+**Port 5173 already in use?**
+```bash
+npm run dev -- --port 5174
+```
+
+**Build too large?**
+```bash
+npm run bundle:stats
+# Opens stats.html showing bundle breakdown
+```
+
+**Tests failing?**
+```bash
+npm run test:watch
+# Rerun on file changes
+```
+
+## Questions?
+
+- Open a GitHub issue
+- Check existing PRs for similar work
+- Ask in Stellar Dev Discord #synapsvault

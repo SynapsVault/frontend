@@ -6,12 +6,32 @@ import { initSentry } from "./lib/sentry.js";
 import "./i18n/config.js";
 import "./index.css";
 
+// Initialize error tracking early
 initSentry();
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element not found. Check index.html for <div id=\"root\"></div>");
+}
+
+// Create React root and mount application
+const root = ReactDOM.createRoot(rootElement);
+
+root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
   </React.StrictMode>,
 );
+
+// Log app version in development
+if (import.meta.env.DEV) {
+  console.log(
+    "%c🚀 SynapsVault Frontend",
+    "font-size: 14px; font-weight: bold; color: #7c5cfc;",
+  );
+  console.log(`API: ${import.meta.env.VITE_API_URL || "http://localhost:3000"}`);
+  console.log(`Network: ${import.meta.env.VITE_NETWORK || "testnet"}`);
+}
