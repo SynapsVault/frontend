@@ -131,4 +131,4 @@ All design tokens live as CSS custom properties in `src/index.css`.
 
 ## License
 
-MIT © 2025 bolu26
+MIT © 2025 Busiii-adetiba
