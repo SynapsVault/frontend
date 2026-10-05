@@ -1,4 +1,5 @@
 import { Networks } from "@stellar/stellar-sdk";
+import { signedPublisherFetch } from "./requestSignature.js";
 
 export interface Resource {
   id: string;
@@ -13,9 +14,7 @@ export interface Resource {
   listed: boolean;
   accessUrl: string;
 }
-import { signedPublisherFetch } from "./requestSignature.js";
 
-export type { Resource };
 export { Networks as registryNetworks };
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";

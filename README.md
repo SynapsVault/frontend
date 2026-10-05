@@ -2,7 +2,7 @@
   <h1>⬡ SynapsVault — Frontend</h1>
   <p><strong>Advanced Stellar-powered knowledge vault marketplace</strong></p>
   <p>
-    <a href="https://github.com/SynapsVault/SynapsVault-frontend/actions"><img src="https://github.com/SynapsVault/SynapsVault-frontend/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="https://github.com/SynapsVault/frontend/actions"><img src="https://github.com/SynapsVault/frontend/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <img src="https://img.shields.io/badge/React-18-61dafb" alt="React 18">
     <img src="https://img.shields.io/badge/TypeScript-5-blue" alt="TypeScript">
     <img src="https://img.shields.io/badge/Stellar-Soroban-7D00FF" alt="Stellar">
@@ -48,18 +48,19 @@ SynapsVault-contracts  (Soroban — vault-registry, access-lease, subscription)
 ## Quick start
 
 ```bash
-# Prerequisites: Node 20+, pnpm
-git clone https://github.com/SynapsVault/SynapsVault-frontend
+# Prerequisites: Node 20+
+git clone https://github.com/SynapsVault/frontend SynapsVault-frontend
 cd SynapsVault-frontend
-pnpm install
+npm install
 
 # Environment
 cp .env.example .env
 # Edit .env — set VITE_API_URL to your backend, VITE_API_KEY if you're a publisher
 
-pnpm dev       # http://localhost:5173
-pnpm test      # unit tests
-pnpm build     # production build → dist/
+npm run dev         # http://localhost:5173
+npm run typecheck   # type checking
+npm run test        # unit tests
+npm run build       # production build → dist/
 ```
 
 ## Docker
@@ -125,8 +126,8 @@ All design tokens live as CSS custom properties in `src/index.css`.
 
 | Repo | Description |
 |---|---|
-| [SynapsVault-backend](https://github.com/SynapsVault/SynapsVault-backend) | Express API + Supabase |
-| [SynapsVault-contracts](https://github.com/SynapsVault/SynapsVault-contracts) | Soroban smart contracts |
+| [SynapsVault-backend](https://github.com/SynapsVault/backend) | Express API + Supabase |
+| [SynapsVault-contracts](https://github.com/SynapsVault/contracts) | Soroban smart contracts |
 
 ## License
 
