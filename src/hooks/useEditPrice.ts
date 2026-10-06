@@ -35,13 +35,18 @@ export function useEditPrice(resourceId: string, apiKey: string) {
 
       if ("error" in result && result.error) {
         throw new Error(
-          typeof result.error === "string" ? result.error : "Wallet rejected signing",
+          typeof result.error === "string"
+            ? result.error
+            : "Wallet rejected signing. Approve the transaction in your wallet and try again.",
         );
       }
 
       const signedXdr =
         "signedTxXdr" in result ? result.signedTxXdr : (result as any).result?.signedTxXdr;
-      if (!signedXdr) throw new Error("No signed transaction returned by wallet");
+      if (!signedXdr)
+        throw new Error(
+          "No signed transaction returned by wallet. Make sure your wallet is unlocked and connected, then try again.",
+        );
 
       // Step 3 — submit signed XDR and sync DB price
       setStatus("submitting");
@@ -49,7 +54,11 @@ export function useEditPrice(resourceId: string, apiKey: string) {
       setNewPrice(updated.price);
       setStatus("confirmed");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not update the price. Check your wallet connection and try again.",
+      );
       setStatus("error");
     }
   }

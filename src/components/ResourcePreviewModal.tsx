@@ -224,7 +224,12 @@ export function ResourcePreviewModal({
           )}
 
           {status === "error" && (
-            <ErrorBanner message={error ?? "Failed to load resource preview."} onRetry={retry} />
+            <ErrorBanner
+              message={
+                error ?? "Could not load this resource preview. Check your connection and try again."
+              }
+              onRetry={retry}
+            />
           )}
 
           {status === "success" && data && (

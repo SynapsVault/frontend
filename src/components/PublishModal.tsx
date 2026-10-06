@@ -33,7 +33,7 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
           apiKey,
         );
       } else {
-        if (!file) throw new Error("Please select a file");
+        if (!file) throw new Error("Please select a file to upload before publishing.");
         const formData = new FormData();
         formData.append("title", title);
         if (description) formData.append("description", description);
@@ -44,7 +44,9 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
       setStep("success");
       onPublished();
     } catch (err: any) {
-      setErrorMsg(err?.message ?? "Publish failed");
+      setErrorMsg(
+        err?.message ?? "Could not publish your resource. Check your connection and try again.",
+      );
       setStep("error");
     }
   }

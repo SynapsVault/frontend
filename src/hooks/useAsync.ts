@@ -42,7 +42,9 @@ export function useAsync<T>(
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
         const message =
-          err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+          err instanceof Error
+            ? err.message
+            : "Something went wrong while loading data. Check your connection and try again.";
         setError(message);
         setStatus("error");
       });

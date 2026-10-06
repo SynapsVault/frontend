@@ -34,6 +34,30 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText(/Try reloading the page/)).toBeInTheDocument();
   });
 
+  it("renders the hint when provided", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <ErrorBoundary hint="Check your network connection">
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText("Check your network connection")).toBeInTheDocument();
+  });
+
+  it("does not render a hint when omitted", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <ErrorBoundary>
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.queryByText("Check your network connection")).not.toBeInTheDocument();
+  });
+
   it("calls onError when provided", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const onError = vi.fn();

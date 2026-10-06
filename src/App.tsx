@@ -42,6 +42,8 @@ import { useTheme }               from "./hooks/useTheme.js";
 import { useAsync }               from "./hooks/useAsync.js";
 import { useCatalog }             from "./hooks/useCatalog.js";
 import { useWalletConnection }    from "./hooks/useWalletConnection.js";
+import { useKeyboardShortcuts }   from "./hooks/useKeyboardShortcuts.js";
+import { KeyboardShortcutsHelp }  from "./components/KeyboardShortcutsHelp.js";
 import { fetchRegistryStatus }    from "./api/resources.js";
 import type { CatalogFilters }    from "./api/resources.js";
 
@@ -116,6 +118,8 @@ export default function App() {
   const [tab, setTab]                   = useState<Tab>("catalog");
   const [showPublish, setShowPublish]   = useState(false);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const searchInputRef                  = React.useRef<HTMLInputElement>(null);
   const { theme, toggleTheme }          = useTheme();
   const wallet                          = useWalletConnection();
   const { t }                           = useTranslation();
@@ -157,6 +161,29 @@ export default function App() {
 
   const isLoading = resourcesStatus === "idle" || resourcesStatus === "loading";
   const registryCount = registryData?.resourceCount ?? null;
+
+  /* ── Keyboard shortcuts ──────────────────────────────────────────────── */
+  useKeyboardShortcuts({
+    onFocusSearch: () => {
+      setTab("catalog");
+      searchInputRef.current?.focus();
+    },
+    onToggleFilters: () => {
+      setTab("catalog");
+      setFilters((f) => ({ ...f, resourceType: f.resourceType === "all" ? "file" : "all" }));
+    },
+    onBuy: () => {
+      if (activeModal?.kind === "buy") return;
+      const target = filteredResources[0];
+      if (target) setActiveModal({ kind: "buy", resource: target });
+    },
+    onShowHelp: () => setShowShortcutsHelp((v) => !v),
+    onEscape: () => {
+      if (showShortcutsHelp) { setShowShortcutsHelp(false); return; }
+      if (activeModal) { setActiveModal(null); return; }
+      if (showPublish) { setShowPublish(false); return; }
+    },
+  });
 
   /* ── Sidebar ─────────────────────────────────────────────────────────── */
   const renderSidebar = () => (
@@ -265,7 +292,7 @@ export default function App() {
           <svg className="synapse-search__icon" width="14" height="14" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={2}>
             <circle cx="7.5" cy="7.5" r="5.5"/><path d="M13 13l3 3"/>
           </svg>
-          <input className="synapse-input synapse-search__input" placeholder="Search resources…"
+          <input ref={searchInputRef} className="synapse-input synapse-search__input" placeholder="Search resources…"
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
         </div>
@@ -453,6 +480,9 @@ export default function App() {
           <PublishModal apiKey={API_KEY} onClose={() => setShowPublish(false)}
             onPublished={() => retryResources()} />
         </Suspense>
+      )}
+      {showShortcutsHelp && (
+        <KeyboardShortcutsHelp onClose={() => setShowShortcutsHelp(false)} />
       )}
       {toast && (
         <Toast message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={() => setToast(null)} />
