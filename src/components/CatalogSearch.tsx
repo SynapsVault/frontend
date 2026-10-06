@@ -214,7 +214,7 @@ export function CatalogSearch({
       </div>
 
       {/* Filter row */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         {/* Verification status */}
         <select
           aria-label="Filter by verification status"
@@ -225,7 +225,7 @@ export function CatalogSearch({
               verificationStatus: e.target.value as CatalogFilters["verificationStatus"],
             })
           }
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
         >
           <option value="all">All statuses</option>
           <option value="verified">Verified</option>
@@ -243,7 +243,7 @@ export function CatalogSearch({
               resourceType: e.target.value as CatalogFilters["resourceType"],
             })
           }
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
         >
           <option value="all">All types</option>
           <option value="file">File</option>
@@ -251,7 +251,7 @@ export function CatalogSearch({
         </select>
 
         {/* Price range */}
-        <div className="flex items-center gap-1">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
           <span className="text-xs text-gray-500 dark:text-gray-400">Price</span>
           <input
             type="number"
@@ -261,7 +261,7 @@ export function CatalogSearch({
             step="0.01"
             value={filters.minPrice ?? ""}
             onChange={(e) => onChange({ ...filters, minPrice: e.target.value })}
-            className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:w-20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
           />
           <span className="text-xs text-gray-400">–</span>
           <input
@@ -272,7 +272,7 @@ export function CatalogSearch({
             step="0.01"
             value={filters.maxPrice ?? ""}
             onChange={(e) => onChange({ ...filters, maxPrice: e.target.value })}
-            className="w-20 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:w-20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
           />
           <span className="text-xs text-gray-400">USDC</span>
         </div>
@@ -281,14 +281,14 @@ export function CatalogSearch({
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
           >
             Clear filters
           </button>
         )}
 
         {/* Result count */}
-        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">
+        <span className="text-xs text-gray-400 sm:ml-auto dark:text-gray-500">
           {hasActiveFilters ? (
             <>
               <span className="font-medium text-gray-600 dark:text-gray-300">{filtered}</span> of{" "}

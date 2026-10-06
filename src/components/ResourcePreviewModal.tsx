@@ -172,7 +172,7 @@ export function ResourcePreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4"
       onClick={handleBackdropClick}
     >
       <div
@@ -183,7 +183,7 @@ export function ResourcePreviewModal({
         aria-describedby={data?.description ? "preview-desc" : undefined}
         tabIndex={-1}
         onKeyDown={handleTabKey}
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800 outline-none"
+        className="relative w-full h-full max-w-none overflow-y-auto rounded-none bg-white p-4 shadow-xl dark:bg-gray-800 outline-none sm:h-auto sm:max-w-lg sm:rounded-2xl sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="preview-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -267,7 +267,7 @@ export function ResourcePreviewModal({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+              <div className="grid grid-cols-1 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
                     Price
@@ -356,10 +356,10 @@ export function ResourcePreviewModal({
                 )}
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <div className="mt-6 flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 dark:border-gray-700 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   onClick={onClose}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 sm:w-auto sm:py-2"
                 >
                   Close
                 </button>
@@ -367,14 +367,14 @@ export function ResourcePreviewModal({
                   onClick={() => {
                     onCopyUrl?.(data.accessUrl);
                   }}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 sm:w-auto sm:py-2"
                 >
                   Copy access URL
                 </button>
                 {onBuy && (
                   <button
                     onClick={onBuy}
-                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto sm:py-2"
                   >
                     Buy {data.price} USDC
                   </button>

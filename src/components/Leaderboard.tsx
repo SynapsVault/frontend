@@ -50,12 +50,12 @@ export function Leaderboard() {
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            <th className="px-4 py-3">#</th>
-            <th className="px-4 py-3">Creator</th>
-            <th className="px-4 py-3">Wallet</th>
-            <th className="px-4 py-3 text-right">Resources</th>
-            <th className="px-4 py-3 text-right">Sales</th>
-            <th className="px-4 py-3 text-right">Earned (USDC)</th>
+            <th className="whitespace-nowrap px-2 py-3 sm:px-4">#</th>
+            <th className="whitespace-nowrap px-2 py-3 sm:px-4">Creator</th>
+            <th className="whitespace-nowrap px-2 py-3 sm:px-4">Wallet</th>
+            <th className="whitespace-nowrap px-2 py-3 text-right sm:px-4">Resources</th>
+            <th className="whitespace-nowrap px-2 py-3 text-right sm:px-4">Sales</th>
+            <th className="whitespace-nowrap px-2 py-3 text-right sm:px-4">Earned (USDC)</th>
           </tr>
         </thead>
         <tbody>
@@ -64,11 +64,11 @@ export function Leaderboard() {
               key={entry.id}
               className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
             >
-              <td className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400">{idx + 1}</td>
-              <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+              <td className="px-2 py-3 font-medium text-gray-500 sm:px-4 dark:text-gray-400">{idx + 1}</td>
+              <td className="px-2 py-3 font-medium text-gray-900 sm:px-4 dark:text-gray-100">
                 {entry.name}
               </td>
-              <td className="px-4 py-3">
+              <td className="px-2 py-3 sm:px-4">
                 <ExplorerLink
                   type="account"
                   value={entry.walletAddress}
@@ -77,13 +77,13 @@ export function Leaderboard() {
                   {truncateWallet(entry.walletAddress)}
                 </ExplorerLink>
               </td>
-              <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
+              <td className="px-2 py-3 text-right text-gray-700 sm:px-4 dark:text-gray-300">
                 {entry.totalResources}
               </td>
-              <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
+              <td className="px-2 py-3 text-right text-gray-700 sm:px-4 dark:text-gray-300">
                 {entry.totalSales}
               </td>
-              <td className="px-4 py-3 text-right font-semibold text-indigo-600 dark:text-indigo-400">
+              <td className="px-2 py-3 text-right font-semibold text-indigo-600 sm:px-4 dark:text-indigo-400">
                 {entry.totalEarned}
               </td>
             </tr>

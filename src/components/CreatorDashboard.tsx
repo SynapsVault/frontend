@@ -69,7 +69,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
   return (
     <div className="space-y-6">
       {/* Summary row */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <SummaryStat label="Total resources" value={summary.total} />
         <SummaryStat label="Listed" value={summary.listed} />
         <SummaryStat label="Verified" value={summary.verified} />
@@ -103,20 +103,20 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {resources.map((r) => (
               <tr key={r.id}>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 sm:px-4">
                   <p className="font-medium text-gray-900 dark:text-gray-100">{r.title}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500">{r.resourceType}</p>
                 </td>
-                <td className="px-4 py-3 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                <td className="px-2 py-3 text-sm font-medium text-indigo-600 sm:px-4 dark:text-indigo-400">
                   {r.price} USDC
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 sm:px-4">
                   <StatusBadge
                     label={r.listed ? "listed" : "unlisted"}
                     tone={r.listed ? "green" : "gray"}
                   />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 sm:px-4">
                   <StatusBadge
                     label={r.verificationStatus}
                     tone={
@@ -128,7 +128,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                     }
                   />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 sm:px-4">
                   <div className="flex items-center gap-1.5">
                     <StatusBadge
                       label={r.onchainStatus === "none" ? "not on-chain" : r.onchainStatus}
@@ -153,8 +153,8 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex justify-end gap-1.5">
+                <td className="px-2 py-3 text-right sm:px-4">
+                  <div className="flex flex-wrap justify-end gap-1.5">
                     {needsRegistration(r) && (
                       <button
                         onClick={() => onRegister(r)}

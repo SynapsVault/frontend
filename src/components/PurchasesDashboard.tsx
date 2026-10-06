@@ -45,7 +45,7 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
         Enter your wallet address to view your purchase history and receipts.
       </p>
 
-      <form onSubmit={onSubmit} className="mt-6 flex max-w-md gap-3">
+      <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:max-w-md">
         <input
           type="text"
           value={address}
@@ -72,31 +72,31 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
       )}
 
       {payments.length > 0 && (
-        <div className="mt-8 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="mt-8 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
                 >
                   Resource ID
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
                 >
                   Date
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
                 >
                   Amount
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                  className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
                 >
                   Receipt
                 </th>
@@ -105,16 +105,16 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
               {payments.map((p) => (
                 <tr key={p.id}>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <td className="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900 sm:px-6 sm:py-4 dark:text-gray-100">
                     {p.resourceId.slice(0, 8)}...
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:px-6 sm:py-4 dark:text-gray-400">
                     {new Date(p.paidAt).toLocaleDateString()}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:px-6 sm:py-4 dark:text-gray-400">
                     {p.amount} USDC
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                  <td className="whitespace-nowrap px-3 py-3 text-right text-sm font-medium sm:px-6 sm:py-4">
                     <a
                       href={`${import.meta.env.VITE_API_URL || ""}/payments/${p.id}/receipt`}
                       target="_blank"

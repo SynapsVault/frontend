@@ -58,7 +58,7 @@ export function BuyModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
@@ -69,7 +69,7 @@ export function BuyModal({
         aria-modal="true"
         aria-labelledby="buy-title"
         tabIndex={-1}
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl outline-none dark:bg-gray-800"
+        className="h-full w-full max-w-none overflow-y-auto rounded-none bg-white p-4 shadow-xl outline-none sm:h-auto sm:max-w-md sm:rounded-2xl sm:p-6 dark:bg-gray-800"
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="buy-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -79,7 +79,7 @@ export function BuyModal({
             onClick={handleClose}
             aria-label="Close"
             disabled={status === "paying"}
-            className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+            className="rounded-full p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
           >
             ✕
           </button>
@@ -124,7 +124,7 @@ export function BuyModal({
               <button
                 onClick={() => buy(accessUrl)}
                 disabled={!walletAddress}
-                className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
               >
                 Pay {price} USDC
               </button>
@@ -192,7 +192,7 @@ export function BuyModal({
             <button
               onClick={() => buy(accessUrl)}
               disabled={!walletAddress}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
             >
               Try again
             </button>
@@ -203,7 +203,7 @@ export function BuyModal({
         <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
           <button
             onClick={() => onCopyUrl(accessUrl)}
-            className="w-full rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 sm:py-2 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             Copy access URL instead
           </button>
