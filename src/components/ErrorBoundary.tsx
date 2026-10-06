@@ -1,9 +1,11 @@
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
-import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  /** Extra, context-specific guidance shown below the generic description. */
+  hint?: string;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -11,6 +13,11 @@ interface State {
   error: Error | null;
 }
 
+/**
+ * Catches render errors below it and shows a recoverable fallback.
+ * Class components can't call useTranslation(), so copy is read from the
+ * shared i18next instance at render time.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -33,15 +40,17 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       if (this.props.fallback) return this.props.fallback;
 
+      const t = i18n.t.bind(i18n);
+
       return (
         <div
           role="alert"
-          className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gray-50 p-8 dark:bg-gray-900"
+          className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas p-8 text-fg"
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-950">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-danger-soft ring-1 ring-danger/20">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-red-400 dark:text-red-500"
+              className="h-7 w-7 text-danger"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -55,19 +64,16 @@ export class ErrorBoundary extends Component<Props, State> {
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="font-display text-xl font-semibold tracking-tight">
             {t("error_boundary.title")}
           </h2>
-          <p className="max-w-md text-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="max-w-md text-center text-sm text-fg-muted">
             {t("error_boundary.description")}
           </p>
-          <p className="max-w-md text-center text-xs text-gray-400 dark:text-gray-500">
-            {t("error_boundary.hint")}
-          </p>
-          <button
-            onClick={this.handleRetry}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-          >
+          {this.props.hint && (
+            <p className="max-w-md text-center text-xs text-fg-subtle">{this.props.hint}</p>
+          )}
+          <button onClick={this.handleRetry} className="synapse-btn synapse-btn--primary">
             {t("error_boundary.reload")}
           </button>
         </div>

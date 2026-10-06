@@ -46,7 +46,10 @@ export default defineConfig(({ mode }) => {
             if (!id.includes("node_modules")) {
               return undefined;
             }
-            if (/[\\/]node_modules[\\/](react|react-dom)[\\/]/.test(id)) {
+            // `scheduler` must live with react-dom: leaving it in the generic
+            // "vendor" chunk creates a vendor <-> react-vendor import cycle
+            // that crashes the app on load ("Cannot set properties of undefined").
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
               return "react-vendor";
             }
             if (/[\\/]node_modules[\\/](@stellar|@x402)[\\/]/.test(id)) {
@@ -87,8 +90,8 @@ export default defineConfig(({ mode }) => {
           short_name: "SynapsVault",
           description:
             "Payment-protected vault for digital resources on Stellar using HTTP 402 and x402.",
-          theme_color: "#7c5cfc",
-          background_color: "#0a0d14",
+          theme_color: "#7654fa",
+          background_color: "#0d0e16",
           display: "standalone",
           start_url: "/",
           scope: "/",

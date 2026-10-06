@@ -15,9 +15,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "lint": "eslint src --ext .ts,.tsx,.jsx",
+    "lint": "eslint .",
     "docker:build": "docker build -t synapsvault-frontend:latest .",
-    "docker:run": "docker run -p 8080:80 synapsvault-frontend:latest"
+    "docker:run": "docker run -p 8080:80 synapsvault-frontend:latest",
+    "check": "npm run lint && npm run typecheck && npm test && npm run bundle:check",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@sentry/react": "^10.62.0",
@@ -31,21 +33,30 @@
     "react-i18next": "^17.0.8"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^20.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^17.13.0",
     "jsdom": "^25.0.1",
     "postcss": "^8.4.49",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^3.4.16",
+    "terser": "^5.51.2",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.71.1",
     "vite": "^6.0.5",
     "vite-plugin-pwa": "^0.21.2",
-    "vitest": "^4.1.7",
-    "@types/node": "^20.0.0"
+    "vitest": "^4.1.7"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

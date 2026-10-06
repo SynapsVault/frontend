@@ -11,7 +11,26 @@
     "theme_light": "Light",
     "theme_dark": "Dark",
     "registry_unavailable": "Registry status unavailable",
-    "registry_count": "Registry: {{count}} resource(s) registered on-chain"
+    "registry_count": "Registry: {{count}} resource(s) registered on-chain",
+    "nav_marketplace": "Marketplace",
+    "nav_creator": "Creator",
+    "nav_label": "Main navigation",
+    "toggle_menu": "Toggle menu",
+    "publish_resource": "Publish resource",
+    "registry_onchain_one": "{{count}} resource on-chain",
+    "registry_onchain_other": "{{count}} resources on-chain",
+    "retry_registry": "Retry registry",
+    "connect_wallet": "Connect wallet",
+    "disconnect_wallet": "Disconnect wallet",
+    "skip_to_content": "Skip to content",
+    "loading": "Loading…",
+    "page_catalog": "Resource Catalog",
+    "page_catalog_desc": "Discover verified datasets, files and links — pay per access in USDC on Stellar.",
+    "page_dashboard": "My Vault",
+    "page_analytics": "Analytics",
+    "page_purchases": "My Purchases",
+    "page_leaderboard": "Leaderboard",
+    "page_agent": "AI Agent"
   },
   "catalog": {
     "empty_title": "The catalog is empty",
@@ -24,7 +43,13 @@
     "copy_url": "Copy URL",
     "owner": "Owner",
     "copied_toast": "Resource URL copied to clipboard",
-    "clipboard_fallback": "Clipboard unavailable — copy the URL below:"
+    "clipboard_fallback": "Clipboard unavailable — copy the URL below:",
+    "search_label": "Search resources",
+    "by_publisher": "by {{name}}",
+    "view_tx": "View tx",
+    "off_chain": "off-chain",
+    "url_copied": "Access URL copied to clipboard",
+    "copy_this_url": "Copy this URL:"
   },
   "leaderboard": {
     "title": "Creator Leaderboard",
@@ -37,7 +62,8 @@
   "error_boundary": {
     "title": "Something went wrong",
     "description": "An unexpected error occurred. Try reloading the page, or click the button below to retry.",
-    "reload": "Reload"
+    "reload": "Reload",
+    "error_message": "Error message"
   },
   "errors": {
     "generic_title": "Something went wrong",
@@ -84,10 +110,19 @@
     "toggle_theme": "Toggle light/dark theme",
     "toggle_language": "Switch language",
     "show_shortcuts": "Show this help overlay",
-    "escape": "Close dialogs and overlays"
+    "escape": "Close dialogs and overlays",
+    "keyboard_shortcuts": "Keyboard shortcuts"
   },
   "language": {
     "switch_to": "Español",
     "label": "Language"
+  },
+  "status": {
+    "verified": "Verified",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "registered": "On-chain",
+    "failed": "Failed",
+    "none": "Off-chain"
   }
 }

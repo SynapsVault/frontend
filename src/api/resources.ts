@@ -1,4 +1,3 @@
-import { Networks } from "@stellar/stellar-sdk";
 import { signedPublisherFetch } from "./requestSignature.js";
 
 export interface Resource {
@@ -14,8 +13,6 @@ export interface Resource {
   listed: boolean;
   accessUrl: string;
 }
-
-export { Networks as registryNetworks };
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
@@ -54,7 +51,7 @@ export async function fetchResourceMeta(id: string, signal?: AbortSignal): Promi
   return res.json();
 }
 
-export async function fetchCatalog(filters?: CatalogFilters): Promise<any[]> {
+export async function fetchCatalog(filters?: CatalogFilters): Promise<unknown[]> {
   const params = new URLSearchParams();
   if (filters?.search) params.set("search", filters.search);
   if (filters?.minPrice) params.set("minPrice", filters.minPrice);
@@ -73,7 +70,8 @@ export async function fetchCatalog(filters?: CatalogFilters): Promise<any[]> {
   return res.json();
 }
 
-export async function fetchMyResources(apiKey: string): Promise<any[]> {
+/** Resources owned by the API key holder. Callers supply the row shape. */
+export async function fetchMyResources<T = unknown>(apiKey: string): Promise<T[]> {
   const res = await fetch(`${API_BASE}/publishers/me/resources`, {
     headers: { "x-api-key": apiKey },
   });
@@ -281,7 +279,7 @@ export async function publishLinkResource(
   data: { title: string; description?: string; price: string; externalUrl: string },
   apiKey: string,
   signal?: AbortSignal,
-): Promise<any> {
+): Promise<unknown> {
   const res = await fetch(`${API_BASE}/resources`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": apiKey },
@@ -299,7 +297,7 @@ export async function publishFileResource(
   formData: FormData,
   apiKey: string,
   signal?: AbortSignal,
-): Promise<any> {
+): Promise<unknown> {
   const res = await fetch(`${API_BASE}/resources`, {
     method: "POST",
     headers: { "x-api-key": apiKey },

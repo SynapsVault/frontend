@@ -6,7 +6,9 @@ export async function checkNetwork(expectedPassphrase: string): Promise<string |
   const freighter = await import("@stellar/freighter-api");
   const result = await freighter.getNetworkDetails();
   if ("error" in result && result.error) return null; // can't check — let signing handle it
-  const actual = (result as any).networkPassphrase ?? (result as any).result?.networkPassphrase;
+  // Older Freighter versions nest the details under `result`.
+  const details = result as { networkPassphrase?: string; result?: { networkPassphrase?: string } };
+  const actual = details.networkPassphrase ?? details.result?.networkPassphrase;
   if (!actual || actual === expectedPassphrase) return null;
   const label = expectedPassphrase.includes("Test")
     ? "Stellar Testnet"

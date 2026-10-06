@@ -1,4 +1,3 @@
-/// <reference path="../types/freighter.d.ts" />
 import React, { useState } from "react";
 import { prepareRegisterTx, submitRegisterTx, RegistrationError } from "../api/resources.js";
 
@@ -20,8 +19,10 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
   const [unsignedXdr, setUnsignedXdr] = useState<string>("");
   const [networkPassphrase, setNetworkPassphrase] = useState<string>("");
 
+  // Prepare once on open; retries call prepareTransaction() explicitly.
   React.useEffect(() => {
     prepareTransaction();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function prepareTransaction() {

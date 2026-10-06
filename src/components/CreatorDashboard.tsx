@@ -36,11 +36,11 @@ const needsRegistration = (r: DashboardResource) =>
  */
 export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onRegister }: Props) {
   const { status, data, error, retry } = useAsync<DashboardResource[]>(
-    () => fetchMyResources(apiKey),
+    () => fetchMyResources<DashboardResource>(apiKey),
     [apiKey],
   );
 
-  const resources = data ?? [];
+  const resources = useMemo(() => data ?? [], [data]);
   const isLoading = status === "idle" || status === "loading";
 
   const summary = useMemo(() => {

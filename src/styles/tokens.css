@@ -1,0 +1,153 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SynapsVault Design Tokens
+   ───────────────────────────────────────────────────────────────────────────
+   Two layers:
+
+   1. Primitive scales (--sv-<hue>-<step>) — static RGB channels. Tailwind's
+      `gray`, `indigo`, `green` palettes are remapped onto these in
+      tailwind.config.js, so every existing utility class (and its `dark:`
+      variant) renders in the brand palette.
+
+   2. Semantic tokens (--sv-canvas, --sv-fg, --sv-accent, …) — describe
+      *intent* and flip between light and dark. New UI should prefer these
+      (exposed in Tailwind as bg-canvas, text-fg-muted, border-line, …).
+
+   Colors are space-separated RGB channels so Tailwind's opacity modifiers
+   (`bg-indigo-600/20`) keep working. All text/background pairs used by the
+   semantic tokens meet WCAG 2.2 AA (≥ 4.5:1 for body text).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Neutral: cool gray with a faint violet undertone ─────────────────── */
+  --sv-gray-50:  248 248 251;
+  --sv-gray-100: 241 241 246;
+  --sv-gray-200: 228 228 236;
+  --sv-gray-300: 208 208 220;
+  --sv-gray-400: 150 151 171;
+  --sv-gray-500: 108 109 130;
+  --sv-gray-600: 80 81 101;
+  --sv-gray-700: 56 57 75;
+  --sv-gray-800: 36 37 51;
+  --sv-gray-900: 23 24 35;
+  --sv-gray-950: 13 14 22;
+
+  /* ── Brand: electric violet (500 = primary, AA with white text) ──────── */
+  --sv-violet-50:  245 243 255;
+  --sv-violet-100: 237 233 254;
+  --sv-violet-200: 221 214 254;
+  --sv-violet-300: 196 181 253;
+  --sv-violet-400: 167 139 250;
+  --sv-violet-500: 118 84 250;
+  --sv-violet-600: 104 68 236;
+  --sv-violet-700: 88 54 206;
+  --sv-violet-800: 72 45 168;
+  --sv-violet-900: 58 38 132;
+  --sv-violet-950: 36 22 88;
+
+  /* ── Secondary accent: cyan (used sparingly, gradients/highlights) ──── */
+  --sv-cyan-400: 34 211 238;
+  --sv-cyan-500: 6 182 212;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  --sv-font-sans: "Inter", "Inter var", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sv-font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --sv-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  --sv-radius-xs: 6px;
+  --sv-radius-sm: 8px;
+  --sv-radius-md: 12px;
+  --sv-radius-lg: 16px;
+  --sv-radius-xl: 20px;
+  --sv-radius-full: 9999px;
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --sv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --sv-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --sv-duration-fast: 120ms;
+  --sv-duration-base: 180ms;
+  --sv-duration-slow: 280ms;
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  --sv-sidebar-w: 248px;
+  --sv-header-h: 60px;
+  --sv-content-max: 1280px;
+
+  /* ── Layering ─────────────────────────────────────────────────────────── */
+  --sv-z-sidebar: 40;
+  --sv-z-header: 30;
+  --sv-z-overlay: 35;
+  --sv-z-modal: 60;
+  --sv-z-toast: 100;
+
+  /* ── Semantic: LIGHT (default) ────────────────────────────────────────── */
+  color-scheme: light;
+  --sv-canvas:         var(--sv-gray-50);
+  --sv-surface:        255 255 255;
+  --sv-surface-raised: 255 255 255;
+  --sv-surface-sunken: var(--sv-gray-100);
+  --sv-hover:          var(--sv-gray-100);
+  --sv-line:           var(--sv-gray-200);
+  --sv-line-strong:    var(--sv-gray-300);
+  --sv-fg:             var(--sv-gray-950);
+  --sv-fg-muted:       var(--sv-gray-600);
+  --sv-fg-subtle:      var(--sv-gray-500);
+  --sv-accent:         var(--sv-violet-600);
+  --sv-accent-hover:   var(--sv-violet-700);
+  --sv-accent-fg:      255 255 255;
+  --sv-accent-text:    var(--sv-violet-700);
+  --sv-accent-soft:    var(--sv-violet-50);
+  --sv-success:        4 120 87;
+  --sv-success-soft:   236 253 245;
+  --sv-warning:        180 83 9;
+  --sv-warning-soft:   255 251 235;
+  --sv-danger:         185 28 28;
+  --sv-danger-soft:    254 242 242;
+  --sv-ring:           var(--sv-violet-500);
+
+  --sv-shadow-sm: 0 1px 2px rgb(var(--sv-gray-950) / 0.06);
+  --sv-shadow-md: 0 1px 2px rgb(var(--sv-gray-950) / 0.04), 0 4px 16px -2px rgb(var(--sv-gray-950) / 0.08);
+  --sv-shadow-lg: 0 2px 4px rgb(var(--sv-gray-950) / 0.04), 0 16px 40px -8px rgb(var(--sv-gray-950) / 0.16);
+  --sv-glow: 0 0 0 1px rgb(var(--sv-violet-500) / 0.18), 0 8px 24px -6px rgb(var(--sv-violet-500) / 0.28);
+}
+
+/* ── Semantic: DARK ───────────────────────────────────────────────────────
+   `.dark` is toggled on <html> by useTheme() (and pre-paint by index.html). */
+.dark {
+  color-scheme: dark;
+  --sv-canvas:         var(--sv-gray-950);
+  --sv-surface:        var(--sv-gray-900);
+  --sv-surface-raised: var(--sv-gray-800);
+  --sv-surface-sunken: 9 10 16;
+  --sv-hover:          var(--sv-gray-800);
+  --sv-line:           var(--sv-gray-800);
+  --sv-line-strong:    var(--sv-gray-700);
+  --sv-fg:             var(--sv-gray-50);
+  --sv-fg-muted:       var(--sv-gray-400);
+  --sv-fg-subtle:      var(--sv-gray-500);
+  --sv-accent:         var(--sv-violet-500);
+  --sv-accent-hover:   var(--sv-violet-400);
+  --sv-accent-fg:      255 255 255;
+  --sv-accent-text:    var(--sv-violet-300);
+  --sv-accent-soft:    var(--sv-violet-950);
+  --sv-success:        52 211 153;
+  --sv-success-soft:   2 44 34;
+  --sv-warning:        251 191 36;
+  --sv-warning-soft:   51 31 4;
+  --sv-danger:         248 113 113;
+  --sv-danger-soft:    56 14 14;
+  --sv-ring:           var(--sv-violet-400);
+
+  --sv-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --sv-shadow-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px -4px rgb(0 0 0 / 0.5);
+  --sv-shadow-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 20px 48px -8px rgb(0 0 0 / 0.6);
+  --sv-glow: 0 0 0 1px rgb(var(--sv-violet-400) / 0.25), 0 8px 32px -6px rgb(var(--sv-violet-500) / 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sv-duration-fast: 0ms;
+    --sv-duration-base: 0ms;
+    --sv-duration-slow: 0ms;
+  }
+}

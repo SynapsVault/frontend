@@ -50,6 +50,8 @@ export function useAsync<T>(
       });
 
     return () => controller.abort();
+    // `deps` is the caller's dependency list, forwarded like useEffect's.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   useEffect(() => {

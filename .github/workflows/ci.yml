@@ -6,30 +6,37 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same branch / PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    name: Test & Lint
+    name: Lint, Typecheck & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Type check
         run: npm run typecheck
 
       - name: Run tests
-        run: npm run test
-
-      - name: Lint code
-        run: npm run lint
-        continue-on-error: true
+        run: npm test
 
   build:
     name: Build & Bundle
@@ -40,8 +47,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -53,55 +60,8 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || '' }}
         run: npm run build
 
-      - name: Check bundle size
-        run: |
-          BUNDLE_SIZE=$(du -sh dist | cut -f1)
-          echo "Bundle size: $BUNDLE_SIZE"
-
-      - name: Enforce bundle size budget
-        run: |
-          set -euo pipefail
-
-          TOTAL_BUDGET=$((1024 * 1024))   # 1MB total gzipped
-          CHUNK_BUDGET=$((800 * 1024))    # 800KB per-chunk gzipped
-
-          shopt -s nullglob
-          JS_FILES=(dist/assets/*.js)
-          shopt -u nullglob
-
-          if [ ${#JS_FILES[@]} -eq 0 ]; then
-            echo "::error::No JS files found in dist/assets/*.js"
-            exit 1
-          fi
-
-          TOTAL=0
-          FAILED=0
-
-          for f in "${JS_FILES[@]}"; do
-            SIZE=$(gzip -c "$f" | wc -c)
-            TOTAL=$((TOTAL + SIZE))
-            HUMAN=$(awk -v s="$SIZE" 'BEGIN { printf "%.2f KB", s/1024 }')
-            echo "  $f: $HUMAN gzipped"
-
-            if [ "$SIZE" -gt "$CHUNK_BUDGET" ]; then
-              echo "::error file=$f::Chunk exceeds 800KB gzipped budget ($HUMAN)"
-              FAILED=1
-            fi
-          done
-
-          TOTAL_HUMAN=$(awk -v s="$TOTAL" 'BEGIN { printf "%.2f KB", s/1024 }')
-          echo "Total gzipped JS: $TOTAL_HUMAN"
-
-          if [ "$TOTAL" -gt "$TOTAL_BUDGET" ]; then
-            echo "::error::Total gzipped JS exceeds 1MB budget ($TOTAL_HUMAN)"
-            FAILED=1
-          fi
-
-          if [ "$FAILED" -ne 0 ]; then
-            exit 1
-          fi
-
-          echo "Bundle size budget check passed."
+      - name: Enforce bundle size budgets
+        run: node scripts/check-bundle-size.mjs
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
@@ -110,5 +70,36 @@ jobs:
           path: dist/
           retention-days: 7
 
-      - name: Docker build smoke test
-        run: docker build -t synapsvault-frontend:ci . || true
+  docker:
+    name: Docker smoke test
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t synapsvault-frontend:ci .
+
+      - name: Serve and health-check
+        run: |
+          docker run -d --name web -p 8080:80 synapsvault-frontend:ci
+          for i in $(seq 1 15); do
+            if curl -fsS http://localhost:8080/health; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8080/health
+          curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+          # SPA fallback: deep links must serve the app shell
+          curl -fsS http://localhost:8080/some/deep/link | grep -q '<div id="root">'
+          # The image's own HEALTHCHECK must report healthy
+          for i in $(seq 1 20); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' web)
+            [ "$status" = healthy ] && break
+            sleep 2
+          done
+          echo "container health: $status"
+          [ "$status" = healthy ]
+
+      - name: Container logs
+        if: always()
+        run: docker logs web || true

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { prepareSetPrice, submitSetPrice } from "../api/resources.js";
 import { checkNetwork } from "./useNetworkCheck.js";
 
+/** Older Freighter versions nest the signed XDR under `result`. */
+type LegacyFreighterResult = { result?: { signedTxXdr?: string } };
+
 type Status = "idle" | "preparing" | "signing" | "submitting" | "confirmed" | "error";
 
 export function useEditPrice(resourceId: string, apiKey: string) {
@@ -42,7 +45,9 @@ export function useEditPrice(resourceId: string, apiKey: string) {
       }
 
       const signedXdr =
-        "signedTxXdr" in result ? result.signedTxXdr : (result as any).result?.signedTxXdr;
+        "signedTxXdr" in result
+          ? result.signedTxXdr
+          : (result as LegacyFreighterResult).result?.signedTxXdr;
       if (!signedXdr)
         throw new Error(
           "No signed transaction returned by wallet. Make sure your wallet is unlocked and connected, then try again.",
