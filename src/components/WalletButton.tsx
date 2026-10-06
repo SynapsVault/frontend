@@ -24,7 +24,7 @@ export function WalletButton({ wallet }: Props) {
     return (
       <div
         aria-label="Restoring wallet connection…"
-        className="h-8 w-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"
+        className="h-8 w-32 animate-pulse rounded-lg bg-line"
       />
     );
   }
@@ -35,11 +35,11 @@ export function WalletButton({ wallet }: Props) {
         {/* Green dot + address */}
         <span
           title={address}
-          className="flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+          className="flex items-center gap-1.5 rounded-lg border border-success/30 bg-success-soft px-3 py-2 text-sm font-medium text-success"
         >
           <span
             aria-hidden="true"
-            className="inline-block h-2 w-2 rounded-full bg-green-500 dark:bg-green-400"
+            className="inline-block h-2 w-2 rounded-full bg-success"
           />
           {shortAddress(address)}
         </span>
@@ -49,7 +49,7 @@ export function WalletButton({ wallet }: Props) {
           onClick={disconnect}
           aria-label="Disconnect wallet"
           title="Disconnect wallet"
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+          className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-fg-muted hover:bg-surface-hover hover:text-fg"
         >
           Disconnect
         </button>
@@ -62,12 +62,12 @@ export function WalletButton({ wallet }: Props) {
     <div className="flex flex-col items-stretch gap-1 sm:items-end">
       <button
         onClick={connect}
-        className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+        className="rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent"
       >
         Connect wallet
       </button>
       {error && (
-        <p role="alert" className="max-w-xs text-right text-xs text-red-500 dark:text-red-400">
+        <p role="alert" className="max-w-xs text-right text-xs text-danger">
           {error}
         </p>
       )}

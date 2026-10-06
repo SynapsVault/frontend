@@ -422,6 +422,7 @@
     box-shadow: 0 0 0 3px rgb(var(--sv-ring) / 0.2);
   }
   .synapse-input::placeholder { color: rgb(var(--sv-fg-subtle)); }
+  textarea.synapse-input { height: auto; min-height: 84px; padding: 9px 12px; line-height: 1.5; resize: vertical; }
 
   .synapse-select {
     appearance: none;

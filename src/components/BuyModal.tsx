@@ -69,17 +69,17 @@ export function BuyModal({
         aria-modal="true"
         aria-labelledby="buy-title"
         tabIndex={-1}
-        className="h-full w-full max-w-none overflow-y-auto rounded-none bg-white p-4 shadow-xl outline-none sm:h-auto sm:max-w-md sm:rounded-2xl sm:p-6 dark:bg-gray-800"
+        className="h-full w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl outline-none sm:h-auto sm:max-w-md sm:rounded-2xl sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="buy-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 id="buy-title" className="text-lg font-semibold text-fg">
             Buy resource
           </h2>
           <button
             onClick={handleClose}
             aria-label="Close"
             disabled={status === "paying"}
-            className="rounded-full p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+            className="rounded-full p-2.5 text-fg-subtle hover:bg-surface-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-50"
           >
             ✕
           </button>
@@ -88,16 +88,16 @@ export function BuyModal({
         {/* ── Confirm ─────────────────────────────────────────────────────── */}
         {(status === "idle" || status === "paying") && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-300">{resourceTitle}</p>
-            <dl className="space-y-2 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-900">
+            <p className="text-sm text-fg-muted">{resourceTitle}</p>
+            <dl className="space-y-2 rounded-lg bg-surface-sunken p-4 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-gray-400">Price</dt>
-                <dd className="font-medium text-indigo-600 dark:text-indigo-400">{price} USDC</dd>
+                <dt className="text-fg-muted">Price</dt>
+                <dd className="font-medium text-accent-text">{price} USDC</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-gray-500 dark:text-gray-400">Pays to</dt>
+                <dt className="text-fg-muted">Pays to</dt>
                 <dd
-                  className="truncate font-mono text-xs text-gray-700 dark:text-gray-300"
+                  className="truncate font-mono text-xs text-fg"
                   title={recipient}
                 >
                   {recipient}
@@ -106,7 +106,7 @@ export function BuyModal({
             </dl>
 
             {!walletAddress && (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
+              <p className="text-sm text-warning">
                 Connect your Freighter wallet to pay, or use Copy URL below.
               </p>
             )}
@@ -115,16 +115,16 @@ export function BuyModal({
               <div
                 role="status"
                 aria-busy="true"
-                className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300"
+                className="flex items-center gap-3 text-sm text-fg-muted"
               >
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
                 Approve in Freighter and wait for settlement…
               </div>
             ) : (
               <button
                 onClick={() => buy(accessUrl)}
                 disabled={!walletAddress}
-                className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
+                className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
               >
                 Pay {price} USDC
               </button>
@@ -135,8 +135,8 @@ export function BuyModal({
         {/* ── Success ─────────────────────────────────────────────────────── */}
         {status === "success" && result && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-400">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/50">
+            <div className="flex items-center gap-2 text-sm font-medium text-success">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success-soft text-success">
                 ✓
               </span>
               Payment successful
@@ -147,7 +147,7 @@ export function BuyModal({
                 href={result.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block break-all rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300"
+                className="block break-all rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent-text hover:bg-accent/15"
               >
                 Open resource ↗
               </a>
@@ -157,7 +157,7 @@ export function BuyModal({
               <a
                 href={result.download.objectUrl}
                 download={result.download.filename}
-                className="block rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300"
+                className="block rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent-text hover:bg-accent/15"
               >
                 Download {result.download.filename}
               </a>
@@ -168,12 +168,12 @@ export function BuyModal({
                 href={result.explorerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-hover"
               >
                 View transaction on Stellar Explorer ↗
               </a>
             ) : (
-              <p className="text-xs text-gray-400 dark:text-gray-500">
+              <p className="text-xs text-fg-subtle">
                 Settlement confirmed. Transaction hash unavailable for this payment.
               </p>
             )}
@@ -183,8 +183,8 @@ export function BuyModal({
         {/* ── Error ───────────────────────────────────────────────────────── */}
         {status === "error" && (
           <div className="space-y-4">
-            <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-400">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/50">
+            <div className="flex items-start gap-2 text-sm text-danger">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-danger-soft text-danger">
                 ✕
               </span>
               <p>{error}</p>
@@ -192,7 +192,7 @@ export function BuyModal({
             <button
               onClick={() => buy(accessUrl)}
               disabled={!walletAddress}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
+              className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
             >
               Try again
             </button>
@@ -200,10 +200,10 @@ export function BuyModal({
         )}
 
         {/* ── Copy URL fallback (always available) ─────────────────────────── */}
-        <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+        <div className="mt-4 border-t border-line pt-4">
           <button
             onClick={() => onCopyUrl(accessUrl)}
-            className="w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 sm:py-2 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="w-full rounded-lg px-4 py-3 text-sm font-medium text-fg-muted hover:bg-surface-hover sm:py-2"
           >
             Copy access URL instead
           </button>

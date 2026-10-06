@@ -90,12 +90,12 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black bg-opacity-50 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-none overflow-y-auto rounded-none bg-white p-4 shadow-xl sm:max-w-md sm:rounded-lg sm:p-6">
+      <div className="w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl sm:max-w-md sm:rounded-lg sm:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Register on Blockchain</h2>
+          <h2 className="text-lg font-semibold text-fg">Register on Blockchain</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-fg-subtle hover:text-fg"
             disabled={state === "submitting"}
           >
             ✕
@@ -105,20 +105,20 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
         <div className="mb-6">
           {state === "preparing" && (
             <div className="flex items-center gap-3">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"></div>
-              <span className="text-sm text-gray-600">Preparing transaction...</span>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
+              <span className="text-sm text-fg-muted">Preparing transaction...</span>
             </div>
           )}
 
           {state === "signing" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-                  <span className="text-sm font-medium text-indigo-600">1</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft">
+                  <span className="text-sm font-medium text-accent-text">1</span>
                 </div>
-                <span className="text-sm text-gray-900">Ready to sign transaction</span>
+                <span className="text-sm text-fg">Ready to sign transaction</span>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-fg-muted">
                 Click "Sign & Submit" to open your Freighter wallet and sign the registration
                 transaction.
               </p>
@@ -128,10 +128,10 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           {state === "submitting" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"></div>
-                <span className="text-sm text-gray-600">Submitting to blockchain...</span>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
+                <span className="text-sm text-fg-muted">Submitting to blockchain...</span>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-fg-muted">
                 This may take up to 30 seconds. Please wait...
               </p>
             </div>
@@ -140,12 +140,12 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           {state === "success" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                  <span className="text-green-600">✓</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success-soft">
+                  <span className="text-success">✓</span>
                 </div>
-                <span className="text-sm font-medium text-green-900">Registration successful!</span>
+                <span className="text-sm font-medium text-success">Registration successful!</span>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-fg-muted">
                 Your resource has been registered on the Stellar blockchain.
               </p>
               {txHash && (
@@ -153,7 +153,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
                   href={getExplorerUrl(txHash)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent-text hover:bg-accent/15"
                 >
                   View on Stellar Explorer
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,19 +172,19 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           {state === "failed" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                  <span className="text-red-600">✕</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-danger-soft">
+                  <span className="text-danger">✕</span>
                 </div>
-                <span className="text-sm font-medium text-red-900">Registration failed</span>
+                <span className="text-sm font-medium text-danger">Registration failed</span>
               </div>
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-danger">{error}</p>
 
               {nextSteps.length > 0 && (
-                <div className="rounded-lg bg-amber-50 p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                <div className="rounded-lg bg-warning-soft p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-warning">
                     What to do next
                   </p>
-                  <ul className="list-disc space-y-1 pl-5 text-sm text-amber-900">
+                  <ul className="list-disc space-y-1 pl-5 text-sm text-warning">
                     {nextSteps.map((step, i) => (
                       <li key={i}>{step}</li>
                     ))}
@@ -197,7 +197,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
                   href={getExplorerUrl(failedTxHash)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                  className="inline-flex items-center gap-2 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent-text hover:bg-accent/15"
                 >
                   Check transaction status on Stellar Explorer
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           {state === "signing" && (
             <button
               onClick={signAndSubmit}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 sm:flex-1 sm:py-2"
+              className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover sm:flex-1 sm:py-2"
             >
               Sign & Submit
             </button>
@@ -227,7 +227,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           {state === "failed" && (
             <button
               onClick={prepareTransaction}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white hover:bg-indigo-700 sm:flex-1 sm:py-2"
+              className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover sm:flex-1 sm:py-2"
             >
               Try Again
             </button>
@@ -236,7 +236,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           <button
             onClick={onClose}
             disabled={state === "submitting"}
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1 sm:py-2"
+            className="w-full rounded-lg border border-line-strong px-4 py-3 text-sm font-medium text-fg hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1 sm:py-2"
           >
             {state === "success" ? "Close" : "Cancel"}
           </button>

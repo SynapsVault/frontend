@@ -11,7 +11,7 @@ export function CatalogStaleBanner({ syncedAt }: Props) {
   return (
     <div
       role="status"
-      className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+      className="mb-4 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning"
     >
       <span className="font-medium">Offline — catalog may be outdated.</span> {label}
     </div>

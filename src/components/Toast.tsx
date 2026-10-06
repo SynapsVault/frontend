@@ -52,7 +52,7 @@ export function Toast({ message, onDismiss, duration = 2500, fallbackUrl }: Toas
           value={fallbackUrl}
           onClick={handleSelectAll}
           aria-label="Resource URL"
-          className="w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-300 dark:bg-gray-200 dark:text-gray-800"
+          className="w-full rounded border border-gray-600 bg-gray-800 px-2 py-1 text-xs text-gray-200 outline-none focus:border-accent focus:ring-1 focus:ring-accent dark:border-gray-300 dark:bg-gray-200 dark:text-gray-800"
         />
       )}
     </div>

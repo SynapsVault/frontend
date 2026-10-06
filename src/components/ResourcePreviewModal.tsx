@@ -59,7 +59,7 @@ function LazyImage({ src, alt, className = "" }: LazyImageProps) {
     return (
       <div
         aria-label={alt}
-        className={`flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-400 dark:text-gray-600 text-xs ${className}`}
+        className={`flex items-center justify-center rounded-lg bg-surface-hover text-fg-subtle text-xs ${className}`}
       >
         No preview
       </div>
@@ -72,7 +72,7 @@ function LazyImage({ src, alt, className = "" }: LazyImageProps) {
       {!loaded && (
         <div
           aria-hidden="true"
-          className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg"
+          className="absolute inset-0 animate-pulse bg-line rounded-lg"
         />
       )}
       <img
@@ -183,16 +183,16 @@ export function ResourcePreviewModal({
         aria-describedby={data?.description ? "preview-desc" : undefined}
         tabIndex={-1}
         onKeyDown={handleTabKey}
-        className="relative w-full h-full max-w-none overflow-y-auto rounded-none bg-white p-4 shadow-xl dark:bg-gray-800 outline-none sm:h-auto sm:max-w-lg sm:rounded-2xl sm:p-6"
+        className="relative w-full h-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl outline-none sm:h-auto sm:max-w-lg sm:rounded-2xl sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="preview-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 id="preview-title" className="text-xl font-bold text-fg">
             Resource Preview
           </h2>
           <button
             onClick={onClose}
             aria-label="Close preview"
-            className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            className="rounded-full p-1.5 text-fg-subtle hover:bg-surface-hover hover:text-fg"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -213,12 +213,12 @@ export function ResourcePreviewModal({
           {(status === "idle" || status === "loading") && (
             <div role="status" aria-busy="true" aria-label="Loading preview…" className="space-y-3">
               {/* Thumbnail skeleton */}
-              <div className="h-32 w-full animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+              <div className="h-32 w-full animate-pulse rounded-lg bg-line" />
               {/* Title skeleton */}
-              <div className="h-5 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-5 w-3/4 animate-pulse rounded bg-line" />
               {/* Meta skeletons */}
-              <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="h-4 w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-line" />
+              <div className="h-4 w-full animate-pulse rounded bg-line" />
               <span className="sr-only">Loading preview…</span>
             </div>
           )}
@@ -244,72 +244,72 @@ export function ResourcePreviewModal({
               )}
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <h3 className="text-lg font-semibold text-fg">
                   {data.title}
                 </h3>
                 {data.publisherName && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-fg-muted">
                     by {data.publisherName}
                   </p>
                 )}
               </div>
 
               <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <h4 className="text-sm font-medium text-fg">
                   Description
                 </h4>
                 {data.description ? (
-                  <p id="preview-desc" className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  <p id="preview-desc" className="mt-1 text-sm text-fg-muted">
                     {data.description}
                   </p>
                 ) : (
                   <p
                     id="preview-desc"
-                    className="mt-1 text-sm italic text-gray-400 dark:text-gray-500"
+                    className="mt-1 text-sm italic text-fg-subtle"
                   >
                     No description provided.
                   </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-900 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 rounded-lg bg-surface-sunken p-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  <p className="text-xs font-medium uppercase text-fg-muted">
                     Price
                   </p>
-                  <p className="mt-1 font-medium text-indigo-600 dark:text-indigo-400">
+                  <p className="mt-1 font-medium text-accent-text">
                     {data.price} USDC
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  <p className="text-xs font-medium uppercase text-fg-muted">
                     Type
                   </p>
-                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100">
+                  <p className="mt-1 font-medium text-fg">
                     {data.resourceType}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  <p className="text-xs font-medium uppercase text-fg-muted">
                     Verification
                   </p>
-                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100">
+                  <p className="mt-1 font-medium text-fg">
                     {data.verificationStatus}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+                  <p className="text-xs font-medium uppercase text-fg-muted">
                     On-chain Status
                   </p>
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                    <span className="font-medium text-fg">
                       {data.onchainStatus === "none" ? "not on-chain" : data.onchainStatus}
                     </span>
                     {data.onchainStatus === "registered" && data.onchainTxHash && (
                       <ExplorerLink
                         type="tx"
                         value={data.onchainTxHash}
-                        className="text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        className="text-xs text-accent-text hover:text-accent-hover"
                       >
                         ↗
                       </ExplorerLink>
@@ -319,18 +319,18 @@ export function ResourcePreviewModal({
               </div>
 
               <div>
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <h4 className="text-sm font-medium text-fg">
                   Content integrity
                 </h4>
                 {data.contentHash ? (
                   <div className="mt-1 space-y-2">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-fg-muted">
                       SHA-256 integrity anchor recorded in the on-chain registry metadata when this
                       resource was registered. It identifies the exact content but is not a live
                       re-verification of the delivered bytes.
                     </p>
-                    <div className="flex items-start gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
-                      <code className="break-all font-mono text-xs text-gray-800 dark:text-gray-200">
+                    <div className="flex items-start gap-2 rounded-lg bg-surface-sunken p-2">
+                      <code className="break-all font-mono text-xs text-fg">
                         {data.contentHash}
                       </code>
                       <button
@@ -339,7 +339,7 @@ export function ResourcePreviewModal({
                           navigator.clipboard?.writeText(data.contentHash ?? "");
                         }}
                         aria-label="Copy content hash"
-                        className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-gray-800"
+                        className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-accent-soft"
                       >
                         Copy
                       </button>
@@ -348,23 +348,23 @@ export function ResourcePreviewModal({
                       <ExplorerLink
                         type="tx"
                         value={data.onchainTxHash}
-                        className="text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        className="text-xs text-accent-text hover:text-accent-hover"
                       >
                         View registration on Stellar Explorer ↗
                       </ExplorerLink>
                     )}
                   </div>
                 ) : (
-                  <p className="mt-1 text-sm italic text-gray-400 dark:text-gray-500">
+                  <p className="mt-1 text-sm italic text-fg-subtle">
                     No integrity anchor available for this resource.
                   </p>
                 )}
               </div>
 
-              <div className="mt-6 flex flex-col-reverse gap-2 border-t border-gray-200 pt-4 dark:border-gray-700 sm:flex-row sm:justify-end sm:gap-3">
+              <div className="mt-6 flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   onClick={onClose}
-                  className="w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 sm:w-auto sm:py-2"
+                  className="w-full rounded-lg px-4 py-3 text-sm font-medium text-fg hover:bg-surface-hover sm:w-auto sm:py-2"
                 >
                   Close
                 </button>
@@ -372,14 +372,14 @@ export function ResourcePreviewModal({
                   onClick={() => {
                     onCopyUrl?.(data.accessUrl);
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 sm:w-auto sm:py-2"
+                  className="w-full rounded-lg border border-line-strong px-4 py-3 text-sm font-medium text-fg hover:bg-surface-hover sm:w-auto sm:py-2"
                 >
                   Copy access URL
                 </button>
                 {onBuy && (
                   <button
                     onClick={onBuy}
-                    className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:w-auto sm:py-2"
+                    className="synapse-btn synapse-btn--primary w-full sm:w-auto"
                   >
                     Buy {data.price} USDC
                   </button>

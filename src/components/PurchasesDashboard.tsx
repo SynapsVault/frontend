@@ -39,9 +39,9 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">My Purchases</h2>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">
+      <h2 className="text-xl font-bold text-fg">My Purchases</h2>
+      <p className="mt-1 text-sm text-fg-muted">
         Enter your wallet address to view your purchase history and receipts.
       </p>
 
@@ -51,67 +51,67 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="G..."
-          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+          className="synapse-input"
           required
         />
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
         >
           {loading ? "Searching..." : "Search"}
         </button>
       </form>
 
-      {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-4 text-sm text-danger">{error}</p>}
 
       {hasSearched && !loading && payments.length === 0 && (
-        <p className="mt-8 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-8 text-sm text-fg-muted">
           No purchases found for this address.
         </p>
       )}
 
       {payments.length > 0 && (
-        <div className="mt-8 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
+        <div className="mt-8 overflow-x-auto rounded-lg border border-line">
+          <table className="min-w-full divide-y divide-line">
+            <thead className="bg-surface-sunken">
               <tr>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
+                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted sm:px-6"
                 >
                   Resource ID
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
+                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted sm:px-6"
                 >
                   Date
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
+                  className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted sm:px-6"
                 >
                   Amount
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 sm:px-6 dark:text-gray-400"
+                  className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-fg-muted sm:px-6"
                 >
                   Receipt
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+            <tbody className="divide-y divide-line bg-surface">
               {payments.map((p) => (
                 <tr key={p.id}>
-                  <td className="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900 sm:px-6 sm:py-4 dark:text-gray-100">
+                  <td className="whitespace-nowrap px-3 py-3 text-sm font-medium text-fg sm:px-6 sm:py-4">
                     {p.resourceId.slice(0, 8)}...
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:px-6 sm:py-4 dark:text-gray-400">
+                  <td className="whitespace-nowrap px-3 py-3 text-sm text-fg-muted sm:px-6 sm:py-4">
                     {new Date(p.paidAt).toLocaleDateString()}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:px-6 sm:py-4 dark:text-gray-400">
+                  <td className="whitespace-nowrap px-3 py-3 text-sm text-fg-muted sm:px-6 sm:py-4">
                     {p.amount} USDC
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-right text-sm font-medium sm:px-6 sm:py-4">
@@ -119,7 +119,7 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
                       href={`${import.meta.env.VITE_API_URL || ""}/payments/${p.id}/receipt`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                      className="text-accent-text hover:text-accent-hover"
                     >
                       View Receipt ↗
                     </a>

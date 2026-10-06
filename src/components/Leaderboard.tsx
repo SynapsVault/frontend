@@ -20,7 +20,7 @@ export function Leaderboard() {
   if (status === "idle" || status === "loading") {
     return (
       <div className="flex justify-center py-20" aria-live="polite" aria-busy="true">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-400 border-t-transparent" />
+        <span className="synapse-spinner synapse-spinner--lg" aria-hidden="true" />
         <span className="sr-only">Loading leaderboard...</span>
       </div>
     );
@@ -37,7 +37,7 @@ export function Leaderboard() {
   if (!entries || entries.length === 0) {
     return (
       <div
-        className="py-20 text-center text-sm text-gray-400 dark:text-gray-500"
+        className="py-20 text-center text-sm text-fg-subtle"
         aria-live="polite"
       >
         No publishers yet. Be the first to publish a resource!
@@ -49,7 +49,7 @@ export function Leaderboard() {
     <div className="overflow-x-auto" aria-live="polite">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-gray-200 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
+          <tr className="border-b border-line text-xs font-semibold uppercase tracking-wider text-fg-muted">
             <th className="whitespace-nowrap px-2 py-3 sm:px-4">#</th>
             <th className="whitespace-nowrap px-2 py-3 sm:px-4">Creator</th>
             <th className="whitespace-nowrap px-2 py-3 sm:px-4">Wallet</th>
@@ -62,28 +62,28 @@ export function Leaderboard() {
           {entries.map((entry, idx) => (
             <tr
               key={entry.id}
-              className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800/50"
+              className="border-b border-line transition-colors hover:bg-surface-hover"
             >
-              <td className="px-2 py-3 font-medium text-gray-500 sm:px-4 dark:text-gray-400">{idx + 1}</td>
-              <td className="px-2 py-3 font-medium text-gray-900 sm:px-4 dark:text-gray-100">
+              <td className="px-2 py-3 font-medium text-fg-muted sm:px-4">{idx + 1}</td>
+              <td className="px-2 py-3 font-medium text-fg sm:px-4">
                 {entry.name}
               </td>
               <td className="px-2 py-3 sm:px-4">
                 <ExplorerLink
                   type="account"
                   value={entry.walletAddress}
-                  className="text-xs text-gray-500 dark:text-gray-400"
+                  className="text-xs text-fg-muted"
                 >
                   {truncateWallet(entry.walletAddress)}
                 </ExplorerLink>
               </td>
-              <td className="px-2 py-3 text-right text-gray-700 sm:px-4 dark:text-gray-300">
+              <td className="px-2 py-3 text-right text-fg sm:px-4">
                 {entry.totalResources}
               </td>
-              <td className="px-2 py-3 text-right text-gray-700 sm:px-4 dark:text-gray-300">
+              <td className="px-2 py-3 text-right text-fg sm:px-4">
                 {entry.totalSales}
               </td>
-              <td className="px-2 py-3 text-right font-semibold text-indigo-600 sm:px-4 dark:text-indigo-400">
+              <td className="px-2 py-3 text-right font-semibold text-accent-text sm:px-4">
                 {entry.totalEarned}
               </td>
             </tr>
