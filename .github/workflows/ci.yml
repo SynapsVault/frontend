@@ -58,6 +58,51 @@ jobs:
           BUNDLE_SIZE=$(du -sh dist | cut -f1)
           echo "Bundle size: $BUNDLE_SIZE"
 
+      - name: Enforce bundle size budget
+        run: |
+          set -euo pipefail
+
+          TOTAL_BUDGET=$((1024 * 1024))   # 1MB total gzipped
+          CHUNK_BUDGET=$((800 * 1024))    # 800KB per-chunk gzipped
+
+          shopt -s nullglob
+          JS_FILES=(dist/assets/*.js)
+          shopt -u nullglob
+
+          if [ ${#JS_FILES[@]} -eq 0 ]; then
+            echo "::error::No JS files found in dist/assets/*.js"
+            exit 1
+          fi
+
+          TOTAL=0
+          FAILED=0
+
+          for f in "${JS_FILES[@]}"; do
+            SIZE=$(gzip -c "$f" | wc -c)
+            TOTAL=$((TOTAL + SIZE))
+            HUMAN=$(awk -v s="$SIZE" 'BEGIN { printf "%.2f KB", s/1024 }')
+            echo "  $f: $HUMAN gzipped"
+
+            if [ "$SIZE" -gt "$CHUNK_BUDGET" ]; then
+              echo "::error file=$f::Chunk exceeds 800KB gzipped budget ($HUMAN)"
+              FAILED=1
+            fi
+          done
+
+          TOTAL_HUMAN=$(awk -v s="$TOTAL" 'BEGIN { printf "%.2f KB", s/1024 }')
+          echo "Total gzipped JS: $TOTAL_HUMAN"
+
+          if [ "$TOTAL" -gt "$TOTAL_BUDGET" ]; then
+            echo "::error::Total gzipped JS exceeds 1MB budget ($TOTAL_HUMAN)"
+            FAILED=1
+          fi
+
+          if [ "$FAILED" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "Bundle size budget check passed."
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:

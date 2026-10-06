@@ -2,12 +2,28 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
-import { initSentry } from "./lib/sentry.js";
 import "./i18n/config.js";
 import "./index.css";
 
-// Initialize error tracking early
-initSentry();
+// Defer error tracking initialization until after first paint to keep
+// @sentry/react out of the initial bundle.
+const scheduleIdle = (callback: () => void) => {
+  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    window.requestIdleCallback(callback);
+  } else {
+    setTimeout(callback, 1);
+  }
+};
+
+scheduleIdle(() => {
+  import("./lib/sentry.js")
+    .then(({ initSentry }) => {
+      initSentry();
+    })
+    .catch((error) => {
+      console.error("Failed to initialize error tracking:", error);
+    });
+});
 
 const rootElement = document.getElementById("root");
 

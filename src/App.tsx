@@ -1,22 +1,43 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { EditPriceModal }         from "./components/EditPriceModal.js";
-import { TransferOwnershipModal } from "./components/TransferOwnershipModal.js";
-import { RegisterModal }          from "./components/RegisterModal.js";
-import { ResourcePreviewModal }   from "./components/ResourcePreviewModal.js";
 import { Toast }                  from "./components/Toast.js";
 import { ResourceGridSkeleton }   from "./components/ResourceCardSkeleton.js";
 import { ErrorBanner }            from "./components/ErrorBanner.js";
-import { AnalyticsDashboard }     from "./components/AnalyticsDashboard.js";
-import { CreatorDashboard }       from "./components/CreatorDashboard.js";
-import { Leaderboard }            from "./components/Leaderboard.js";
-import { AgentStatusPage }        from "./components/AgentStatusPage.js";
-import { PublishModal }           from "./components/PublishModal.js";
-import { PurchasesDashboard }     from "./components/PurchasesDashboard.js";
-import { BuyModal }               from "./components/BuyModal.js";
 import { CatalogStaleBanner }     from "./components/CatalogStaleBanner.js";
 import { LanguageSwitcher }       from "./components/LanguageSwitcher.js";
 import { ExplorerLink }           from "./components/ExplorerLink.js";
+
+const EditPriceModal         = lazy(() => import("./components/EditPriceModal.js").then((m) => ({ default: m.EditPriceModal })));
+const TransferOwnershipModal = lazy(() => import("./components/TransferOwnershipModal.js").then((m) => ({ default: m.TransferOwnershipModal })));
+const RegisterModal          = lazy(() => import("./components/RegisterModal.js").then((m) => ({ default: m.RegisterModal })));
+const ResourcePreviewModal   = lazy(() => import("./components/ResourcePreviewModal.js").then((m) => ({ default: m.ResourcePreviewModal })));
+const AnalyticsDashboard     = lazy(() => import("./components/AnalyticsDashboard.js").then((m) => ({ default: m.AnalyticsDashboard })));
+const CreatorDashboard       = lazy(() => import("./components/CreatorDashboard.js").then((m) => ({ default: m.CreatorDashboard })));
+const Leaderboard            = lazy(() => import("./components/Leaderboard.js").then((m) => ({ default: m.Leaderboard })));
+const AgentStatusPage        = lazy(() => import("./components/AgentStatusPage.js").then((m) => ({ default: m.AgentStatusPage })));
+const PublishModal           = lazy(() => import("./components/PublishModal.js").then((m) => ({ default: m.PublishModal })));
+const PurchasesDashboard     = lazy(() => import("./components/PurchasesDashboard.js").then((m) => ({ default: m.PurchasesDashboard })));
+const BuyModal               = lazy(() => import("./components/BuyModal.js").then((m) => ({ default: m.BuyModal })));
+
+/* ─── lazy fallbacks ────────────────────────────────────────────────────── */
+function LazyFallback({ label }: { label?: string }) {
+  return (
+    <div className="synapse-lazy-fallback" role="status" aria-live="polite">
+      <span className="synapse-spinner" aria-hidden="true" />
+      {label && <span className="synapse-lazy-fallback__label">{label}</span>}
+    </div>
+  );
+}
+
+function LazyModalFallback() {
+  return (
+    <div className="synapse-modal-backdrop" role="status" aria-live="polite">
+      <div className="synapse-modal synapse-modal--loading">
+        <span className="synapse-spinner" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
 import { useTheme }               from "./hooks/useTheme.js";
 import { useAsync }               from "./hooks/useAsync.js";
 import { useCatalog }             from "./hooks/useCatalog.js";
@@ -359,49 +380,79 @@ export default function App() {
 
         <main id="main-content" className="synapse-content">
           {tab === "catalog"     && renderCatalog()}
-          {tab === "leaderboard" && <Leaderboard />}
-          {tab === "purchases"   && <PurchasesDashboard initialWallet={wallet.address ?? ""} />}
-          {tab === "agent"       && <AgentStatusPage />}
-          {tab === "dashboard"   && API_KEY && (
-            <CreatorDashboard apiKey={API_KEY}
-              onEditPrice={(r) => setActiveModal({ kind: "editPrice", resource: r as Resource })}
-              onTransferOwnership={(r) => setActiveModal({ kind: "transferOwnership", resource: r as Resource })}
-              onRegister={(r) => setActiveModal({ kind: "register", resource: r as Resource })} />
+          {tab === "leaderboard" && (
+            <Suspense fallback={<LazyFallback label="Loading leaderboard…" />}>
+              <Leaderboard />
+            </Suspense>
           )}
-          {tab === "analytics" && API_KEY && <AnalyticsDashboard apiKey={API_KEY} />}
+          {tab === "purchases"   && (
+            <Suspense fallback={<LazyFallback label="Loading purchases…" />}>
+              <PurchasesDashboard initialWallet={wallet.address ?? ""} />
+            </Suspense>
+          )}
+          {tab === "agent"       && (
+            <Suspense fallback={<LazyFallback label="Loading agent status…" />}>
+              <AgentStatusPage />
+            </Suspense>
+          )}
+          {tab === "dashboard"   && API_KEY && (
+            <Suspense fallback={<LazyFallback label="Loading dashboard…" />}>
+              <CreatorDashboard apiKey={API_KEY}
+                onEditPrice={(r) => setActiveModal({ kind: "editPrice", resource: r as Resource })}
+                onTransferOwnership={(r) => setActiveModal({ kind: "transferOwnership", resource: r as Resource })}
+                onRegister={(r) => setActiveModal({ kind: "register", resource: r as Resource })} />
+            </Suspense>
+          )}
+          {tab === "analytics" && API_KEY && (
+            <Suspense fallback={<LazyFallback label="Loading analytics…" />}>
+              <AnalyticsDashboard apiKey={API_KEY} />
+            </Suspense>
+          )}
         </main>
       </div>
 
       {/* ── Modals ──────────────────────────────────────────────────────── */}
       {activeModal?.kind === "preview" && (
-        <ResourcePreviewModal resourceId={activeModal.resource.id}
-          onClose={() => setActiveModal(null)} onCopyUrl={handleCopyUrl}
-          onBuy={() => setActiveModal({ kind: "buy", resource: (activeModal as { resource: Resource }).resource })} />
+        <Suspense fallback={<LazyModalFallback />}>
+          <ResourcePreviewModal resourceId={activeModal.resource.id}
+            onClose={() => setActiveModal(null)} onCopyUrl={handleCopyUrl}
+            onBuy={() => setActiveModal({ kind: "buy", resource: (activeModal as { resource: Resource }).resource })} />
+        </Suspense>
       )}
       {activeModal?.kind === "buy" && (
-        <BuyModal resourceTitle={activeModal.resource.title} price={activeModal.resource.price}
-          recipient={activeModal.resource.walletAddress} accessUrl={activeModal.resource.accessUrl}
-          walletAddress={wallet.status === "connected" ? wallet.address : null}
-          onClose={() => setActiveModal(null)} onCopyUrl={handleCopyUrl} />
+        <Suspense fallback={<LazyModalFallback />}>
+          <BuyModal resourceTitle={activeModal.resource.title} price={activeModal.resource.price}
+            recipient={activeModal.resource.walletAddress} accessUrl={activeModal.resource.accessUrl}
+            walletAddress={wallet.status === "connected" ? wallet.address : null}
+            onClose={() => setActiveModal(null)} onCopyUrl={handleCopyUrl} />
+        </Suspense>
       )}
       {activeModal?.kind === "editPrice" && (
-        <EditPriceModal resourceId={activeModal.resource.id} currentPrice={activeModal.resource.price}
-          apiKey={API_KEY} onClose={() => setActiveModal(null)}
-          onConfirmed={(price) => { applyOverride(activeModal.resource.id, { price }); setActiveModal(null); }} />
+        <Suspense fallback={<LazyModalFallback />}>
+          <EditPriceModal resourceId={activeModal.resource.id} currentPrice={activeModal.resource.price}
+            apiKey={API_KEY} onClose={() => setActiveModal(null)}
+            onConfirmed={(price) => { applyOverride(activeModal.resource.id, { price }); setActiveModal(null); }} />
+        </Suspense>
       )}
       {activeModal?.kind === "transferOwnership" && (
-        <TransferOwnershipModal resourceId={activeModal.resource.id} apiKey={API_KEY}
-          onClose={() => setActiveModal(null)}
-          onConfirmed={(addr) => { applyOverride(activeModal.resource.id, { walletAddress: addr }); setActiveModal(null); }} />
+        <Suspense fallback={<LazyModalFallback />}>
+          <TransferOwnershipModal resourceId={activeModal.resource.id} apiKey={API_KEY}
+            onClose={() => setActiveModal(null)}
+            onConfirmed={(addr) => { applyOverride(activeModal.resource.id, { walletAddress: addr }); setActiveModal(null); }} />
+        </Suspense>
       )}
       {activeModal?.kind === "register" && (
-        <RegisterModal resourceId={activeModal.resource.id} apiKey={API_KEY}
-          onClose={() => setActiveModal(null)}
-          onConfirmed={() => { applyOverride(activeModal.resource.id, { onchainStatus: "registered" }); setActiveModal(null); }} />
+        <Suspense fallback={<LazyModalFallback />}>
+          <RegisterModal resourceId={activeModal.resource.id} apiKey={API_KEY}
+            onClose={() => setActiveModal(null)}
+            onConfirmed={() => { applyOverride(activeModal.resource.id, { onchainStatus: "registered" }); setActiveModal(null); }} />
+        </Suspense>
       )}
       {showPublish && API_KEY && (
-        <PublishModal apiKey={API_KEY} onClose={() => setShowPublish(false)}
-          onPublished={() => retryResources()} />
+        <Suspense fallback={<LazyModalFallback />}>
+          <PublishModal apiKey={API_KEY} onClose={() => setShowPublish(false)}
+            onPublished={() => retryResources()} />
+        </Suspense>
       )}
       {toast && (
         <Toast message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={() => setToast(null)} />

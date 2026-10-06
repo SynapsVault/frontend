@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/react";
-
 const SENSITIVE_KEYS = [
   "password",
   "secret",
@@ -16,9 +14,11 @@ function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEYS.some((sensitive) => lower.includes(sensitive));
 }
 
-export function initSentry(): void {
+export async function initSentry(): Promise<void> {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   if (!dsn) return;
+
+  const Sentry = await import("@sentry/react");
 
   Sentry.init({
     dsn,
@@ -71,3 +71,5 @@ export function initSentry(): void {
     },
   });
 }
+
+export default initSentry;
