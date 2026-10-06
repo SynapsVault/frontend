@@ -8,25 +8,25 @@ export function ResourceCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      className="rounded-xl border border-line bg-surface p-5 shadow-sm"
     >
       {/* Title line */}
-      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+      <div className="h-4 w-3/4 animate-pulse rounded bg-line-strong" />
       {/* Subtitle / publisher */}
-      <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-gray-700/60" />
+      <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-line" />
       {/* Wallet address */}
-      <div className="mt-2 h-3 w-full animate-pulse rounded bg-gray-100 dark:bg-gray-700/60" />
+      <div className="mt-2 h-3 w-full animate-pulse rounded bg-line" />
 
       {/* Badge row */}
       <div className="mt-3 flex gap-2">
-        <div className="h-5 w-16 animate-pulse rounded-full bg-gray-100 dark:bg-gray-700/60" />
-        <div className="h-5 w-20 animate-pulse rounded-full bg-gray-100 dark:bg-gray-700/60" />
+        <div className="h-5 w-16 animate-pulse rounded-full bg-line" />
+        <div className="h-5 w-20 animate-pulse rounded-full bg-line" />
       </div>
 
       {/* Price + actions row */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-        <div className="h-7 w-20 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-700/60" />
+        <div className="h-4 w-16 animate-pulse rounded bg-line-strong" />
+        <div className="h-7 w-20 animate-pulse rounded-lg bg-line" />
       </div>
     </div>
   );

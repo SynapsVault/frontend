@@ -22,7 +22,7 @@ export function ExplorerLink({ type, value, children, className = "" }: Props) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`text-indigo-600 hover:underline ${className}`}
+      className={`text-accent-text hover:underline ${className}`}
       title="View on Stellar Explorer"
     >
       {children ?? "View on Stellar Explorer"}

@@ -14,12 +14,12 @@ export function ErrorBanner({ message, hint, onRetry }: Props) {
   return (
     <div
       role="alert"
-      className="flex flex-col items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-6 py-10 text-center dark:border-red-900 dark:bg-red-950"
+      className="flex flex-col items-center gap-3 rounded-xl border border-danger/30 bg-danger-soft px-6 py-10 text-center"
     >
       {/* Icon */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-8 w-8 text-red-400 dark:text-red-500"
+        className="h-8 w-8 text-danger"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -33,16 +33,16 @@ export function ErrorBanner({ message, hint, onRetry }: Props) {
         />
       </svg>
 
-      <p className="text-sm font-medium text-red-700 dark:text-red-300">{message}</p>
+      <p className="text-sm font-medium text-danger">{message}</p>
 
       {hint && (
-        <p className="text-xs text-red-500 dark:text-red-400">{hint}</p>
+        <p className="text-xs text-danger">{hint}</p>
       )}
 
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-1 rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 dark:bg-red-700 dark:hover:bg-red-600"
+          className="synapse-btn synapse-btn--danger synapse-btn--sm mt-1"
         >
           Try again
         </button>

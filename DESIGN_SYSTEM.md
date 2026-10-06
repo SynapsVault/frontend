@@ -44,7 +44,9 @@ no code changes.
 | `text-warning` / `bg-warning-soft` | `--sv-warning…` | Pending, stale, attention              |
 | `text-danger` / `bg-danger-soft`   | `--sv-danger…`  | Errors, rejected, destructive          |
 
-Each of these flips automatically under `.dark`. **Prefer them over
+Each of these flips automatically under `.dark`. All screens use them; the
+one deliberate exception is `Toast`, an inverted surface (dark in light mode,
+light in dark mode) that keeps explicit `gray-*` + `dark:` pairs. **Prefer them over
 `gray-*` + `dark:` pairs.** One class instead of two, and it can't drift.
 
 ```tsx

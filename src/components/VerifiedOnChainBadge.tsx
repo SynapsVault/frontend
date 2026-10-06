@@ -8,22 +8,22 @@ interface Props {
 const STATUS_CONFIG = {
   none: {
     label: "Not on-chain",
-    className: "bg-gray-100 text-gray-600 border-gray-200",
+    className: "bg-surface-hover text-fg-muted border-line",
     icon: "○",
   },
   pending: {
     label: "Registration pending",
-    className: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    className: "bg-warning-soft text-warning border-warning/30",
     icon: "⏳",
   },
   registered: {
     label: "Verified on-chain",
-    className: "bg-green-100 text-green-700 border-green-200",
+    className: "bg-success-soft text-success border-success/30",
     icon: "✓",
   },
   failed: {
     label: "Registration failed",
-    className: "bg-red-100 text-red-700 border-red-200",
+    className: "bg-danger-soft text-danger border-danger/30",
     icon: "✗",
   },
 } as const;

@@ -119,7 +119,8 @@
   --sv-surface:        var(--sv-gray-900);
   --sv-surface-raised: var(--sv-gray-800);
   --sv-surface-sunken: 9 10 16;
-  --sv-hover:          var(--sv-gray-800);
+  /* Between gray-800 and gray-700 so hover stays visible on raised surfaces. */
+  --sv-hover:          46 47 63;
   --sv-line:           var(--sv-gray-800);
   --sv-line-strong:    var(--sv-gray-700);
   --sv-fg:             var(--sv-gray-50);

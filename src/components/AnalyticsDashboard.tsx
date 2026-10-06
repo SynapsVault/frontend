@@ -11,14 +11,14 @@ export function AnalyticsDashboard({ apiKey }: Props) {
 
   if (loading)
     return (
-      <p className="mt-8 text-center text-sm text-gray-500" aria-live="polite" aria-busy="true">
+      <p className="mt-8 text-center text-sm text-fg-muted" aria-live="polite" aria-busy="true">
         Loading analytics…
       </p>
     );
 
   if (error)
     return (
-      <p className="mt-8 text-center text-sm text-red-500" aria-live="assertive">
+      <p className="mt-8 text-center text-sm text-danger" aria-live="assertive">
         Error: {error}
       </p>
     );
@@ -31,7 +31,7 @@ export function AnalyticsDashboard({ apiKey }: Props) {
   if (summary.totalResources === 0)
     return (
       <div
-        className="mt-8 rounded-xl border border-dashed border-gray-200 p-10 text-center text-gray-500"
+        className="mt-8 rounded-xl border border-dashed border-line p-10 text-center text-fg-muted"
         aria-live="polite"
       >
         <p className="text-lg font-medium">No resources yet</p>
@@ -74,10 +74,10 @@ export function AnalyticsDashboard({ apiKey }: Props) {
 
 function StatCard({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
-      <p className="mt-1 text-xs text-gray-400">{note}</p>
+    <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-fg">{value}</p>
+      <p className="mt-1 text-xs text-fg-subtle">{note}</p>
     </div>
   );
 }
@@ -86,22 +86,22 @@ function ResourceRow({ resource: r }: { resource: ResourceStat }) {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-line bg-surface shadow-sm">
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex w-full flex-col items-start gap-2 px-4 py-4 text-left sm:flex-row sm:items-center sm:justify-between sm:px-5"
       >
         <div>
-          <p className="font-semibold text-gray-900">{r.title}</p>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="font-semibold text-fg">{r.title}</p>
+          <p className="mt-0.5 text-xs text-fg-muted">
             {r.price} USDC ·{" "}
             <span
               className={
                 r.verificationStatus === "verified"
-                  ? "text-green-600"
+                  ? "text-success"
                   : r.verificationStatus === "rejected"
-                    ? "text-red-500"
-                    : "text-yellow-600"
+                    ? "text-danger"
+                    : "text-warning"
               }
             >
               {r.verificationStatus}
@@ -110,30 +110,30 @@ function ResourceRow({ resource: r }: { resource: ResourceStat }) {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold text-indigo-600">{r.totalEarned} USDC</p>
-          <p className="text-xs text-gray-400">
+          <p className="text-sm font-semibold text-accent-text">{r.totalEarned} USDC</p>
+          <p className="text-xs text-fg-subtle">
             {r.totalSales} sale{r.totalSales !== 1 ? "s" : ""}
           </p>
         </div>
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 px-5 pb-4">
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-gray-500">
+        <div className="border-t border-line px-5 pb-4">
+          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-fg-muted">
             Resource URL
           </p>
           <a
             href={r.accessUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-1 block truncate text-xs text-indigo-500 hover:underline"
+            className="mt-1 block truncate text-xs text-accent-text hover:underline"
           >
             {r.accessUrl}
           </a>
 
           {r.recentPayments.length > 0 && (
             <>
-              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-gray-500">
+              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-fg-muted">
                 Recent payments
               </p>
               <ul className="mt-2 space-y-2">
@@ -151,12 +151,12 @@ function ResourceRow({ resource: r }: { resource: ResourceStat }) {
 
 function PaymentRow({ payment: p }: { payment: RecentPayment }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-1 text-xs text-gray-600">
+    <li className="flex flex-wrap items-center justify-between gap-1 text-xs text-fg-muted">
       <span className="font-mono">
         {p.payerAddress.slice(0, 8)}…{p.payerAddress.slice(-4)}
       </span>
-      <span className="ml-2 font-medium text-gray-900">{p.amount} USDC</span>
-      <span className="ml-2 text-gray-400">{new Date(p.paidAt).toLocaleDateString()}</span>
+      <span className="ml-2 font-medium text-fg">{p.amount} USDC</span>
+      <span className="ml-2 text-fg-subtle">{new Date(p.paidAt).toLocaleDateString()}</span>
     </li>
   );
 }

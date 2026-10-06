@@ -59,7 +59,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
 
   if (resources.length === 0) {
     return (
-      <div className="mt-8 rounded-xl border border-dashed border-gray-200 p-10 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+      <div className="mt-8 rounded-xl border border-dashed border-line p-10 text-center text-fg-muted">
         <p className="text-lg font-medium">No resources yet</p>
         <p className="mt-1 text-sm">Publish a resource to see it show up here.</p>
       </div>
@@ -77,8 +77,8 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
       </div>
 
       {summary.pendingRegistration > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+        <div className="rounded-xl border border-warning/30 bg-warning-soft p-4">
+          <p className="text-sm font-medium text-warning">
             {summary.pendingRegistration} resource{summary.pendingRegistration !== 1 ? "s" : ""}{" "}
             verified but not yet registered on-chain.
           </p>
@@ -86,9 +86,9 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
       )}
 
       {/* Owned resource list */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900/40">
+      <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-sm">
+        <table className="min-w-full divide-y divide-line">
+          <thead className="bg-surface-sunken">
             <tr>
               <Th>Title</Th>
               <Th>Price</Th>
@@ -100,14 +100,14 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
               </Th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+          <tbody className="divide-y divide-line">
             {resources.map((r) => (
               <tr key={r.id}>
                 <td className="px-2 py-3 sm:px-4">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{r.title}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{r.resourceType}</p>
+                  <p className="font-medium text-fg">{r.title}</p>
+                  <p className="text-xs text-fg-subtle">{r.resourceType}</p>
                 </td>
-                <td className="px-2 py-3 text-sm font-medium text-indigo-600 sm:px-4 dark:text-indigo-400">
+                <td className="px-2 py-3 text-sm font-medium text-accent-text sm:px-4">
                   {r.price} USDC
                 </td>
                 <td className="px-2 py-3 sm:px-4">
@@ -146,7 +146,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                       <ExplorerLink
                         type="tx"
                         value={r.onchainTxHash}
-                        className="text-xs text-indigo-500 hover:text-indigo-600 dark:text-indigo-400"
+                        className="text-xs text-accent-text hover:text-accent-hover"
                       >
                         ↗
                       </ExplorerLink>
@@ -158,20 +158,20 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                     {needsRegistration(r) && (
                       <button
                         onClick={() => onRegister(r)}
-                        className="rounded-lg bg-amber-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-600"
+                        className="rounded-lg border border-warning/30 bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning hover:border-warning/60"
                       >
                         Register
                       </button>
                     )}
                     <button
                       onClick={() => onEditPrice(r)}
-                      className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                      className="rounded-lg bg-surface-hover px-2.5 py-1 text-xs font-medium text-fg hover:bg-line"
                     >
                       Edit price
                     </button>
                     <button
                       onClick={() => onTransferOwnership(r)}
-                      className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                      className="rounded-lg bg-surface-hover px-2.5 py-1 text-xs font-medium text-fg hover:bg-line"
                     >
                       Transfer
                     </button>
@@ -188,29 +188,29 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
 
 function SummaryStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+      <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="mt-1 text-2xl font-bold text-fg">{value}</p>
     </div>
   );
 }
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-fg-muted">
       {children}
     </th>
   );
 }
 
 const TONE_CLASSES: Record<string, string> = {
-  green: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
-  red: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-  yellow: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
-  indigo: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+  green: "bg-success-soft text-success",
+  red: "bg-danger-soft text-danger",
+  yellow: "bg-warning-soft text-warning",
+  indigo: "bg-accent-soft text-accent-text",
+  gray: "bg-surface-hover text-fg-muted",
 };
 
 function StatusBadge({ label, tone }: { label: string; tone: keyof typeof TONE_CLASSES }) {
