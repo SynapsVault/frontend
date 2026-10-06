@@ -39,6 +39,31 @@ export default defineConfig(({ mode }) => {
           drop_console: true, // Remove console logs in production
         },
       },
+      // Split vendor libraries into separate, cache-friendly chunks
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) {
+              return undefined;
+            }
+            if (/[\\/]node_modules[\\/](react|react-dom)[\\/]/.test(id)) {
+              return "react-vendor";
+            }
+            if (/[\\/]node_modules[\\/](@stellar|@x402)[\\/]/.test(id)) {
+              return "stellar-vendor";
+            }
+            if (/[\\/]node_modules[\\/]@sentry[\\/]/.test(id)) {
+              return "sentry-vendor";
+            }
+            if (/[\\/]node_modules[\\/](i18next|react-i18next)[\\/]/.test(id)) {
+              return "i18n-vendor";
+            }
+            return "vendor";
+          },
+          chunkFileNames: "assets/[name]-[hash].js",
+          entryFileNames: "assets/[name]-[hash].js",
+        },
+      },
     },
 
     // Vite plugins
