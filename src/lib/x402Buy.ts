@@ -20,23 +20,15 @@ const networks: Record<string, NetworkPreset> = {
   mainnet: { explorerNetwork: "public", x402Network: "stellar:pubnet", networkPassphrase: "Public Global Stellar Network ; September 2015", sorobanRpcUrl: "https://soroban.stellar.org", horizonUrl: "https://horizon.stellar.org", usdcSacContractId: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75" },
 };
 import { explorerTxUrl } from "./stellarExplorer.js";
+import { freighterErrorMessage } from "./freighter.js";
+import { STELLAR_NETWORK } from "./config.js";
 
 /** Resolve the deployment network the web app targets (defaults to testnet). */
 function resolveNetworkPreset(): NetworkPreset {
-  const raw = (import.meta.env.VITE_STELLAR_NETWORK as string | undefined)?.trim().toLowerCase();
-  if (raw === "public" || raw === "mainnet" || raw === "pubnet") return networks.mainnet;
-  return networks.testnet;
+  return networks[STELLAR_NETWORK];
 }
 
 /** Turn a Freighter error object into a readable, actionable message. */
-function freighterErrorMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === "object" && "message" in error) {
-    const message = String((error as { message: unknown }).message ?? "").trim();
-    if (message) return message;
-  }
-  return fallback;
-}
-
 /**
  * Build a SEP-43 client signer backed by Freighter. Both signing methods default
  * to the app's configured network passphrase when the scheme doesn't pass one,

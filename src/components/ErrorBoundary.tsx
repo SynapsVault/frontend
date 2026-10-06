@@ -6,6 +6,11 @@ interface Props {
   fallback?: ReactNode;
   /** Extra, context-specific guidance shown below the generic description. */
   hint?: string;
+  /**
+   * "page" (default) fills the viewport, for the app root. "section" is a
+   * compact card, so one broken screen doesn't take down the whole app.
+   */
+  variant?: "page" | "section";
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -45,7 +50,11 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div
           role="alert"
-          className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas p-8 text-fg"
+          className={
+            this.props.variant === "section"
+              ? "flex flex-col items-center justify-center gap-4 rounded-2xl border border-line bg-surface px-6 py-12 text-fg"
+              : "flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas p-8 text-fg"
+          }
         >
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-danger-soft ring-1 ring-danger/20">
             <svg

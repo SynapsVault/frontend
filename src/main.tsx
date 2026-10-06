@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.js";
+import { API_BASE, STELLAR_NETWORK } from "./lib/config.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import "./i18n/config.js";
 import "./index.css";
@@ -48,6 +49,6 @@ if (import.meta.env.DEV) {
     "%c🚀 SynapsVault Frontend",
     "font-size: 14px; font-weight: bold; color: #7c5cfc;",
   );
-  console.log(`API: ${import.meta.env.VITE_API_URL || "http://localhost:3000"}`);
-  console.log(`Network: ${import.meta.env.VITE_NETWORK || "testnet"}`);
+  console.log(`API: ${API_BASE || "(same origin → dev proxy → http://localhost:3000)"}`);
+  console.log(`Network: ${STELLAR_NETWORK}`);
 }

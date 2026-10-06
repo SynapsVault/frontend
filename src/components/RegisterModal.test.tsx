@@ -1,12 +1,19 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RegisterModal } from "./RegisterModal.js";
 import { RegistrationError } from "../api/resources.js";
 
 const mocks = vi.hoisted(() => ({
   prepareRegisterTx: vi.fn(),
   submitRegisterTx: vi.fn(),
+  isConnected: vi.fn(),
+  signTransaction: vi.fn(),
+}));
+
+vi.mock("@stellar/freighter-api", () => ({
+  isConnected: mocks.isConnected,
+  signTransaction: mocks.signTransaction,
 }));
 
 vi.mock("../api/resources.js", () => ({
@@ -42,13 +49,8 @@ describe("RegisterModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.prepareRegisterTx.mockResolvedValue(mockPrepare);
-    window.freighterApi = {
-      signTransaction: vi.fn().mockResolvedValue("signed-xdr"),
-    } as unknown as typeof window.freighterApi;
-  });
-
-  afterEach(() => {
-    delete (window as { freighterApi?: unknown }).freighterApi;
+    mocks.isConnected.mockResolvedValue({ isConnected: true });
+    mocks.signTransaction.mockResolvedValue({ signedTxXdr: "signed-xdr", signerAddress: "GCREATOR" });
   });
 
   it("prepares transaction on mount and shows signing step", async () => {

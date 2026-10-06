@@ -7,6 +7,7 @@ import { CatalogStaleBanner } from "./components/CatalogStaleBanner.js";
 import { CatalogSearch } from "./components/CatalogSearch.js";
 import { ResourceCard, type Resource } from "./components/ResourceCard.js";
 import { KeyboardShortcutsHelp, type KeyboardShortcut } from "./components/KeyboardShortcutsHelp.js";
+import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { useTheme } from "./hooks/useTheme.js";
 import { useAsync } from "./hooks/useAsync.js";
 import { useCatalog } from "./hooks/useCatalog.js";
@@ -16,6 +17,7 @@ import { useKeyboardShortcuts, type ShortcutMap } from "./hooks/useKeyboardShort
 import { fetchRegistryStatus } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 import { loadLocale } from "./i18n/config.js";
+import { STELLAR_NETWORK } from "./lib/config.js";
 
 export type { Resource };
 
@@ -143,11 +145,7 @@ export default function App() {
   } = useCatalog<Resource>(debouncedFilters);
 
   /* registry stats */
-  const {
-    status: registryStatus,
-    data: registryData,
-    retry: retryRegistry,
-  } = useAsync<{ resourceCount: number }>(() => fetchRegistryStatus(), []);
+  const { data: registryData } = useAsync(() => fetchRegistryStatus(), []);
 
   const resources = useMemo((): Resource[] => {
     if (!rawResources) return [];
@@ -259,7 +257,7 @@ export default function App() {
       <div className="synapse-sidebar__brand">
         <img src="/icon.svg" alt="" className="synapse-sidebar__logo" width={30} height={30} />
         <span className="synapse-sidebar__name">{t("app.title")}</span>
-        <span className="synapse-sidebar__network">{import.meta.env.VITE_NETWORK || "testnet"}</span>
+        <span className="synapse-sidebar__network">{STELLAR_NETWORK}</span>
       </div>
 
       <nav className="synapse-sidebar__nav" aria-label={t("app.nav_label")}>
@@ -285,16 +283,40 @@ export default function App() {
             {t("app.registry_onchain", { count: registryCount })}
           </div>
         )}
-        <button
-          className="synapse-wallet-btn"
-          onClick={wallet.status === "connected" ? wallet.disconnect : wallet.connect}
-          title={wallet.status === "connected" ? t("app.disconnect_wallet") : undefined}
-        >
-          <span className={`synapse-wallet-dot ${wallet.status === "connected" ? "synapse-wallet-dot--connected" : ""}`} aria-hidden="true" />
-          {wallet.status === "connected" && wallet.address
-            ? <span className="font-mono">{`${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`}</span>
-            : t("app.connect_wallet")}
-        </button>
+        {wallet.status === "connected" && wallet.address ? (
+          <div className="synapse-wallet">
+            <span className="synapse-wallet-btn synapse-wallet-btn--static" title={wallet.address}>
+              <span className="synapse-wallet-dot synapse-wallet-dot--connected" aria-hidden="true" />
+              <span className="font-mono">{`${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`}</span>
+            </span>
+            <button className="synapse-icon-btn" onClick={wallet.disconnect}
+              aria-label={t("app.disconnect_wallet")} title={t("app.disconnect_wallet")}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 3H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M12 13l4-4-4-4M16 9H7"/>
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <button
+            className="synapse-wallet-btn"
+            onClick={() => void wallet.connect()}
+            disabled={wallet.status === "connecting" || wallet.status === "restoring"}
+            aria-describedby={wallet.error ? "wallet-error" : undefined}
+          >
+            {wallet.status === "connecting" || wallet.status === "restoring"
+              ? <span className="synapse-spinner" aria-hidden="true" />
+              : <span className="synapse-wallet-dot" aria-hidden="true" />}
+            {wallet.status === "connecting" ? t("app.connecting_wallet") : t("app.connect_wallet")}
+          </button>
+        )}
+        {wallet.error && (
+          <p id="wallet-error" role="alert" className="synapse-wallet-error">
+            {wallet.error}
+            {/not found/i.test(wallet.error) && (
+              <> <a href="https://freighter.app" target="_blank" rel="noopener noreferrer">{t("app.install_freighter")} ↗</a></>
+            )}
+          </p>
+        )}
         <div className="synapse-sidebar__prefs">
           <button className="synapse-icon-btn" onClick={toggleTheme}
             aria-label={theme === "dark" ? t("app.theme_light") : t("app.theme_dark")}
@@ -332,11 +354,6 @@ export default function App() {
       </button>
       <h1 className="synapse-topbar__title">{t(TAB_TITLE_KEYS[tab])}</h1>
       <div className="synapse-topbar__actions">
-        {registryStatus === "error" && (
-          <button className="synapse-btn synapse-btn--ghost synapse-btn--sm" onClick={retryRegistry}>
-            {t("app.retry_registry")}
-          </button>
-        )}
         {API_KEY && (
           <button className="synapse-btn synapse-btn--primary synapse-btn--sm" onClick={() => setShowPublish(true)}>
             <svg width="14" height="14" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><path d="M9 3v12M3 9h12"/></svg>
@@ -423,6 +440,8 @@ export default function App() {
         {renderTopbar()}
 
         <main id="main-content" className="synapse-content" tabIndex={-1}>
+          {/* Keyed by tab: a crash stays inside this screen and resets on navigation. */}
+          <ErrorBoundary key={tab} variant="section">
           {tab === "catalog" && renderCatalog()}
           {tab === "leaderboard" && (
             <Suspense fallback={<LazyFallback label={t("app.loading")} />}>
@@ -452,6 +471,7 @@ export default function App() {
               <AnalyticsDashboard apiKey={API_KEY} />
             </Suspense>
           )}
+          </ErrorBoundary>
         </main>
       </div>
 

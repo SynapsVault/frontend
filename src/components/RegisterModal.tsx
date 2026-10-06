@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { prepareRegisterTx, submitRegisterTx, RegistrationError } from "../api/resources.js";
+import { signWithFreighter } from "../lib/freighter.js";
 
 interface RegisterModalProps {
   resourceId: string;
@@ -49,17 +50,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
     try {
       setState("submitting");
 
-      // Check if Freighter is available
-      if (!window.freighterApi) {
-        throw new Error(
-          "Freighter wallet not found. Install the Freighter browser extension from https://freighter.app, then reload this page and try again."
-        );
-      }
-
-      // Sign the transaction with Freighter
-      const signedXdr = await window.freighterApi.signTransaction(unsignedXdr, {
-        networkPassphrase,
-      });
+      const signedXdr = await signWithFreighter(unsignedXdr, networkPassphrase);
 
       // Submit the signed transaction
       const result = await submitRegisterTx(resourceId, signedXdr, apiKey);

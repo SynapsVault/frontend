@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { prepareTransferOwnership, submitTransferOwnership } from "../api/resources.js";
 import { checkNetwork } from "./useNetworkCheck.js";
-
-/** Older Freighter versions nest the signed XDR under `result`. */
-type LegacyFreighterResult = { result?: { signedTxXdr?: string } };
+import { signWithFreighter } from "../lib/freighter.js";
 
 type Status = "idle" | "preparing" | "signing" | "submitting" | "confirmed" | "error";
 
@@ -35,27 +33,7 @@ export function useTransferOwnership(resourceId: string, apiKey: string) {
 
       // Step 2 — ask Freighter (or any SEP-43 wallet) to sign
       setStatus("signing");
-      const freighter = await import("@stellar/freighter-api");
-      const result = await freighter.signTransaction(unsignedXdr, {
-        networkPassphrase,
-      });
-
-      if ("error" in result && result.error) {
-        throw new Error(
-          typeof result.error === "string"
-            ? result.error
-            : "Wallet rejected signing. Please approve the transaction in your wallet and try again.",
-        );
-      }
-
-      const signedXdr =
-        "signedTxXdr" in result
-          ? result.signedTxXdr
-          : (result as LegacyFreighterResult).result?.signedTxXdr;
-      if (!signedXdr)
-        throw new Error(
-          "No signed transaction returned by wallet. Ensure your wallet is unlocked, connected, and on the correct network, then try again.",
-        );
+      const signedXdr = await signWithFreighter(unsignedXdr, networkPassphrase);
 
       // Step 3 — submit signed XDR and sync DB owner
       setStatus("submitting");

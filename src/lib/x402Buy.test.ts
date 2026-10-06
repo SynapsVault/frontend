@@ -94,7 +94,7 @@ describe("purchaseResource (#219)", () => {
   });
 
   it("exposes the expected network passphrase for the preflight check", () => {
-    // Defaults to testnet when VITE_STELLAR_NETWORK is unset.
+    // Defaults to testnet when VITE_NETWORK is unset.
     expect(expectedNetworkPassphrase()).toContain("Test");
   });
 });

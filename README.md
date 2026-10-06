@@ -55,9 +55,10 @@ npm install
 
 # Environment
 cp .env.example .env
-# Edit .env — set VITE_API_URL to your backend, VITE_API_KEY if you're a publisher
+# Edit .env — VITE_API_KEY if you're a publisher. Leave VITE_API_URL empty in dev.
 
-npm run dev         # http://localhost:5173
+# Run the backend (SynapsVault/backend) on http://localhost:3000, then:
+npm run dev         # http://localhost:5173 (API routes are proxied to the backend)
 npm run lint        # ESLint (typescript-eslint + react-hooks)
 npm run typecheck   # type checking
 npm run test        # unit tests
@@ -80,9 +81,10 @@ docker run -p 8080:80 synapsvault-frontend
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_API_URL` | ✅ | Backend API base URL |
+| `VITE_API_URL` | Production | Backend API base URL. Leave empty in development: the dev server proxies all API routes to `VITE_DEV_PROXY_TARGET` (default `http://localhost:3000`). **Must** be set for production builds, or API calls return the app's HTML. |
+| `VITE_DEV_PROXY_TARGET` | ❌ | Backend the dev server proxies to (default `http://localhost:3000`) |
 | `VITE_API_KEY` | Publisher only | API key for creator features |
-| `VITE_NETWORK` | ✅ | `testnet` or `mainnet` |
+| `VITE_NETWORK` | ✅ | `testnet` or `mainnet`: payments, signing, explorer links |
 | `VITE_SENTRY_DSN` | ❌ | Sentry DSN for error tracking |
 
 ## Workflow
