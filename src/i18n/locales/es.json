@@ -11,7 +11,26 @@
     "theme_light": "Claro",
     "theme_dark": "Oscuro",
     "registry_unavailable": "Estado del registro no disponible",
-    "registry_count": "Registro: {{count}} recurso(s) registrados en cadena"
+    "registry_count": "Registro: {{count}} recurso(s) registrados en cadena",
+    "nav_marketplace": "Mercado",
+    "nav_creator": "Creador",
+    "nav_label": "Navegación principal",
+    "toggle_menu": "Alternar menú",
+    "publish_resource": "Publicar recurso",
+    "registry_onchain_one": "{{count}} recurso en cadena",
+    "registry_onchain_other": "{{count}} recursos en cadena",
+    "retry_registry": "Reintentar registro",
+    "connect_wallet": "Conectar billetera",
+    "disconnect_wallet": "Desconectar billetera",
+    "skip_to_content": "Saltar al contenido",
+    "loading": "Cargando…",
+    "page_catalog": "Catálogo de recursos",
+    "page_catalog_desc": "Descubra conjuntos de datos, archivos y enlaces verificados — pague por acceso en USDC sobre Stellar.",
+    "page_dashboard": "Mi bóveda",
+    "page_analytics": "Analíticas",
+    "page_purchases": "Mis compras",
+    "page_leaderboard": "Clasificación",
+    "page_agent": "Agente IA"
   },
   "catalog": {
     "empty_title": "El catálogo está vacío",
@@ -24,7 +43,13 @@
     "copy_url": "Copiar URL",
     "owner": "Propietario",
     "copied_toast": "URL del recurso copiada al portapapeles",
-    "clipboard_fallback": "Portapapeles no disponible — copie la URL a continuación:"
+    "clipboard_fallback": "Portapapeles no disponible — copie la URL a continuación:",
+    "search_label": "Buscar recursos",
+    "by_publisher": "por {{name}}",
+    "view_tx": "Ver tx",
+    "off_chain": "fuera de cadena",
+    "url_copied": "URL de acceso copiada al portapapeles",
+    "copy_this_url": "Copie esta URL:"
   },
   "leaderboard": {
     "title": "Clasificación de Creadores",
@@ -41,10 +66,63 @@
     "error_message": "Mensaje de error"
   },
   "shortcuts": {
-    "keyboard_shortcuts": "Atajos de teclado"
+    "keyboard_shortcuts": "Atajos de teclado",
+    "title": "Atajos de teclado",
+    "description": "Use estos atajos para navegar SynapsVault más rápido.",
+    "open": "Mostrar atajos de teclado",
+    "close": "Cerrar",
+    "group_navigation": "Navegación",
+    "group_actions": "Acciones",
+    "group_help": "Ayuda",
+    "go_catalog": "Ir al Catálogo",
+    "go_purchases": "Ir a Compras",
+    "go_leaderboard": "Ir a Clasificación",
+    "go_agent": "Ir al Agente",
+    "go_dashboard": "Ir al Panel",
+    "go_analytics": "Ir a Mis Analíticas",
+    "publish": "Publicar un recurso",
+    "search": "Enfocar la búsqueda",
+    "toggle_theme": "Alternar tema claro/oscuro",
+    "toggle_language": "Cambiar idioma",
+    "show_shortcuts": "Mostrar esta ayuda",
+    "escape": "Cerrar diálogos y superposiciones"
   },
   "language": {
     "switch_to": "English",
     "label": "Idioma"
+  },
+  "status": {
+    "verified": "Verificado",
+    "pending": "Pendiente",
+    "rejected": "Rechazado",
+    "registered": "En cadena",
+    "failed": "Fallido",
+    "none": "Fuera de cadena"
+  },
+  "errors": {
+    "generic_title": "Algo salió mal",
+    "generic_description": "Ocurrió un error inesperado. Inténtelo de nuevo.",
+    "network_title": "Problema de conexión",
+    "network_description": "No pudimos acceder a la red. Revise su conexión e inténtelo de nuevo.",
+    "network_hint": "Verifique su conexión a internet y luego reintente la solicitud.",
+    "wallet_title": "Billetera no conectada",
+    "wallet_description": "Conecte su billetera para continuar con esta acción.",
+    "wallet_hint": "Haga clic en \"Conectar billetera\" y apruebe la solicitud en su billetera.",
+    "transaction_title": "La transacción falló",
+    "transaction_description": "No se pudo completar la transacción.",
+    "transaction_hint": "Asegúrese de tener fondos suficientes para las comisiones e inténtelo de nuevo.",
+    "not_found_title": "No encontrado",
+    "not_found_description": "El recurso que busca no existe o fue eliminado.",
+    "not_found_hint": "Vuelva al catálogo y elija otro recurso.",
+    "permission_title": "Permiso denegado",
+    "permission_description": "No tiene permiso para realizar esta acción.",
+    "permission_hint": "Inicie sesión con una cuenta que tenga los permisos necesarios.",
+    "validation_title": "Entrada no válida",
+    "validation_description": "Parte de la información proporcionada no es válida.",
+    "validation_hint": "Revise los campos resaltados y corrija los errores.",
+    "retry": "Reintentar",
+    "dismiss": "Descartar",
+    "details": "Mostrar detalles",
+    "hide_details": "Ocultar detalles"
   }
 }

@@ -1,4 +1,3 @@
-/// <reference path="../types/freighter.d.ts" />
 /**
  * In-browser x402 purchase flow (issue #219).
  *

@@ -69,15 +69,6 @@ export function CatalogSearch({
     if (activeIndex !== -1) setActiveIndex(-1);
   }
 
-  const moveActive = useCallback((delta: number, resultCount: number) => {
-    setActiveIndex((prev) => {
-      const next = prev + delta;
-      if (next < 0) return resultCount - 1;
-      if (next >= resultCount) return 0;
-      return next;
-    });
-  }, []);
-
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (!hasResults) return;
@@ -130,33 +121,29 @@ export function CatalogSearch({
         inputRef.current?.focus();
       }
     },
-    [results, onActivate],
+    [results, onActivate, inputRef],
   );
 
   const activeDescendant =
     hasResults && activeIndex >= 0 ? `${listboxId}-item-${activeIndex}` : undefined;
 
   return (
-    <div className="mb-6 space-y-3">
+    <div className="synapse-search">
       {/* Search box */}
-      <div className="relative">
-        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-            />
-          </svg>
-        </span>
+      <div className="synapse-search__field">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="synapse-search__icon"
+          width="16"
+          height="16"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+        </svg>
         <input
           ref={inputRef}
           type="search"
@@ -170,24 +157,19 @@ export function CatalogSearch({
           value={filters.search ?? ""}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           onKeyDown={handleInputKeyDown}
-          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-800"
+          className="synapse-input synapse-search__input"
         />
+        <kbd className="synapse-kbd synapse-search__hint" aria-hidden="true">/</kbd>
 
         {/* Keyboard-navigable results list (#311) */}
         {hasResults && (
-          <ul
-            id={listboxId}
-            role="listbox"
-            aria-label="Search results"
-            className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
-          >
+          <ul id={listboxId} role="listbox" aria-label="Search results" className="synapse-listbox">
             {results!.map((result, index) => {
               const isActive = index === activeIndex;
-              const itemId = `${listboxId}-item-${index}`;
               return (
                 <li
                   key={result.id}
-                  id={itemId}
+                  id={`${listboxId}-item-${index}`}
                   ref={(el) => {
                     itemRefs.current[index] = el;
                   }}
@@ -201,17 +183,11 @@ export function CatalogSearch({
                     inputRef.current?.focus();
                   }}
                   onMouseEnter={() => setActiveIndex(index)}
-                  className={`cursor-pointer select-none px-4 py-2 text-sm transition-colors ${
-                    isActive
-                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300"
-                      : "text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700"
-                  }`}
+                  className="synapse-listbox__option"
                 >
                   <span className="block font-medium">{result.title}</span>
                   {result.subtitle && (
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
-                      {result.subtitle}
-                    </span>
+                    <span className="block text-xs text-fg-muted">{result.subtitle}</span>
                   )}
                 </li>
               );
@@ -221,11 +197,7 @@ export function CatalogSearch({
       </div>
 
       {/* Filter row */}
-      <div
-        id="catalog-filter-row"
-        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
-      >
-        {/* Verification status */}
+      <div id="catalog-filter-row" className="synapse-search__filters">
         <select
           aria-label="Filter by verification status"
           value={filters.verificationStatus ?? "all"}
@@ -235,7 +207,7 @@ export function CatalogSearch({
               verificationStatus: e.target.value as CatalogFilters["verificationStatus"],
             })
           }
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+          className="synapse-input synapse-select"
         >
           <option value="all">All statuses</option>
           <option value="verified">Verified</option>
@@ -243,7 +215,6 @@ export function CatalogSearch({
           <option value="rejected">Rejected</option>
         </select>
 
-        {/* Resource type */}
         <select
           aria-label="Filter by resource type"
           value={filters.resourceType ?? "all"}
@@ -253,16 +224,14 @@ export function CatalogSearch({
               resourceType: e.target.value as CatalogFilters["resourceType"],
             })
           }
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+          className="synapse-input synapse-select"
         >
           <option value="all">All types</option>
           <option value="file">File</option>
           <option value="link">Link</option>
         </select>
 
-        {/* Price range */}
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Price</span>
+        <div className="synapse-search__price">
           <input
             type="number"
             aria-label="Minimum price in USDC"
@@ -271,9 +240,9 @@ export function CatalogSearch({
             step="0.01"
             value={filters.minPrice ?? ""}
             onChange={(e) => onChange({ ...filters, minPrice: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:w-20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+            className="synapse-input"
           />
-          <span className="text-xs text-gray-400">–</span>
+          <span aria-hidden="true">–</span>
           <input
             type="number"
             aria-label="Maximum price in USDC"
@@ -282,42 +251,35 @@ export function CatalogSearch({
             step="0.01"
             value={filters.maxPrice ?? ""}
             onChange={(e) => onChange({ ...filters, maxPrice: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 sm:w-20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:focus:border-indigo-500"
+            className="synapse-input"
           />
-          <span className="text-xs text-gray-400">USDC</span>
+          <span className="synapse-search__unit">USDC</span>
         </div>
 
-        {/* Toggle filters (keyboard shortcut `f`) */}
         {onToggleFilters && (
           <button
             type="button"
             onClick={onToggleFilters}
             aria-controls="catalog-filter-row"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            className="synapse-btn synapse-btn--ghost synapse-btn--sm"
           >
             Toggle filters
           </button>
         )}
 
-        {/* Reset */}
         {hasActiveFilters && (
-          <button
-            onClick={onReset}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-          >
+          <button onClick={onReset} className="synapse-btn synapse-btn--ghost synapse-btn--sm">
             Clear filters
           </button>
         )}
 
-        {/* Result count */}
-        <span className="text-xs text-gray-400 sm:ml-auto dark:text-gray-500">
+        <span className="synapse-search__count">
           {hasActiveFilters ? (
             <>
-              <span className="font-medium text-gray-600 dark:text-gray-300">{filtered}</span> of{" "}
-              {total}
+              <strong>{filtered}</strong> of {total}
             </>
           ) : (
-            <span className="font-medium text-gray-600 dark:text-gray-300">{total}</span>
+            <strong>{total}</strong>
           )}{" "}
           resource{total !== 1 ? "s" : ""}
         </span>

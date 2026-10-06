@@ -33,11 +33,11 @@ describe("ResourcePreviewModal", () => {
   });
 
   it("shows loading state before resolving, then renders metadata", async () => {
-    let resolvePromise: (val: any) => void;
-    const fetchPromise = new Promise((resolve) => {
+    let resolvePromise: (val: Awaited<ReturnType<typeof fetchResourceMeta>>) => void;
+    const fetchPromise = new Promise<Awaited<ReturnType<typeof fetchResourceMeta>>>((resolve) => {
       resolvePromise = resolve;
     });
-    vi.mocked(fetchResourceMeta).mockReturnValue(fetchPromise as any);
+    vi.mocked(fetchResourceMeta).mockReturnValue(fetchPromise);
 
     render(
       <ResourcePreviewModal resourceId="res-1" onClose={mockOnClose} onCopyUrl={mockOnCopyUrl} />,

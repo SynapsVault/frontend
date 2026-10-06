@@ -26,8 +26,8 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
       const data = await fetchBuyerPayments(searchAddress);
       setPayments(data);
       setHasSearched(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to load purchases");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to load purchases");
     } finally {
       setLoading(false);
     }

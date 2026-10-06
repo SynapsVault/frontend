@@ -43,9 +43,11 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
       }
       setStep("success");
       onPublished();
-    } catch (err: any) {
+    } catch (err) {
       setErrorMsg(
-        err?.message ?? "Could not publish your resource. Check your connection and try again.",
+        err instanceof Error
+          ? err.message
+          : "Could not publish your resource. Check your connection and try again.",
       );
       setStep("error");
     }

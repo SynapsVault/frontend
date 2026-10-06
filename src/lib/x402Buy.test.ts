@@ -40,7 +40,11 @@ function response(
 }
 
 describe("purchaseResource (#219)", () => {
-  beforeEach(() => paidFetch.mockReset());
+  // Braces matter: mockReset() returns the mock, and a function returned from
+  // beforeEach is run by Vitest as a teardown hook.
+  beforeEach(() => {
+    paidFetch.mockReset();
+  });
 
   it("returns link url, receipt, and settlement tx hash on success", async () => {
     const receipt = { paymentId: "p1", amount: "0.50", currency: "USDC" };

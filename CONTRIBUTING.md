@@ -61,9 +61,11 @@ npm run docker:run
 
 3. **Before committing, verify:**
    ```bash
+   npm run lint        # ESLint passes (CI enforces it)
    npm run typecheck   # Type safety
    npm run test        # All tests pass
    npm run build       # Production build works
+   # or simply: npm run check
    ```
 
 4. **Commit with conventional format (see below)**
@@ -88,29 +90,16 @@ Tests use Vitest + React Testing Library. Focus on user behavior, not implementa
 
 - **TypeScript**: Strict mode, no `any` without comment
 - **Components**: Functional components with hooks
-- **Styling**: Use CSS custom properties (`var(--synapse-*)`)
+- **Styling**: Use semantic Tailwind tokens (`bg-surface`, `text-fg-muted`, `border-line`) — see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)
 - **Accessibility**: ARIA labels, keyboard navigation
 - **Performance**: Code-split routes, memoize expensive renders
 - **Errors**: Use Sentry for tracking, user-friendly error messages
 
 ## Design System
 
-All design tokens live in `src/index.css` as CSS custom properties:
-
-```css
-/* Colors */
---synapse-bg:      #0a0d14  /* Page background */
---synapse-surface: #111622  /* Cards, sidebar */
---synapse-violet:  #7c5cfc  /* Primary accent */
---synapse-cyan:    #22d3ee  /* Secondary accent */
-
-/* Fonts */
---font-display: Sora        /* Headings, brand */
---font-body:    Inter       /* Body copy */
---font-mono:    JetBrains Mono  /* Addresses, code */
-```
-
-**Never hardcode hex values** — use CSS variables instead. This ensures consistency and makes theme changes easy.
+Tokens live in `src/styles/tokens.css` and are exposed to Tailwind as semantic
+classes that adapt to light/dark automatically. Read
+[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) before adding UI.
 
 ## Adding a New Page
 
@@ -136,6 +125,7 @@ perf(catalog): memoize ResourceCard component
 
 ## Code Review Checklist
 
+- [ ] Lint passes (`npm run lint`)
 - [ ] TypeScript compiles (`npm run typecheck`)
 - [ ] Tests pass (`npm run test`)
 - [ ] Bundle size acceptable (check Vite output)

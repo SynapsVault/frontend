@@ -2,6 +2,9 @@ import { useState } from "react";
 import { prepareTransferOwnership, submitTransferOwnership } from "../api/resources.js";
 import { checkNetwork } from "./useNetworkCheck.js";
 
+/** Older Freighter versions nest the signed XDR under `result`. */
+type LegacyFreighterResult = { result?: { signedTxXdr?: string } };
+
 type Status = "idle" | "preparing" | "signing" | "submitting" | "confirmed" | "error";
 
 export function useTransferOwnership(resourceId: string, apiKey: string) {
@@ -46,7 +49,9 @@ export function useTransferOwnership(resourceId: string, apiKey: string) {
       }
 
       const signedXdr =
-        "signedTxXdr" in result ? result.signedTxXdr : (result as any).result?.signedTxXdr;
+        "signedTxXdr" in result
+          ? result.signedTxXdr
+          : (result as LegacyFreighterResult).result?.signedTxXdr;
       if (!signedXdr)
         throw new Error(
           "No signed transaction returned by wallet. Ensure your wallet is unlocked, connected, and on the correct network, then try again.",

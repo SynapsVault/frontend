@@ -58,9 +58,11 @@ cp .env.example .env
 # Edit .env — set VITE_API_URL to your backend, VITE_API_KEY if you're a publisher
 
 npm run dev         # http://localhost:5173
+npm run lint        # ESLint (typescript-eslint + react-hooks)
 npm run typecheck   # type checking
 npm run test        # unit tests
 npm run build       # production build → dist/
+npm run check       # everything CI runs: lint, typecheck, test, build + bundle budgets
 ```
 
 ## Docker
@@ -89,8 +91,13 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full branch strategy and commit
 
 ### CI/CD pipeline
 
+Every push and PR runs three jobs: **lint + typecheck + test**, **build + bundle
+budgets** (initial JS ≤ 250 KB gz, any chunk ≤ 800 KB gz, total ≤ 1 MB gz, and no
+circular chunk imports — see `scripts/check-bundle-size.mjs`), and a **Docker
+smoke test** that boots nginx and checks `/health` and SPA routing.
+
 ```
-Push to feat/* ──► CI (lint + typecheck + test)
+Push to feat/* ──► CI (lint + typecheck + test + build + docker)
                          │
 Merge to dev   ──► CI + preview deploy
                          │
@@ -99,17 +106,18 @@ Merge to main  ──► CI + production deploy (Vercel)
 
 ## Design system
 
-All design tokens live as CSS custom properties in `src/index.css`.
+Token-driven (primitive scales → semantic tokens → components) with first-class
+light and dark themes, WCAG AA contrast, and reduced-motion support. Tokens live
+in [`src/styles/tokens.css`](./src/styles/tokens.css) and are exposed to Tailwind
+as semantic classes (`bg-surface`, `text-fg-muted`, `border-line`, `bg-accent`, …).
 
-| Token | Value | Use |
-|---|---|---|
-| `--synapse-bg` | `#0a0d14` | Page background |
-| `--synapse-surface` | `#111622` | Cards, sidebar |
-| `--synapse-violet` | `#7c5cfc` | Primary accent |
-| `--synapse-cyan` | `#22d3ee` | Secondary accent |
-| `--font-display` | Sora | Headings, brand |
-| `--font-body` | Inter | Body copy |
-| `--font-mono` | JetBrains Mono | Addresses, prices |
+See **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** for the full reference.
+
+## Keyboard shortcuts
+
+Press <kbd>?</kbd> in the app for the full list. Highlights: <kbd>/</kbd> search,
+<kbd>1</kbd>–<kbd>6</kbd> switch tabs, <kbd>T</kbd> toggle theme, <kbd>L</kbd> switch language,
+<kbd>Esc</kbd> close dialogs.
 
 ## Screens
 

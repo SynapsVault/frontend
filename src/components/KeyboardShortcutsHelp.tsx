@@ -1,116 +1,90 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface KeyboardShortcut {
+  /** Keys to display, e.g. "/" or "Shift + ?". Split on " + " into separate <kbd>s. */
   keys: string;
   description: string;
+  /** Optional heading the shortcut is listed under. */
+  group?: string;
 }
 
 export interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
   onClose: () => void;
-  shortcuts?: KeyboardShortcut[];
+  shortcuts: KeyboardShortcut[];
 }
 
-const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  { keys: '?', description: 'Show this help dialog' },
-  { keys: 'Esc', description: 'Close dialog or cancel current action' },
-  { keys: '/', description: 'Focus the search field' },
-  { keys: 'Ctrl/Cmd + K', description: 'Open the command palette' },
-  { keys: 'Ctrl/Cmd + S', description: 'Save the current item' },
-  { keys: 'Ctrl/Cmd + Enter', description: 'Submit the current form' },
-  { keys: 'Ctrl/Cmd + Z', description: 'Undo the last action' },
-  { keys: 'Ctrl/Cmd + Shift + Z', description: 'Redo the last undone action' },
-  { keys: 'Arrow Up / Arrow Down', description: 'Navigate through a list' },
-  { keys: 'Enter', description: 'Confirm the selected item' },
-];
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+function groupShortcuts(shortcuts: KeyboardShortcut[]): [string, KeyboardShortcut[]][] {
+  const groups = new Map<string, KeyboardShortcut[]>();
+  for (const shortcut of shortcuts) {
+    const key = shortcut.group ?? "";
+    groups.set(key, [...(groups.get(key) ?? []), shortcut]);
+  }
+  return [...groups.entries()];
+}
+
+/** Modal listing the app's keyboard shortcuts. Traps focus and closes on Escape. */
 export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   isOpen,
   onClose,
-  shortcuts = DEFAULT_SHORTCUTS,
+  shortcuts,
 }) => {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
+    if (!isOpen) return;
 
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-
     const dialog = dialogRef.current;
-    if (dialog) {
-      dialog.focus();
-    }
+    dialog?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
         onClose();
         return;
       }
 
-      if (event.key === 'Tab' && dialog) {
-        const focusable = dialog.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
+      if (event.key === "Tab" && dialog) {
+        const focusable = dialog.querySelectorAll<HTMLElement>(FOCUSABLE);
         if (focusable.length === 0) {
           event.preventDefault();
           dialog.focus();
           return;
         }
-
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
         const active = document.activeElement;
-
-        if (event.shiftKey) {
-          if (active === first || active === dialog) {
-            event.preventDefault();
-            last.focus();
-          }
-        } else if (active === last) {
+        if (event.shiftKey && (active === first || active === dialog)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
           event.preventDefault();
           first.focus();
         }
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown, true);
-
+    document.addEventListener("keydown", handleKeyDown, true);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown, true);
-      const previouslyFocused = previouslyFocusedRef.current;
-      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
-        previouslyFocused.focus();
-      }
+      document.removeEventListener("keydown", handleKeyDown, true);
+      previouslyFocusedRef.current?.focus?.();
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
-    return null;
-  }
-
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
+  if (!isOpen) return null;
 
   return (
     <div
-      className="keyboard-shortcuts-help__backdrop"
-      onClick={handleBackdropClick}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
+      className="synapse-modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
@@ -120,101 +94,53 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
         aria-labelledby="keyboard-shortcuts-help-title"
         aria-describedby="keyboard-shortcuts-help-description"
         tabIndex={-1}
-        className="keyboard-shortcuts-help"
-        style={{
-          backgroundColor: '#fff',
-          color: '#111',
-          borderRadius: '8px',
-          padding: '24px',
-          maxWidth: '480px',
-          width: '90%',
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
-          outline: 'none',
-        }}
+        className="synapse-modal outline-none"
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '16px',
-          }}
-        >
-          <h2
-            id="keyboard-shortcuts-help-title"
-            style={{ margin: 0, fontSize: '1.25rem' }}
-          >
-            Keyboard Shortcuts
+        <div className="synapse-modal__header">
+          <h2 id="keyboard-shortcuts-help-title" className="synapse-modal__title">
+            {t("shortcuts.title")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close keyboard shortcuts help"
-            className="keyboard-shortcuts-help__close"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              lineHeight: 1,
-              padding: '4px 8px',
-              color: 'inherit',
-            }}
+            aria-label={t("shortcuts.close")}
+            className="synapse-icon-btn"
           >
-            ×
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+              <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
 
-        <p
-          id="keyboard-shortcuts-help-description"
-          style={{ marginTop: 0, marginBottom: '16px', fontSize: '0.875rem', color: '#555' }}
-        >
-          Use these shortcuts to work faster. Press Escape to close this dialog.
-        </p>
+        <div className="synapse-modal__body">
+          <p id="keyboard-shortcuts-help-description" className="text-sm text-fg-muted">
+            {t("shortcuts.description")}
+          </p>
 
-        <ul
-          style={{
-            listStyle: 'none',
-            margin: 0,
-            padding: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-          }}
-        >
-          {shortcuts.map((shortcut) => (
-            <li
-              key={`${shortcut.keys}-${shortcut.description}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '16px',
-              }}
-            >
-              <span style={{ fontSize: '0.9375rem' }}>{shortcut.description}</span>
-              <kbd
-                style={{
-                  fontFamily: 'inherit',
-                  fontSize: '0.8125rem',
-                  backgroundColor: '#f2f2f2',
-                  border: '1px solid #ccc',
-                  borderBottomWidth: '2px',
-                  borderRadius: '4px',
-                  padding: '2px 8px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {shortcut.keys}
-              </kbd>
-            </li>
+          {groupShortcuts(shortcuts).map(([group, items]) => (
+            <section key={group || "default"} className="flex flex-col gap-1">
+              {group && <h3 className="synapse-nav-label px-0">{group}</h3>}
+              <ul className="flex flex-col">
+                {items.map((shortcut) => (
+                  <li
+                    key={`${shortcut.keys}-${shortcut.description}`}
+                    className="flex items-center justify-between gap-4 border-b border-line py-2 text-sm last:border-b-0"
+                  >
+                    <span>{shortcut.description}</span>
+                    <span className="flex shrink-0 gap-1">
+                      {shortcut.keys.split(" + ").map((key) => (
+                        <kbd key={key} className="synapse-kbd">
+                          {key}
+                        </kbd>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );
 };
-
-export default KeyboardShortcutsHelp;
