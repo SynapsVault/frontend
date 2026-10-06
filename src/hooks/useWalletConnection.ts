@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { FREIGHTER_INSTALL_URL, freighterErrorMessage, loadFreighter } from "../lib/freighter.js";
 
-export type WalletStatus = "restoring" | "disconnected" | "connected" | "error";
+export type WalletStatus = "restoring" | "disconnected" | "connecting" | "connected" | "error";
 
 export interface WalletState {
   status: WalletStatus;
@@ -12,115 +13,118 @@ export interface WalletState {
 
 const STORAGE_KEY = "synapsvault-wallet";
 
+function readStored(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStored(address: string | null): void {
+  try {
+    if (address) localStorage.setItem(STORAGE_KEY, address);
+    else localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage unavailable: the connection still works for this session.
+  }
+}
+
 /**
- * Manages Freighter wallet connection with localStorage persistence.
+ * Manages the Freighter wallet connection (@stellar/freighter-api v6).
  *
- * On mount it reads any previously stored address and re-validates it with
- * Freighter (isConnected + getPublicKey). If Freighter confirms the same
- * address the session is silently restored; if not the stored value is
- * cleared and the user sees the "Connect wallet" button.
- *
- * The address is written to localStorage on connect and removed on disconnect,
- * so it survives page reloads without requiring the user to re-approve.
+ * - connect(): checks the extension is installed, then calls requestAccess(),
+ *   which opens Freighter's approval prompt and resolves with the address.
+ * - On mount, a previously connected address is restored silently when
+ *   Freighter still reports this site as allowed (no prompt).
+ * - disconnect() forgets the address locally. Freighter has no programmatic
+ *   revoke; users remove site access from the extension itself.
  */
 export function useWalletConnection(): WalletState {
-  const [status, setStatus] = useState<WalletStatus>("restoring");
+  const [status, setStatus] = useState<WalletStatus>(() => (readStored() ? "restoring" : "disconnected"));
   const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // ── Restore on mount ──────────────────────────────────────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = readStored();
+    if (!stored) return;
 
-    if (!stored) {
-      setStatus("disconnected");
-      return;
-    }
-
-    // Validate the stored address is still live in Freighter
-    async function restore() {
+    let cancelled = false;
+    (async () => {
       try {
-        const api = window.freighterApi;
-        if (!api) {
-          // Extension not installed — clear stale storage and stay disconnected
-          localStorage.removeItem(STORAGE_KEY);
-          setStatus("disconnected");
-          return;
-        }
+        const freighter = await loadFreighter();
+        const [{ isConnected }, { isAllowed }] = await Promise.all([
+          freighter.isConnected(),
+          freighter.isAllowed(),
+        ]);
+        if (!isConnected || !isAllowed) throw new Error("not allowed");
 
-        const connected = await api.isConnected();
-        if (!connected) {
-          localStorage.removeItem(STORAGE_KEY);
-          setStatus("disconnected");
-          return;
-        }
-
-        const liveAddress = await api.getPublicKey();
-        if (liveAddress && liveAddress === stored) {
-          // Same account — restore silently
-          setAddress(liveAddress);
-          setStatus("connected");
-        } else {
-          // Different account or empty — clear and let user reconnect
-          localStorage.removeItem(STORAGE_KEY);
-          setStatus("disconnected");
-        }
+        const result = await freighter.getAddress();
+        if (result.error || !result.address) throw new Error("no address");
+        if (cancelled) return;
+        writeStored(result.address);
+        setAddress(result.address);
+        setStatus("connected");
       } catch {
-        // Any Freighter error → fall back to disconnected, don't crash
-        localStorage.removeItem(STORAGE_KEY);
+        if (cancelled) return;
+        writeStored(null);
         setStatus("disconnected");
       }
-    }
+    })();
 
-    restore();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Connect ───────────────────────────────────────────────────────────────
   const connect = useCallback(async () => {
     setError(null);
-
-    const api = window.freighterApi;
-    if (!api) {
-      setError(
-        "Freighter wallet not found. Install the Freighter browser extension from https://freighter.app, then reload this page and try again."
-      );
-      setStatus("error");
-      return;
-    }
+    setStatus("connecting");
 
     try {
-      const connected = await api.isConnected();
-      if (!connected) {
+      const freighter = await loadFreighter();
+
+      const installed = await freighter.isConnected();
+      if (installed.error || !installed.isConnected) {
         setError(
-          "Freighter is not connected. Open the Freighter extension, unlock your wallet, and approve the connection request, then try again."
+          `Freighter wallet not found. Install the Freighter browser extension from ${FREIGHTER_INSTALL_URL}, then reload this page.`,
         );
         setStatus("error");
         return;
       }
 
-      const publicKey = await api.getPublicKey();
-      if (!publicKey) {
-        setError("Could not retrieve public key from Freighter.");
+      // Opens Freighter's "connect to this site" prompt if not yet allowed.
+      const access = await freighter.requestAccess();
+      if (access.error || !access.address) {
+        setError(
+          freighterErrorMessage(
+            access.error,
+            "Connection was not approved. Open Freighter, unlock it, and approve the request.",
+          ),
+        );
         setStatus("error");
         return;
       }
 
-      localStorage.setItem(STORAGE_KEY, publicKey);
-      setAddress(publicKey);
+      writeStored(access.address);
+      setAddress(access.address);
       setStatus("connected");
     } catch (err) {
-      const message =
-        err instanceof Error && err.message
-          ? err.message
-          : "Failed to connect wallet. Make sure Freighter is installed and unlocked, then try again.";
-      setError(message);
+      setError(
+        freighterErrorMessage(
+          err,
+          "Failed to connect wallet. Make sure Freighter is installed and unlocked, then try again.",
+        ),
+      );
       setStatus("error");
     }
   }, []);
 
   // ── Disconnect ────────────────────────────────────────────────────────────
   const disconnect = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    writeStored(null);
     setAddress(null);
     setStatus("disconnected");
     setError(null);

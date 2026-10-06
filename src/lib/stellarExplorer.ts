@@ -1,4 +1,5 @@
 // Inlined from @synapsvault/registry-client
+import { STELLAR_NETWORK } from "./config.js";
 type ExplorerNetwork = "testnet" | "public";
 interface NetworkPreset { explorerNetwork: ExplorerNetwork; x402Network: string; networkPassphrase: string; sorobanRpcUrl: string; horizonUrl: string; usdcSacContractId: string; }
 const networks: Record<string, NetworkPreset> = {
@@ -8,18 +9,8 @@ const networks: Record<string, NetworkPreset> = {
 
 export type StellarNetwork = ExplorerNetwork;
 
-function resolveExplorerNetwork(): StellarNetwork {
-  const raw = (import.meta.env.VITE_STELLAR_NETWORK as string | undefined)?.trim().toLowerCase();
-  if (!raw) return networks.testnet.explorerNetwork;
-  if (raw === "public" || raw === "mainnet" || raw === "pubnet") {
-    return networks.mainnet.explorerNetwork;
-  }
-  if (raw === "testnet") return networks.testnet.explorerNetwork;
-  return networks.testnet.explorerNetwork;
-}
-
-// Defaults to testnet; set VITE_STELLAR_NETWORK=testnet|mainnet|public for explorer links.
-const NETWORK: StellarNetwork = resolveExplorerNetwork();
+// Follows VITE_NETWORK (see lib/config.ts); defaults to testnet.
+const NETWORK: StellarNetwork = networks[STELLAR_NETWORK].explorerNetwork;
 
 const EXPLORER_BASE = `https://stellar.expert/explorer/${NETWORK}`;
 

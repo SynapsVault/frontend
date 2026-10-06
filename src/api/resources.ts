@@ -1,4 +1,5 @@
 import { signedPublisherFetch } from "./requestSignature.js";
+import { apiFetch, apiUrl, getJson, isArray, readJson } from "./http.js";
 
 export interface Resource {
   id: string;
@@ -14,7 +15,10 @@ export interface Resource {
   accessUrl: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+/** Signed publisher request against a backend path like "/resources/1/price". */
+function signedFetch(path: string, apiKey: string, init: RequestInit): Promise<Response> {
+  return signedPublisherFetch(apiUrl(path), apiKey, init);
+}
 
 export interface CatalogFilters {
   search?: string;
@@ -43,12 +47,7 @@ export interface ResourceMeta {
 }
 
 export async function fetchResourceMeta(id: string, signal?: AbortSignal): Promise<ResourceMeta> {
-  const res = await fetch(`${API_BASE}/resources/${id}/meta`, { signal });
-  if (!res.ok) {
-    const { error } = await res.json().catch(() => ({ error: undefined }));
-    throw new Error(error ?? "Failed to load resource preview");
-  }
-  return res.json();
+  return getJson<ResourceMeta>(`/resources/${id}/meta`, "Failed to load resource preview", { signal });
 }
 
 export async function fetchCatalog(filters?: CatalogFilters): Promise<unknown[]> {
@@ -62,56 +61,17 @@ export async function fetchCatalog(filters?: CatalogFilters): Promise<unknown[]>
     params.set("resourceType", filters.resourceType);
 
   const qs = params.toString();
-  const res = await fetch(`${API_BASE}/resources${qs ? `?${qs}` : ""}`);
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Catalog fetch failed (${res.status}): ${body.slice(0, 100)}`);
-  }
-  return res.json();
+  return getJson<unknown[]>(`/resources${qs ? `?${qs}` : ""}`, "Couldn't load the catalog", undefined, isArray);
 }
 
 /** Resources owned by the API key holder. Callers supply the row shape. */
 export async function fetchMyResources<T = unknown>(apiKey: string): Promise<T[]> {
-  const res = await fetch(`${API_BASE}/publishers/me/resources`, {
-    headers: { "x-api-key": apiKey },
-  });
-  if (!res.ok) throw new Error("Failed to fetch your resources");
-  return res.json();
-}
-
-export async function prepareRegister(
-  resourceId: string,
-  apiKey: string,
-): Promise<{ unsignedXdr: string; networkPassphrase: string }> {
-  const res = await fetch(`${API_BASE}/resources/${resourceId}/register/prepare`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-    },
-  });
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to prepare register transaction");
-  }
-  return res.json();
-}
-
-export async function submitRegister(
-  resourceId: string,
-  signedXdr: string,
-  apiKey: string,
-): Promise<{ id: string; onchainStatus: string; onchainTxHash?: string }> {
-  const body = JSON.stringify({ signedXdr });
-  const res = await signedPublisherFetch(`${API_BASE}/resources/${resourceId}/register`, apiKey, {
-    method: "POST",
-    body,
-  });
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to submit register transaction");
-  }
-  return res.json();
+  return getJson<T[]>(
+    "/publishers/me/resources",
+    "Failed to fetch your resources",
+    { headers: { "x-api-key": apiKey } },
+    isArray,
+  );
 }
 
 export async function prepareRegisterTx(
@@ -128,14 +88,9 @@ export async function prepareRegisterTx(
     description?: string;
   };
 }> {
-  const res = await fetch(`${API_BASE}/resources/${resourceId}/register/prepare`, {
+  return getJson(`/resources/${resourceId}/register/prepare`, "Failed to prepare register transaction", {
     headers: { "x-api-key": apiKey },
   });
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to prepare register transaction");
-  }
-  return res.json();
 }
 
 /**
@@ -174,11 +129,11 @@ export async function submitRegisterTx(
   apiKey: string,
 ): Promise<{ id: string; onchainStatus: string; txHash: string }> {
   const body = JSON.stringify({ signedXdr });
-  const res = await signedPublisherFetch(`${API_BASE}/resources/${resourceId}/register`, apiKey, {
+  const res = await signedFetch(`/resources/${resourceId}/register`, apiKey, {
     method: "POST",
     body,
   });
-  if (!res.ok) {
+  if (!res.ok && (res.headers.get("content-type") ?? "").includes("application/json")) {
     const body = await res.json().catch(() => ({}));
     throw new RegistrationError(
       body.message ?? body.error ?? "Failed to submit register transaction",
@@ -190,7 +145,7 @@ export async function submitRegisterTx(
       },
     );
   }
-  return res.json();
+  return readJson(res, "Failed to submit register transaction");
 }
 
 export async function prepareSetPrice(
@@ -199,25 +154,19 @@ export async function prepareSetPrice(
   apiKey: string,
 ): Promise<{ unsignedXdr: string; networkPassphrase: string }> {
   const body = JSON.stringify({ price });
-  const res = await signedPublisherFetch(
-    `${API_BASE}/resources/${resourceId}/price/prepare`,
-    apiKey,
-    { method: "POST", body },
-  );
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to prepare transaction");
-  }
-  return res.json();
+  const res = await signedFetch(`/resources/${resourceId}/price/prepare`, apiKey, { method: "POST", body });
+  return readJson(res, "Failed to prepare transaction");
 }
 
-export async function fetchRegistryStatus(): Promise<{ resourceCount: number }> {
+/**
+ * On-chain registry stats for the sidebar. Non-critical, so it never throws;
+ * null means "unknown" and the UI hides the stat rather than showing a fake 0.
+ */
+export async function fetchRegistryStatus(): Promise<{ resourceCount: number } | null> {
   try {
-    const res = await fetch(`${API_BASE}/registry/status`);
-    if (!res.ok) return { resourceCount: 0 };
-    return res.json();
+    return await getJson<{ resourceCount: number }>("/registry/status", "Registry unavailable");
   } catch {
-    return { resourceCount: 0 };
+    return null;
   }
 }
 
@@ -227,16 +176,8 @@ export async function prepareTransferOwnership(
   apiKey: string,
 ): Promise<{ unsignedXdr: string; networkPassphrase: string }> {
   const body = JSON.stringify({ newCreator });
-  const res = await signedPublisherFetch(
-    `${API_BASE}/resources/${resourceId}/ownership/prepare`,
-    apiKey,
-    { method: "POST", body },
-  );
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to prepare transfer transaction");
-  }
-  return res.json();
+  const res = await signedFetch(`/resources/${resourceId}/ownership/prepare`, apiKey, { method: "POST", body });
+  return readJson(res, "Failed to prepare transfer transaction");
 }
 
 export async function submitTransferOwnership(
@@ -246,15 +187,8 @@ export async function submitTransferOwnership(
   apiKey: string,
 ): Promise<{ id: string; newCreator: string; status: string }> {
   const body = JSON.stringify({ signedXdr, newCreator });
-  const res = await signedPublisherFetch(`${API_BASE}/resources/${resourceId}/ownership`, apiKey, {
-    method: "POST",
-    body,
-  });
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to submit transfer transaction");
-  }
-  return res.json();
+  const res = await signedFetch(`/resources/${resourceId}/ownership`, apiKey, { method: "POST", body });
+  return readJson(res, "Failed to submit transfer transaction");
 }
 
 export interface LeaderboardEntry {
@@ -270,9 +204,7 @@ export interface LeaderboardEntry {
 }
 
 export async function fetchLeaderboard(signal?: AbortSignal): Promise<LeaderboardEntry[]> {
-  const res = await fetch(`${API_BASE}/publishers/leaderboard`, { signal });
-  if (!res.ok) throw new Error("Failed to fetch leaderboard");
-  return res.json();
+  return getJson<LeaderboardEntry[]>("/publishers/leaderboard", "Failed to fetch leaderboard", { signal }, isArray);
 }
 
 export async function publishLinkResource(
@@ -280,17 +212,13 @@ export async function publishLinkResource(
   apiKey: string,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const res = await fetch(`${API_BASE}/resources`, {
+  const res = await apiFetch("/resources", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": apiKey },
     body: JSON.stringify(data),
     signal,
   });
-  if (!res.ok) {
-    const { error } = await res.json().catch(() => ({ error: undefined }));
-    throw new Error(error ?? "Failed to publish resource");
-  }
-  return res.json();
+  return readJson(res, "Failed to publish resource");
 }
 
 export async function publishFileResource(
@@ -298,17 +226,13 @@ export async function publishFileResource(
   apiKey: string,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const res = await fetch(`${API_BASE}/resources`, {
+  const res = await apiFetch("/resources", {
     method: "POST",
     headers: { "x-api-key": apiKey },
     body: formData,
     signal,
   });
-  if (!res.ok) {
-    const { error } = await res.json().catch(() => ({ error: undefined }));
-    throw new Error(error ?? "Failed to publish resource");
-  }
-  return res.json();
+  return readJson(res, "Failed to publish resource");
 }
 
 export async function submitSetPrice(
@@ -318,13 +242,6 @@ export async function submitSetPrice(
   apiKey: string,
 ): Promise<{ id: string; price: string; status: string }> {
   const body = JSON.stringify({ signedXdr, price });
-  const res = await signedPublisherFetch(`${API_BASE}/resources/${resourceId}/price`, apiKey, {
-    method: "POST",
-    body,
-  });
-  if (!res.ok) {
-    const { error } = await res.json();
-    throw new Error(error ?? "Failed to submit transaction");
-  }
-  return res.json();
+  const res = await signedFetch(`/resources/${resourceId}/price`, apiKey, { method: "POST", body });
+  return readJson(res, "Failed to submit transaction");
 }

@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+import { apiUrl, getJson, isArray } from "./http.js";
 
 export interface PaymentReceipt {
   id: string;
@@ -10,13 +10,19 @@ export interface PaymentReceipt {
 }
 
 export async function fetchReceipt(paymentId: string): Promise<PaymentReceipt> {
-  const res = await fetch(`${API_BASE}/payments/${paymentId}/receipt`);
-  if (!res.ok) throw new Error("Failed to load receipt");
-  return res.json();
+  return getJson<PaymentReceipt>(`/payments/${paymentId}/receipt`, "Failed to load receipt");
 }
 
 export async function fetchBuyerPayments(address: string): Promise<PaymentReceipt[]> {
-  const res = await fetch(`${API_BASE}/buyers/${address}/payments`);
-  if (!res.ok) throw new Error("Failed to load buyer payments");
-  return res.json();
+  return getJson<PaymentReceipt[]>(
+    `/buyers/${encodeURIComponent(address)}/payments`,
+    "Failed to load purchases",
+    undefined,
+    isArray,
+  );
+}
+
+/** Public URL of a payment receipt, for linking. */
+export function receiptUrl(paymentId: string): string {
+  return apiUrl(`/payments/${paymentId}/receipt`);
 }

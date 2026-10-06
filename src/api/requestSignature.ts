@@ -3,6 +3,8 @@
  * Mirrors server/src/utils/requestSignature.ts — keep in sync when changing the scheme.
  */
 
+import { networkFetch } from "./http.js";
+
 export const EMPTY_BODY_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
 async function sha256Hex(data: string): Promise<string> {
@@ -98,5 +100,5 @@ export async function signedPublisherFetch(
   headers.set("X-Timestamp", signatureHeaders["X-Timestamp"]);
   headers.set("X-Signature", signatureHeaders["X-Signature"]);
 
-  return fetch(url, { ...init, headers });
+  return networkFetch(url, { ...init, headers });
 }

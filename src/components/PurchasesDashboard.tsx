@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fetchBuyerPayments, PaymentReceipt } from "../api/payments.js";
+import { fetchBuyerPayments, receiptUrl, type PaymentReceipt } from "../api/payments.js";
 
 interface Props {
   initialWallet?: string;
@@ -116,7 +116,7 @@ export function PurchasesDashboard({ initialWallet = "" }: Props) {
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-right text-sm font-medium sm:px-6 sm:py-4">
                     <a
-                      href={`${import.meta.env.VITE_API_URL || ""}/payments/${p.id}/receipt`}
+                      href={receiptUrl(p.id)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-accent-text hover:text-accent-hover"

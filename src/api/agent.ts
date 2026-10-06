@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+import { getJson, hasKeys } from "./http.js";
 
 export interface AgentActivity {
   id: string;
@@ -31,7 +31,10 @@ export interface AgentStatus {
 
 /** Fetch public verification-agent stats from `GET /agent/status` (issue #221). */
 export async function fetchAgentStatus(signal?: AbortSignal): Promise<AgentStatus> {
-  const res = await fetch(`${API_BASE}/agent/status`, { signal });
-  if (!res.ok) throw new Error("Failed to load agent status");
-  return res.json();
+  return getJson<AgentStatus>(
+    "/agent/status",
+    "Failed to load agent status",
+    { signal },
+    hasKeys("agent", "stats", "recentActivity"),
+  );
 }

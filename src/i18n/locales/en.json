@@ -19,7 +19,6 @@
     "publish_resource": "Publish resource",
     "registry_onchain_one": "{{count}} resource on-chain",
     "registry_onchain_other": "{{count}} resources on-chain",
-    "retry_registry": "Retry registry",
     "connect_wallet": "Connect wallet",
     "disconnect_wallet": "Disconnect wallet",
     "skip_to_content": "Skip to content",
@@ -30,7 +29,9 @@
     "page_analytics": "Analytics",
     "page_purchases": "My Purchases",
     "page_leaderboard": "Leaderboard",
-    "page_agent": "AI Agent"
+    "page_agent": "AI Agent",
+    "connecting_wallet": "Connecting…",
+    "install_freighter": "Install Freighter"
   },
   "catalog": {
     "empty_title": "The catalog is empty",

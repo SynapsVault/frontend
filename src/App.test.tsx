@@ -5,6 +5,13 @@ import App from "./App.js";
 import { fetchCatalog, fetchRegistryStatus } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 
+vi.mock("@stellar/freighter-api", () => ({
+  isConnected: vi.fn().mockResolvedValue({ isConnected: false }),
+  isAllowed: vi.fn().mockResolvedValue({ isAllowed: false }),
+  requestAccess: vi.fn(),
+  getAddress: vi.fn(),
+}));
+
 vi.mock("./api/resources.js", () => ({
   fetchCatalog: vi.fn(),
   fetchMyResources: vi.fn(),
@@ -95,5 +102,15 @@ describe("App catalog empty states", () => {
     expect(within(dialog).getByRole("heading", { name: "Buy resource" })).toBeInTheDocument();
     expect(within(dialog).getByText("Atlas of Stellar Networks")).toBeInTheDocument();
     expect(within(dialog).getByText("5.00 USDC")).toBeInTheDocument();
+  });
+
+  it("shows why the wallet can't connect instead of doing nothing", async () => {
+    vi.mocked(fetchCatalog).mockResolvedValue([]);
+
+    render(<App />);
+    await userEvent.click(screen.getByRole("button", { name: "Connect wallet" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Freighter wallet not found/);
+    expect(screen.getByRole("link", { name: /Install Freighter/ })).toHaveAttribute("href", "https://freighter.app");
   });
 });

@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+import { getJson, hasKeys } from "./http.js";
 
 export interface RecentPayment {
   payerAddress: string;
@@ -32,9 +32,10 @@ export interface AnalyticsData {
 }
 
 export async function fetchAnalytics(apiKey: string): Promise<AnalyticsData> {
-  const res = await fetch(`${API_BASE}/publishers/me/analytics`, {
-    headers: { "x-api-key": apiKey },
-  });
-  if (!res.ok) throw new Error("Failed to load analytics");
-  return res.json();
+  return getJson<AnalyticsData>(
+    "/publishers/me/analytics",
+    "Failed to load analytics",
+    { headers: { "x-api-key": apiKey } },
+    hasKeys("summary", "resources"),
+  );
 }

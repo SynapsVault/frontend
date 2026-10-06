@@ -19,7 +19,6 @@
     "publish_resource": "Publicar recurso",
     "registry_onchain_one": "{{count}} recurso en cadena",
     "registry_onchain_other": "{{count}} recursos en cadena",
-    "retry_registry": "Reintentar registro",
     "connect_wallet": "Conectar billetera",
     "disconnect_wallet": "Desconectar billetera",
     "skip_to_content": "Saltar al contenido",
@@ -30,7 +29,9 @@
     "page_analytics": "Analíticas",
     "page_purchases": "Mis compras",
     "page_leaderboard": "Clasificación",
-    "page_agent": "Agente IA"
+    "page_agent": "Agente IA",
+    "connecting_wallet": "Conectando…",
+    "install_freighter": "Instalar Freighter"
   },
   "catalog": {
     "empty_title": "El catálogo está vacío",

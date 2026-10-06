@@ -3,9 +3,13 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import { visualizer } from "rollup-plugin-visualizer";
 
+/** Backend route groups (see SynapsVault/backend src/routes). */
+const API_PROXY_PATTERN = "^/(resources|agent|registry|publishers|buyers|payments)(/|\\?|$)";
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const apiBase = env.VITE_API_URL ?? "";
+  const devProxyTarget = env.VITE_DEV_PROXY_TARGET || "http://localhost:3000";
 
   // Generate catalog URL pattern for service worker caching
   // Matches API origin to ensure cache only works for configured backend
@@ -137,15 +141,22 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: false, // Fall back to next available port
-      // Proxy API requests to backend
+      // With VITE_API_URL unset the app calls same-origin paths; forward every
+      // backend route group so none of them fall through to index.html.
       proxy: {
-        "/resources": {
-          target: "http://localhost:3000",
+        [API_PROXY_PATTERN]: {
+          target: devProxyTarget,
           changeOrigin: true,
-        },
-        "/api": {
-          target: "http://localhost:3000",
-          changeOrigin: true,
+          configure: (proxy) => {
+            // Backend down: answer with JSON the app can explain, instead of
+            // Vite's bare "500 Internal Server Error".
+            proxy.on("error", (err, _req, res) => {
+              if (!("writeHead" in res) || res.headersSent) return;
+              res.writeHead(502, { "Content-Type": "application/json" });
+              const reason = (err as NodeJS.ErrnoException).code || err.message || "connection failed";
+              res.end(JSON.stringify({ error: `Backend unreachable at ${devProxyTarget} (${reason})` }));
+            });
+          },
         },
       },
     },
