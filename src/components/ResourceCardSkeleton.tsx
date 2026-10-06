@@ -38,7 +38,7 @@ export function ResourceGridSkeleton({ count = 6 }: { count?: number }) {
     <div
       role="status"
       aria-label="Loading resources…"
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
     >
       {Array.from({ length: count }).map((_, i) => (
         <ResourceCardSkeleton key={i} />

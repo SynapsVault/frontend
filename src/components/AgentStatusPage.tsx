@@ -43,7 +43,7 @@ export function AgentStatusPage() {
   return (
     <section aria-labelledby="agent-heading" className="mt-8 space-y-6">
       {/* ── Agent identity ─────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5 dark:border-gray-700 dark:bg-gray-800">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2
@@ -85,7 +85,7 @@ export function AgentStatusPage() {
       </div>
 
       {/* ── Stat cards ─────────────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <StatCard label="Verifications processed" value={String(stats.totalVerifications)} />
         <StatCard
           label="Approved"
@@ -153,7 +153,7 @@ function StatCard({
 
 function ActivityRow({ activity: a }: { activity: AgentActivity }) {
   return (
-    <li className="flex items-center justify-between gap-3 px-5 py-3">
+    <li className="flex flex-col items-start gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-5">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">
           {a.resourceTitle}

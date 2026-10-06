@@ -44,7 +44,7 @@ export function AnalyticsDashboard({ apiKey }: Props) {
   return (
     <div className="mt-8 space-y-6" aria-live="polite">
       {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard
           label="Total earned"
           value={`${summary.totalEarned} ${summary.currency}`}
@@ -89,7 +89,7 @@ function ResourceRow({ resource: r }: { resource: ResourceStat }) {
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left"
+        className="flex w-full flex-col items-start gap-2 px-4 py-4 text-left sm:flex-row sm:items-center sm:justify-between sm:px-5"
       >
         <div>
           <p className="font-semibold text-gray-900">{r.title}</p>
@@ -151,7 +151,7 @@ function ResourceRow({ resource: r }: { resource: ResourceStat }) {
 
 function PaymentRow({ payment: p }: { payment: RecentPayment }) {
   return (
-    <li className="flex items-center justify-between text-xs text-gray-600">
+    <li className="flex flex-wrap items-center justify-between gap-1 text-xs text-gray-600">
       <span className="font-mono">
         {p.payerAddress.slice(0, 8)}…{p.payerAddress.slice(-4)}
       </span>

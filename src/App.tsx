@@ -212,8 +212,7 @@ export default function App() {
   const renderTopbar = () => (
     <header className="synapse-topbar">
       {/* mobile hamburger */}
-      <button className="synapse-btn synapse-btn--ghost synapse-btn--sm"
-        style={{ display: "none" }} // shown via media query below
+      <button className="synapse-btn synapse-btn--ghost synapse-btn--sm synapse-topbar__menu-btn"
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Toggle menu">
         ☰
@@ -249,14 +248,14 @@ export default function App() {
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
         </div>
-        <select className="synapse-input synapse-select" style={{ width: "auto", flexShrink: 0 }}
+        <select className="synapse-input synapse-select synapse-search__select"
           value={filters.resourceType}
           onChange={(e) => setFilters((f) => ({ ...f, resourceType: e.target.value as "all" | "file" | "link" }))}>
           <option value="all">All types</option>
           <option value="file">Files</option>
           <option value="link">Links</option>
         </select>
-        <select className="synapse-input synapse-select" style={{ width: "auto", flexShrink: 0 }}
+        <select className="synapse-input synapse-select synapse-search__select"
           value={filters.verificationStatus}
           onChange={(e) => setFilters((f) => ({ ...f, verificationStatus: e.target.value as "all" | "verified" | "pending" | "rejected" }))}>
           <option value="all">All status</option>
@@ -264,10 +263,10 @@ export default function App() {
           <option value="pending">Pending</option>
           <option value="rejected">Rejected</option>
         </select>
-        <input className="synapse-input" style={{ width: 90 }} placeholder="Min $"
+        <input className="synapse-input synapse-search__price" placeholder="Min $"
           value={filters.minPrice}
           onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))} />
-        <input className="synapse-input" style={{ width: 90 }} placeholder="Max $"
+        <input className="synapse-input synapse-search__price" placeholder="Max $"
           value={filters.maxPrice}
           onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))} />
         {(filters.search || filters.resourceType !== "all" || filters.verificationStatus !== "all" || filters.minPrice || filters.maxPrice) && (

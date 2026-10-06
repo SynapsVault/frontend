@@ -231,6 +231,21 @@ body {
   gap: 8px;
 }
 
+.synapse-topbar__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--synapse-border);
+  border-radius: var(--radius-sm);
+  background: var(--synapse-surface);
+  color: var(--synapse-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.synapse-topbar__menu-btn:hover { border-color: var(--synapse-violet); color: var(--synapse-violet-hi); }
+
 .synapse-content {
   padding: 28px 24px;
   flex: 1;
@@ -719,6 +734,23 @@ body {
   .synapse-sidebar { transform: translateX(-100%); transition: transform 0.25s ease; }
   .synapse-sidebar--open { transform: translateX(0); width: 260px; }
   .synapse-main { margin-left: 0; }
+
+  .synapse-topbar__menu-btn { display: inline-flex; }
+  .synapse-topbar { padding: 0 12px; }
+  .synapse-content { padding: 16px 12px; }
+
+  .synapse-search { flex-direction: column; align-items: stretch; }
+  .synapse-search__field { min-width: 0; }
+
+  .synapse-resource-grid { grid-template-columns: 1fr; }
+
+  .synapse-toast { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+
+  .synapse-modal { max-width: none; border-radius: 0; max-height: 100vh; height: 100%; }
+  .synapse-modal-overlay { padding: 0; align-items: stretch; }
+
+  .synapse-btn { min-height: 44px; }
+  .synapse-nav-item { min-height: 44px; }
 }
 
 /* ── Light mode override ────────────────────────────────────────────────── */
