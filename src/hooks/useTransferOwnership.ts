@@ -39,13 +39,18 @@ export function useTransferOwnership(resourceId: string, apiKey: string) {
 
       if ("error" in result && result.error) {
         throw new Error(
-          typeof result.error === "string" ? result.error : "Wallet rejected signing",
+          typeof result.error === "string"
+            ? result.error
+            : "Wallet rejected signing. Please approve the transaction in your wallet and try again.",
         );
       }
 
       const signedXdr =
         "signedTxXdr" in result ? result.signedTxXdr : (result as any).result?.signedTxXdr;
-      if (!signedXdr) throw new Error("No signed transaction returned by wallet");
+      if (!signedXdr)
+        throw new Error(
+          "No signed transaction returned by wallet. Ensure your wallet is unlocked, connected, and on the correct network, then try again.",
+        );
 
       // Step 3 — submit signed XDR and sync DB owner
       setStatus("submitting");
@@ -53,7 +58,11 @@ export function useTransferOwnership(resourceId: string, apiKey: string) {
       setNewOwner(updated.newCreator);
       setStatus("confirmed");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while transferring ownership. Please check your wallet connection and try again.",
+      );
       setStatus("error");
     }
   }

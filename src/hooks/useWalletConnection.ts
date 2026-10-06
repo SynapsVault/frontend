@@ -81,7 +81,9 @@ export function useWalletConnection(): WalletState {
 
     const api = window.freighterApi;
     if (!api) {
-      setError("Freighter wallet not found. Please install the Freighter browser extension.");
+      setError(
+        "Freighter wallet not found. Install the Freighter browser extension from https://freighter.app, then reload this page and try again."
+      );
       setStatus("error");
       return;
     }
@@ -89,7 +91,9 @@ export function useWalletConnection(): WalletState {
     try {
       const connected = await api.isConnected();
       if (!connected) {
-        setError("Freighter is not connected. Open the extension and unlock your wallet.");
+        setError(
+          "Freighter is not connected. Open the Freighter extension, unlock your wallet, and approve the connection request, then try again."
+        );
         setStatus("error");
         return;
       }
@@ -105,7 +109,10 @@ export function useWalletConnection(): WalletState {
       setAddress(publicKey);
       setStatus("connected");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to connect wallet.";
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Failed to connect wallet. Make sure Freighter is installed and unlocked, then try again.";
       setError(message);
       setStatus("error");
     }

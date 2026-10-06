@@ -2,6 +2,7 @@ import React from "react";
 
 interface Props {
   message: string;
+  hint?: string;
   onRetry?: () => void;
 }
 
@@ -9,7 +10,7 @@ interface Props {
  * Full-width error banner with an optional retry button.
  * Used wherever an async fetch fails.
  */
-export function ErrorBanner({ message, onRetry }: Props) {
+export function ErrorBanner({ message, hint, onRetry }: Props) {
   return (
     <div
       role="alert"
@@ -33,6 +34,10 @@ export function ErrorBanner({ message, onRetry }: Props) {
       </svg>
 
       <p className="text-sm font-medium text-red-700 dark:text-red-300">{message}</p>
+
+      {hint && (
+        <p className="text-xs text-red-500 dark:text-red-400">{hint}</p>
+      )}
 
       {onRetry && (
         <button

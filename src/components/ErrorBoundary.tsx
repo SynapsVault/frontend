@@ -1,4 +1,5 @@
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   children: ReactNode;
@@ -55,17 +56,19 @@ export class ErrorBoundary extends Component<Props, State> {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            Something went wrong
+            {t("error_boundary.title")}
           </h2>
           <p className="max-w-md text-center text-sm text-gray-500 dark:text-gray-400">
-            An unexpected error occurred. Try reloading the page, or click the button below to
-            retry.
+            {t("error_boundary.description")}
+          </p>
+          <p className="max-w-md text-center text-xs text-gray-400 dark:text-gray-500">
+            {t("error_boundary.hint")}
           </p>
           <button
             onClick={this.handleRetry}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-600"
           >
-            Reload
+            {t("error_boundary.reload")}
           </button>
         </div>
       );

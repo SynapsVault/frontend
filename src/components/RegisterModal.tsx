@@ -35,7 +35,11 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
       setNetworkPassphrase(result.networkPassphrase);
       setState("signing");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to prepare transaction");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to prepare transaction. Please check your connection and try again."
+      );
       setState("failed");
     }
   }
@@ -46,7 +50,9 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
 
       // Check if Freighter is available
       if (!window.freighterApi) {
-        throw new Error("Freighter wallet not found. Please install Freighter extension.");
+        throw new Error(
+          "Freighter wallet not found. Install the Freighter browser extension from https://freighter.app, then reload this page and try again."
+        );
       }
 
       // Sign the transaction with Freighter
@@ -60,7 +66,11 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
       setState("success");
       onConfirmed(result.txHash);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign or submit transaction");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to sign or submit transaction. Ensure Freighter is unlocked and connected to the correct network, then try again."
+      );
       if (err instanceof RegistrationError) {
         setNextSteps(err.nextSteps ?? []);
         setFailedTxHash(err.txHash ?? "");

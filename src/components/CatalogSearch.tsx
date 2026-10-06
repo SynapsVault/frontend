@@ -22,6 +22,10 @@ interface Props {
   results?: SearchResult[];
   /** Called when a result is activated (Enter key or click). */
   onActivate?: (result: SearchResult) => void;
+  /** Ref forwarded to the search input so the parent can focus it programmatically. */
+  searchInputRef?: React.RefObject<HTMLInputElement>;
+  /** Called when the filter row should be toggled (e.g. via the `f` shortcut). */
+  onToggleFilters?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,6 +40,8 @@ export function CatalogSearch({
   onReset,
   results,
   onActivate,
+  searchInputRef,
+  onToggleFilters,
 }: Props) {
   const hasActiveFilters =
     !!filters.search ||
@@ -49,7 +55,8 @@ export function CatalogSearch({
   const listboxId = useId();
   // Index of the currently focused result (-1 means none).
   const [activeIndex, setActiveIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = searchInputRef ?? internalInputRef;
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const hasResults = results && results.length > 0;
@@ -214,7 +221,10 @@ export function CatalogSearch({
       </div>
 
       {/* Filter row */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <div
+        id="catalog-filter-row"
+        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+      >
         {/* Verification status */}
         <select
           aria-label="Filter by verification status"
@@ -276,6 +286,18 @@ export function CatalogSearch({
           />
           <span className="text-xs text-gray-400">USDC</span>
         </div>
+
+        {/* Toggle filters (keyboard shortcut `f`) */}
+        {onToggleFilters && (
+          <button
+            type="button"
+            onClick={onToggleFilters}
+            aria-controls="catalog-filter-row"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 sm:py-1.5 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+          >
+            Toggle filters
+          </button>
+        )}
 
         {/* Reset */}
         {hasActiveFilters && (

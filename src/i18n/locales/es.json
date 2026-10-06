@@ -37,7 +37,11 @@
   "error_boundary": {
     "title": "Algo salió mal",
     "description": "Ocurrió un error inesperado. Intente recargar la página o haga clic en el botón para reintentar.",
-    "reload": "Recargar"
+    "reload": "Recargar",
+    "error_message": "Mensaje de error"
+  },
+  "shortcuts": {
+    "keyboard_shortcuts": "Atajos de teclado"
   },
   "language": {
     "switch_to": "English",

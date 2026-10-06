@@ -39,7 +39,7 @@ export function useBuyResource(address: string | null): BuyState {
 
       if (!address) {
         setStatus("error");
-        setError("Connect your Freighter wallet before buying.");
+        setError("Your wallet is not connected. Click Connect Wallet, then try again.");
         return;
       }
 
@@ -58,7 +58,11 @@ export function useBuyResource(address: string | null): BuyState {
         setResult(purchase);
         setStatus("success");
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Purchase failed. Please try again.");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Purchase failed. Please check that your wallet is on the correct network and has enough balance, then try again.",
+        );
         setStatus("error");
       } finally {
         inFlight.current = false;
