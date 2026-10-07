@@ -3,6 +3,8 @@ import { useAsync } from "../hooks/useAsync.js";
 import { ErrorBanner } from "./ErrorBanner.js";
 import { ResourceGridSkeleton } from "./ResourceCardSkeleton.js";
 import { ExplorerLink } from "./ExplorerLink.js";
+import { StatusTag, formatPrice } from "./ResourceCard.js";
+import { StatCard, formatCount } from "./StatCard.js";
 import { fetchMyResources } from "../api/resources.js";
 
 export interface DashboardResource {
@@ -47,8 +49,8 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
     const listed = resources.filter((r) => r.listed).length;
     const verified = resources.filter((r) => r.verificationStatus === "verified").length;
     const registered = resources.filter((r) => r.onchainStatus === "registered").length;
-    const pendingRegistration = resources.filter(needsRegistration).length;
-    return { total: resources.length, listed, verified, registered, pendingRegistration };
+    const pending = resources.filter(needsRegistration);
+    return { total: resources.length, listed, verified, registered, pending };
   }, [resources]);
 
   if (isLoading) return <ResourceGridSkeleton count={6} />;
@@ -59,39 +61,59 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
 
   if (resources.length === 0) {
     return (
-      <div className="mt-8 rounded-xl border border-dashed border-line p-10 text-center text-fg-muted">
-        <p className="text-lg font-medium">No resources yet</p>
-        <p className="mt-1 text-sm">Publish a resource to see it show up here.</p>
+      <div className="synapse-empty">
+        <div className="synapse-empty__icon" aria-hidden="true">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round">
+            <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" />
+            <path d="M3 7.5 12 12l9-4.5M12 12v9" />
+          </svg>
+        </div>
+        <p className="synapse-empty__title">No resources yet</p>
+        <p className="synapse-empty__body">Publish a resource to see it show up here.</p>
       </div>
     );
   }
 
+  const { total, listed, verified, registered, pending } = summary;
+
   return (
     <div className="space-y-6">
       {/* Summary row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <SummaryStat label="Total resources" value={summary.total} />
-        <SummaryStat label="Listed" value={summary.listed} />
-        <SummaryStat label="Verified" value={summary.verified} />
-        <SummaryStat label="Registered on-chain" value={summary.registered} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard label="Total resources" value={formatCount(total)} />
+        <StatCard
+          label="Listed"
+          value={formatCount(listed)}
+          note={total - listed > 0 ? `${formatCount(total - listed)} unlisted` : undefined}
+        />
+        <StatCard label="Verified" value={formatCount(verified)} tone="success" progress={verified / total} />
+        <StatCard label="Registered on-chain" value={formatCount(registered)} tone="accent" progress={registered / total} />
       </div>
 
-      {summary.pendingRegistration > 0 && (
-        <div className="rounded-xl border border-warning/30 bg-warning-soft p-4">
-          <p className="text-sm font-medium text-warning">
-            {summary.pendingRegistration} resource{summary.pendingRegistration !== 1 ? "s" : ""}{" "}
-            verified but not yet registered on-chain.
-          </p>
+      {pending.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm">
+            <p className="font-semibold text-warning">
+              {pending.length} verified resource{pending.length !== 1 ? "s" : ""} not yet registered on-chain
+            </p>
+            <p className="mt-0.5 text-warning">
+              Registering records the creator, title and price in the on-chain vault registry, so buyers and agents can
+              verify who owns a resource without trusting SynapsVault.
+            </p>
+          </div>
+          <button onClick={() => onRegister(pending[0])} className="synapse-btn synapse-btn--primary synapse-btn--sm shrink-0">
+            Register next
+          </button>
         </div>
       )}
 
       {/* Owned resource list */}
-      <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-sm">
+      <div className="relative overflow-x-auto rounded-xl border border-line bg-surface shadow-sm">
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-surface-sunken">
             <tr>
               <Th>Title</Th>
-              <Th>Price</Th>
+              <Th align="right">Price</Th>
               <Th>Listing</Th>
               <Th>Verification</Th>
               <Th>On-chain</Th>
@@ -102,77 +124,46 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
           </thead>
           <tbody className="divide-y divide-line">
             {resources.map((r) => (
-              <tr key={r.id}>
-                <td className="px-2 py-3 sm:px-4">
-                  <p className="font-medium text-fg">{r.title}</p>
-                  <p className="text-xs text-fg-subtle">{r.resourceType}</p>
+              <tr key={r.id} className="transition-colors hover:bg-surface-hover">
+                <td className="max-w-[16rem] px-3 py-3 sm:px-4">
+                  <p className="truncate font-medium text-fg" title={r.title}>
+                    {r.title}
+                  </p>
+                  <p className="text-xs capitalize text-fg-subtle">{r.resourceType}</p>
                 </td>
-                <td className="px-2 py-3 text-sm font-medium text-accent-text sm:px-4">
-                  {r.price} USDC
+                <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-sm font-medium tabular-nums text-fg sm:px-4">
+                  {formatPrice(r.price)} USDC
                 </td>
-                <td className="px-2 py-3 sm:px-4">
-                  <StatusBadge
-                    label={r.listed ? "listed" : "unlisted"}
-                    tone={r.listed ? "green" : "gray"}
-                  />
+                <td className="px-3 py-3 sm:px-4">
+                  <span className={`synapse-tag ${r.listed ? "synapse-tag--success" : "synapse-tag--neutral"}`}>
+                    {r.listed ? "Listed" : "Unlisted"}
+                  </span>
                 </td>
-                <td className="px-2 py-3 sm:px-4">
-                  <StatusBadge
-                    label={r.verificationStatus}
-                    tone={
-                      r.verificationStatus === "verified"
-                        ? "green"
-                        : r.verificationStatus === "rejected"
-                          ? "red"
-                          : "gray"
-                    }
-                  />
+                <td className="px-3 py-3 sm:px-4">
+                  <StatusTag status={r.verificationStatus} type="verify" />
                 </td>
-                <td className="px-2 py-3 sm:px-4">
+                <td className="px-3 py-3 sm:px-4">
                   <div className="flex items-center gap-1.5">
-                    <StatusBadge
-                      label={r.onchainStatus === "none" ? "not on-chain" : r.onchainStatus}
-                      tone={
-                        r.onchainStatus === "registered"
-                          ? "indigo"
-                          : r.onchainStatus === "failed"
-                            ? "red"
-                            : r.onchainStatus === "pending"
-                              ? "yellow"
-                              : "gray"
-                      }
-                    />
+                    <StatusTag status={r.onchainStatus} type="chain" />
                     {r.onchainStatus === "registered" && r.onchainTxHash && (
-                      <ExplorerLink
-                        type="tx"
-                        value={r.onchainTxHash}
-                        className="text-xs text-accent-text hover:text-accent-hover"
-                      >
-                        ↗
+                      <ExplorerLink type="tx" value={r.onchainTxHash} className="text-xs">
+                        <span aria-hidden="true">↗</span>
+                        <span className="sr-only">View registration transaction</span>
                       </ExplorerLink>
                     )}
                   </div>
                 </td>
-                <td className="px-2 py-3 text-right sm:px-4">
-                  <div className="flex flex-wrap justify-end gap-1.5">
+                <td className="px-3 py-3 sm:px-4">
+                  <div className="flex justify-end gap-1.5">
                     {needsRegistration(r) && (
-                      <button
-                        onClick={() => onRegister(r)}
-                        className="rounded-lg border border-warning/30 bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning hover:border-warning/60"
-                      >
+                      <button onClick={() => onRegister(r)} className="synapse-btn synapse-btn--primary synapse-btn--sm">
                         Register
                       </button>
                     )}
-                    <button
-                      onClick={() => onEditPrice(r)}
-                      className="rounded-lg bg-surface-hover px-2.5 py-1 text-xs font-medium text-fg hover:bg-line"
-                    >
+                    <button onClick={() => onEditPrice(r)} className="synapse-btn synapse-btn--secondary synapse-btn--sm">
                       Edit price
                     </button>
-                    <button
-                      onClick={() => onTransferOwnership(r)}
-                      className="rounded-lg bg-surface-hover px-2.5 py-1 text-xs font-medium text-fg hover:bg-line"
-                    >
+                    <button onClick={() => onTransferOwnership(r)} className="synapse-btn synapse-btn--ghost synapse-btn--sm">
                       Transfer
                     </button>
                   </div>
@@ -186,39 +177,15 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
   );
 }
 
-function SummaryStat({ label, value }: { label: string; value: number }) {
+function Th({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-bold text-fg">{value}</p>
-    </div>
-  );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-fg-muted">
+    <th
+      scope="col"
+      className={`whitespace-nowrap px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-fg-muted sm:px-4 ${
+        align === "right" ? "text-right" : "text-left"
+      }`}
+    >
       {children}
     </th>
-  );
-}
-
-const TONE_CLASSES: Record<string, string> = {
-  green: "bg-success-soft text-success",
-  red: "bg-danger-soft text-danger",
-  yellow: "bg-warning-soft text-warning",
-  indigo: "bg-accent-soft text-accent-text",
-  gray: "bg-surface-hover text-fg-muted",
-};
-
-function StatusBadge({ label, tone }: { label: string; tone: keyof typeof TONE_CLASSES }) {
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TONE_CLASSES[tone]}`}
-    >
-      {label}
-    </span>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CreatorDashboard, type DashboardResource } from "./CreatorDashboard.js";
 import { fetchMyResources } from "../api/resources.js";
@@ -56,11 +56,12 @@ describe("CreatorDashboard", () => {
 
     renderDashboard();
 
-    expect(await screen.findByText("Atlas of Stellar Networks")).toBeInTheDocument();
-    expect(screen.getByText("5.00 USDC")).toBeInTheDocument();
-    expect(screen.getByText("verified")).toBeInTheDocument();
-    expect(screen.getByText("registered")).toBeInTheDocument();
-    expect(screen.getByText("listed")).toBeInTheDocument();
+    const title = await screen.findByText("Atlas of Stellar Networks");
+    const row = within(title.closest("tr")!);
+    expect(row.getByText("5.00 USDC")).toBeInTheDocument();
+    expect(row.getByText("Verified")).toBeInTheDocument();
+    expect(row.getByText("On-chain")).toBeInTheDocument();
+    expect(row.getByText("Listed")).toBeInTheDocument();
   });
 
   it("shows a Register entry point only when verified but not yet on-chain", async () => {

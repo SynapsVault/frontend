@@ -79,6 +79,18 @@ light in dark mode) that keeps explicit `gray-*` + `dark:` pairs. **Prefer them 
 | `synapse-empty` › `__icon` / `__title` / `__body` | Empty states                                    |
 | `synapse-spinner` (`--lg`)                   | Indeterminate loading                                |
 
+### React building blocks
+
+| Export                                   | From                         | Use                                                                 |
+| ---------------------------------------- | ---------------------------- | ------------------------------------------------------------------- |
+| `StatCard({ label, value, unit?, note?, tone?, progress? })` | `components/StatCard.tsx` | Summary metric. `tone`: `default` `accent` `success` `danger` `warning`; `progress` (0–1) adds a bar in the tone color |
+| `StatusTag({ status, type })`            | `components/ResourceCard.tsx` | Verification (`type="verify"`) or on-chain (`type="chain"`) pill. Wording differs per type (`status_verify.*` / `status_chain.*`) |
+| `formatPrice(price)`                     | `components/ResourceCard.tsx` | Pads to ≥ 2 decimals without rounding: `"0.5"` → `"0.50"`         |
+| `shortAddress(addr)`                     | `components/ResourceCard.tsx` | `GABC…WXYZ`                                                         |
+| `formatCount(n)`                         | `components/StatCard.tsx`    | `1832` → `"1,832"`                                                  |
+| `timeAgo(iso)`                           | `components/StatCard.tsx`    | `just now` · `3 min ago` · `2 h ago` · `4 d ago`, then a date       |
+| `sumUsdc(amounts)`                       | `components/StatCard.tsx`    | Sums USDC strings without float drift: `["1.5","0.25"]` → `"1.75"` |
+
 > **Tailwind purging:** these live in `@layer components`, so a rule is only
 > emitted if its full class name appears literally in source. Never build
 > modifiers with template strings (`` `synapse-tag--${tone}` ``); map to full

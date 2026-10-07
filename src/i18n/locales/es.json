@@ -31,7 +31,14 @@
     "page_leaderboard": "Clasificación",
     "page_agent": "Agente IA",
     "connecting_wallet": "Conectando…",
-    "install_freighter": "Instalar Freighter"
+    "install_freighter": "Instalar Freighter",
+    "hero_title": "Conocimiento de pago por acceso, liquidado en Stellar",
+    "stat_listings": "Publicaciones",
+    "stat_verified": "Verificados",
+    "stat_onchain": "Registro en cadena",
+    "stat_from": "Precio más bajo",
+    "copy_address": "Copiar dirección de la billetera",
+    "address_copied": "Dirección de la billetera copiada"
   },
   "catalog": {
     "empty_title": "El catálogo está vacío",
@@ -50,11 +57,33 @@
     "view_tx": "Ver tx",
     "off_chain": "fuera de cadena",
     "url_copied": "URL de acceso copiada al portapapeles",
-    "copy_this_url": "Copie esta URL:"
+    "copy_this_url": "Copie esta URL:",
+    "sort_label": "Ordenar recursos",
+    "sort_featured": "Destacados",
+    "sort_price_asc": "Precio: de menor a mayor",
+    "sort_price_desc": "Precio: de mayor a menor",
+    "sort_title": "Título: A–Z",
+    "anonymous_publisher": "Editor anónimo",
+    "open_preview": "Abrir vista previa de {{title}}",
+    "type_file": "Archivo",
+    "type_link": "Enlace"
   },
   "leaderboard": {
     "title": "Clasificación de Creadores",
-    "description": "Los mejores creadores clasificados por USDC ganado"
+    "description": "Los mejores creadores clasificados por USDC ganado",
+    "rank": "Puesto",
+    "creator": "Creador",
+    "wallet": "Billetera",
+    "resources": "Recursos",
+    "sales": "Ventas",
+    "earned": "Ganado (USDC)",
+    "share": "Porcentaje de ganancias",
+    "empty": "Aún no hay editores. ¡Sea el primero en publicar un recurso!",
+    "loading": "Cargando clasificación…",
+    "load_failed": "No se pudo cargar la clasificación.",
+    "creators_one": "{{count}} creador",
+    "creators_other": "{{count}} creadores",
+    "total_earned": "{{amount}} USDC pagados"
   },
   "agent": {
     "title": "Agente de Verificación",
@@ -125,5 +154,39 @@
     "dismiss": "Descartar",
     "details": "Mostrar detalles",
     "hide_details": "Ocultar detalles"
+  },
+  "buy": {
+    "connect": "Conectar Freighter"
+  },
+  "status_verify": {
+    "verified": "Verificado",
+    "pending": "En revisión",
+    "rejected": "Rechazado"
+  },
+  "status_chain": {
+    "registered": "En cadena",
+    "pending": "Registrando",
+    "failed": "Registro fallido",
+    "none": "Fuera de cadena",
+    "unregistered": "Fuera de cadena"
+  },
+  "purchases": {
+    "description": "Consulte cualquier billetera de Stellar para ver su historial de compras y recibos.",
+    "wallet_label": "Dirección de la billetera",
+    "placeholder": "G…",
+    "look_up": "Consultar",
+    "searching": "Consultando…",
+    "invalid_address": "Introduzca una dirección de Stellar válida: 56 caracteres que empiezan por G.",
+    "load_failed": "No se pudieron cargar las compras.",
+    "use_connected": "Usar la billetera conectada",
+    "prompt_title": "Encuentre sus compras",
+    "prompt_body": "Introduzca una dirección arriba, o conecte su billetera, para ver los recibos de cada recurso que haya pagado.",
+    "empty_title": "Aún no hay compras",
+    "empty_body": "Esta billetera no ha comprado ningún recurso. Explore el catálogo para encontrar algo que valga la pena desbloquear.",
+    "total_one": "{{count}} compra · {{amount}} USDC en total",
+    "total_other": "{{count}} compras · {{amount}} USDC en total",
+    "resource_fallback": "Recurso #{{id}}",
+    "paid_to": "Pagado a {{address}}",
+    "view_receipt": "Ver recibo"
   }
 }
