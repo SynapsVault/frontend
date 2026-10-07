@@ -31,20 +31,36 @@ const TONE_CLASS: Record<Tone, string> = {
 const VERIFY_TONE: Record<string, Tone> = { verified: "success", pending: "warning", rejected: "danger" };
 const CHAIN_TONE: Record<string, Tone> = { registered: "accent", pending: "warning", failed: "danger" };
 
-/** Pill showing a verification or on-chain status, colored by meaning. */
+/**
+ * Pill showing a verification or on-chain status, colored by meaning. The two
+ * types use distinct wording ("In review" vs "Registering") so a pending
+ * verification can't be mistaken for a pending registration.
+ */
 export function StatusTag({ status, type }: { status: string; type: "verify" | "chain" }) {
   const { t } = useTranslation();
   const tone = (type === "verify" ? VERIFY_TONE : CHAIN_TONE)[status] ?? (type === "verify" ? "warning" : "neutral");
+  const ns = type === "verify" ? "status_verify" : "status_chain";
   return (
-    <span className={`synapse-tag ${TONE_CLASS[tone]}`}>
+    <span className={`synapse-tag normal-case ${TONE_CLASS[tone]}`}>
       <span className="synapse-tag__dot" aria-hidden="true" />
-      {t(`status.${status}`, { defaultValue: status })}
+      {t(`${ns}.${status}`, { defaultValue: t(`status.${status}`, { defaultValue: status }) })}
     </span>
   );
 }
 
+/**
+ * Pads a decimal price to at least two places without rounding:
+ * "0.5" → "0.50", "3" → "3.00", "1.2345" stays. Non-numeric input passes through.
+ */
+export function formatPrice(price: string | number): string {
+  const s = String(price).trim();
+  if (!/^-?\d+(\.\d+)?$/.test(s)) return String(price);
+  const [whole, frac = ""] = s.split(".");
+  return `${whole}.${frac.padEnd(2, "0")}`;
+}
+
 /** Truncates a Stellar address to GABC…WXYZ. */
-function shortAddress(addr: string): string {
+export function shortAddress(addr: string): string {
   return addr.length > 12 ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : addr;
 }
 
@@ -54,37 +70,56 @@ interface Props {
   onBuy: (resource: Resource) => void;
 }
 
-/** Catalog card for a single paywalled resource. */
+/**
+ * Catalog card for a single paywalled resource. The title button's ::after
+ * covers the whole card, so clicking anywhere opens the preview; tags, links
+ * and footer buttons sit above it.
+ */
 export function ResourceCard({ resource: r, onPreview, onBuy }: Props) {
   const { t } = useTranslation();
+  const isLink = r.resourceType === "link";
   return (
     <article className="synapse-resource-card" aria-labelledby={`resource-${r.id}-title`}>
       <div className="synapse-resource-card__header">
-        <span className="synapse-resource-card__type" aria-hidden="true">
-          {r.resourceType === "link" ? (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+        <span className="synapse-resource-card__type">
+          {isLink ? (
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden="true">
               <path d="M6.5 9.5a3 3 0 0 0 4.2 0l2-2a3 3 0 0 0-4.2-4.2l-.6.6M9.5 6.5a3 3 0 0 0-4.2 0l-2 2a3 3 0 0 0 4.2 4.2l.6-.6" strokeLinecap="round" />
             </svg>
           ) : (
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden="true">
               <path d="M9 1.5H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5L9 1.5Z M9 1.5V5h3.5" strokeLinejoin="round" />
             </svg>
           )}
+          {isLink ? t("catalog.type_link") : t("catalog.type_file")}
         </span>
         <div className="synapse-resource-card__price">
-          {r.price} <span>USDC</span>
+          {formatPrice(r.price)} <span>USDC</span>
         </div>
       </div>
 
       <div>
-        <h3 id={`resource-${r.id}-title`} className="synapse-resource-card__title">
-          {r.title}
+        <h3 className="synapse-resource-card__title">
+          <button
+            type="button"
+            className="synapse-resource-card__title-btn"
+            aria-label={t("catalog.open_preview", { title: r.title })}
+            onClick={() => onPreview(r)}
+          >
+            <span id={`resource-${r.id}-title`}>{r.title}</span>
+          </button>
         </h3>
-        {r.publisherName && (
-          <div className="synapse-resource-card__publisher">
-            {t("catalog.by_publisher", { name: r.publisherName })}
-          </div>
-        )}
+        <p className="synapse-resource-card__publisher">
+          {r.publisherName ? t("catalog.by_publisher", { name: r.publisherName }) : t("catalog.anonymous_publisher")}
+          {r.walletAddress && (
+            <>
+              <span aria-hidden="true"> · </span>
+              <ExplorerLink type="account" value={r.walletAddress} className="synapse-resource-card__addr">
+                {shortAddress(r.walletAddress)}
+              </ExplorerLink>
+            </>
+          )}
+        </p>
       </div>
 
       <div className="synapse-resource-card__tags">
@@ -98,17 +133,12 @@ export function ResourceCard({ resource: r, onPreview, onBuy }: Props) {
       </div>
 
       <div className="synapse-resource-card__footer">
-        <ExplorerLink type="account" value={r.walletAddress} className="synapse-resource-card__addr">
-          {shortAddress(r.walletAddress)}
-        </ExplorerLink>
-        <div className="synapse-resource-card__actions">
-          <button className="synapse-btn synapse-btn--ghost synapse-btn--sm" onClick={() => onPreview(r)}>
-            {t("catalog.preview")}
-          </button>
-          <button className="synapse-btn synapse-btn--primary synapse-btn--sm" onClick={() => onBuy(r)}>
-            {t("catalog.buy")}
-          </button>
-        </div>
+        <button className="synapse-btn synapse-btn--secondary synapse-btn--sm" onClick={() => onPreview(r)}>
+          {t("catalog.preview")}
+        </button>
+        <button className="synapse-btn synapse-btn--primary synapse-btn--sm" onClick={() => onBuy(r)}>
+          {t("catalog.buy")}
+        </button>
       </div>
     </article>
   );

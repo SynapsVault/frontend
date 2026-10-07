@@ -1,162 +1,196 @@
-import React from "react";
+import React, { useId, useMemo, useState } from "react";
 import { useAnalytics } from "../hooks/useAnalytics.js";
-import { RecentPayment, ResourceStat } from "../api/analytics.js";
+import type { RecentPayment, ResourceStat } from "../api/analytics.js";
+import { ErrorBanner } from "./ErrorBanner.js";
+import { StatusTag, formatPrice, shortAddress } from "./ResourceCard.js";
+import { StatCard, formatCount, timeAgo } from "./StatCard.js";
 
 interface Props {
   apiKey: string;
 }
 
+const earnedOf = (r: ResourceStat) => {
+  const n = Number.parseFloat(r.totalEarned);
+  return Number.isFinite(n) ? n : 0;
+};
+
 export function AnalyticsDashboard({ apiKey }: Props) {
-  const { data, loading, error } = useAnalytics(apiKey);
+  const { data, loading, error, retry } = useAnalytics(apiKey);
 
-  if (loading)
-    return (
-      <p className="mt-8 text-center text-sm text-fg-muted" aria-live="polite" aria-busy="true">
-        Loading analytics…
-      </p>
-    );
+  const sorted = useMemo(() => [...(data?.resources ?? [])].sort((a, b) => earnedOf(b) - earnedOf(a)), [data]);
 
-  if (error)
-    return (
-      <p className="mt-8 text-center text-sm text-danger" aria-live="assertive">
-        Error: {error}
-      </p>
-    );
+  if (loading && !data) return <AnalyticsSkeleton />;
+
+  if (error) return <ErrorBanner message={error} onRetry={retry} />;
 
   if (!data) return null;
 
-  const { summary, resources } = data;
+  const { summary } = data;
 
   // Empty state
   if (summary.totalResources === 0)
     return (
-      <div
-        className="mt-8 rounded-xl border border-dashed border-line p-10 text-center text-fg-muted"
-        aria-live="polite"
-      >
-        <p className="text-lg font-medium">No resources yet</p>
-        <p className="mt-1 text-sm">
+      <div className="synapse-empty" aria-live="polite">
+        <div className="synapse-empty__icon" aria-hidden="true">
+          <svg width="24" height="24" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2.5 15.5 6.5 9l3 3.5 3-6 3 5" />
+          </svg>
+        </div>
+        <p className="synapse-empty__title">No resources yet</p>
+        <p className="synapse-empty__body">
           Publish your first resource to start earning USDC directly to your Stellar wallet.
         </p>
       </div>
     );
 
+  const totalEarned = Number.parseFloat(summary.totalEarned) || 0;
+  const avgSale = summary.totalSales > 0 ? totalEarned / summary.totalSales : 0;
+  const { verified, pending, rejected } = summary.verification;
+
   return (
-    <div className="mt-8 space-y-6" aria-live="polite">
+    <div className="space-y-6" aria-live="polite" aria-busy={loading}>
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard
           label="Total earned"
-          value={`${summary.totalEarned} ${summary.currency}`}
+          value={formatPrice(summary.totalEarned)}
+          unit={summary.currency}
+          tone="accent"
           note="Paid directly to your Stellar wallet"
         />
         <StatCard
           label="Total sales"
-          value={String(summary.totalSales)}
-          note={`across ${summary.totalResources} resource${summary.totalResources !== 1 ? "s" : ""}`}
+          value={formatCount(summary.totalSales)}
+          note={
+            summary.totalSales > 0
+              ? `avg sale ${formatPrice(avgSale.toFixed(2))} ${summary.currency}`
+              : `across ${summary.totalResources} resource${summary.totalResources !== 1 ? "s" : ""}`
+          }
         />
         <StatCard
           label="Listed resources"
-          value={`${summary.listedResources} / ${summary.totalResources}`}
-          note={`${summary.verification.verified} verified · ${summary.verification.pending} pending`}
+          value={`${formatCount(summary.listedResources)} / ${formatCount(summary.totalResources)}`}
+          progress={summary.listedResources / summary.totalResources}
+          tone="success"
+          note={`${verified} verified · ${pending} pending · ${rejected} rejected`}
         />
       </div>
 
       {/* Per-resource breakdown */}
-      <div className="space-y-4">
-        {resources.map((r) => (
-          <ResourceRow key={r.id} resource={r} />
-        ))}
+      <div className="rounded-xl border border-line bg-surface shadow-sm">
+        <h2 className="border-b border-line px-4 py-3 text-base font-semibold text-fg sm:px-5">Earnings by resource</h2>
+        <ul role="list" className="divide-y divide-line">
+          {sorted.map((r) => (
+            <ResourceRow key={r.id} resource={r} share={totalEarned > 0 ? earnedOf(r) / totalEarned : 0} />
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value, note }: { label: string; value: string; note: string }) {
+function AnalyticsSkeleton() {
   return (
-    <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-fg">{value}</p>
-      <p className="mt-1 text-xs text-fg-subtle">{note}</p>
+    <div role="status" aria-busy="true">
+      <span className="sr-only">Loading analytics…</span>
+      <div className="animate-pulse space-y-6" aria-hidden="true">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-xl bg-surface-hover" />
+          ))}
+        </div>
+        <div className="h-64 rounded-xl bg-surface-hover" />
+      </div>
     </div>
   );
 }
 
-function ResourceRow({ resource: r }: { resource: ResourceStat }) {
-  const [open, setOpen] = React.useState(false);
+function ResourceRow({ resource: r, share }: { resource: ResourceStat; share: number }) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const pct = Math.round(share * 100);
 
   return (
-    <div className="rounded-xl border border-line bg-surface shadow-sm">
+    <li>
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full flex-col items-start gap-2 px-4 py-4 text-left sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-surface-hover sm:gap-4 sm:px-5"
       >
-        <div>
-          <p className="font-semibold text-fg">{r.title}</p>
+        <svg
+          className={`shrink-0 text-fg-subtle transition-transform ${open ? "rotate-90" : ""}`}
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M6 3.5 10.5 8 6 12.5" />
+        </svg>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium text-fg">{r.title}</p>
           <p className="mt-0.5 text-xs text-fg-muted">
-            {r.price} USDC ·{" "}
-            <span
-              className={
-                r.verificationStatus === "verified"
-                  ? "text-success"
-                  : r.verificationStatus === "rejected"
-                    ? "text-danger"
-                    : "text-warning"
-              }
-            >
-              {r.verificationStatus}
-            </span>{" "}
-            · {r.listed ? "listed" : "unlisted"}
+            {formatPrice(r.price)} USDC · {r.listed ? "listed" : "unlisted"} · {r.totalSales} sale
+            {r.totalSales !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-semibold text-accent-text">{r.totalEarned} USDC</p>
-          <p className="text-xs text-fg-subtle">
-            {r.totalSales} sale{r.totalSales !== 1 ? "s" : ""}
-          </p>
+        <div className="hidden w-28 items-center gap-2 sm:flex" title={`${pct}% of earnings`}>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
+            <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="w-8 text-right text-xs tabular-nums text-fg-subtle">{pct}%</span>
         </div>
+        <p className="w-24 text-right font-mono text-sm font-semibold tabular-nums text-accent-text">
+          {formatPrice(r.totalEarned)}
+          <span className="ml-1 font-sans text-xs font-medium text-fg-subtle">USDC</span>
+        </p>
       </button>
 
-      {open && (
-        <div className="border-t border-line px-5 pb-4">
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-fg-muted">
-            Resource URL
-          </p>
-          <a
-            href={r.accessUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-1 block truncate text-xs text-accent-text hover:underline"
-          >
-            {r.accessUrl}
-          </a>
-
-          {r.recentPayments.length > 0 && (
-            <>
-              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-fg-muted">
-                Recent payments
-              </p>
-              <ul className="mt-2 space-y-2">
-                {r.recentPayments.map((p, i) => (
-                  <PaymentRow key={i} payment={p} />
-                ))}
-              </ul>
-            </>
-          )}
+      <div id={panelId} hidden={!open} className="border-t border-line bg-surface-sunken/50 px-4 pb-4 pt-3 sm:px-5 sm:pl-12">
+        <div className="mb-3">
+          <StatusTag status={r.verificationStatus} type="verify" />
         </div>
-      )}
-    </div>
+        <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">Resource URL</p>
+        <a
+          href={r.accessUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-1 block truncate font-mono text-xs text-accent-text hover:underline"
+        >
+          {r.accessUrl}
+        </a>
+
+        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-fg-muted">Recent payments</p>
+        {r.recentPayments.length > 0 ? (
+          <ul className="mt-2 divide-y divide-line">
+            {r.recentPayments.map((p, i) => (
+              <PaymentRow key={i} payment={p} />
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-1 text-xs text-fg-subtle">No payments yet</p>
+        )}
+      </div>
+    </li>
   );
 }
 
 function PaymentRow({ payment: p }: { payment: RecentPayment }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-1 text-xs text-fg-muted">
-      <span className="font-mono">
-        {p.payerAddress.slice(0, 8)}…{p.payerAddress.slice(-4)}
+    <li className="flex items-center justify-between gap-3 py-1.5 text-xs">
+      <span className="font-mono text-fg-muted" title={p.payerAddress}>
+        {shortAddress(p.payerAddress)}
       </span>
-      <span className="ml-2 font-medium text-fg">{p.amount} USDC</span>
-      <span className="ml-2 text-fg-subtle">{new Date(p.paidAt).toLocaleDateString()}</span>
+      <time className="ml-auto text-fg-subtle" dateTime={p.paidAt} title={new Date(p.paidAt).toLocaleString()}>
+        {timeAgo(p.paidAt)}
+      </time>
+      <span className="w-20 text-right font-mono font-medium tabular-nums text-fg">{formatPrice(p.amount)} USDC</span>
     </li>
   );
 }

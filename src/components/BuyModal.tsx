@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useBuyResource } from "../hooks/useBuyResource.js";
+import { FREIGHTER_INSTALL_URL } from "../lib/freighter.js";
+import { formatPrice, shortAddress } from "./ResourceCard.js";
 
 interface BuyModalProps {
   resourceTitle: string;
@@ -11,6 +14,12 @@ interface BuyModalProps {
   onClose: () => void;
   /** Copy-URL fallback so buyers can still pay via another x402 client. */
   onCopyUrl: (url: string) => void;
+  /** Starts the Freighter connection from inside the dialog. */
+  onConnect?: () => void;
+  /** True while the wallet connection is in progress. */
+  connecting?: boolean;
+  /** Last wallet connection error, shown inline. */
+  walletError?: string | null;
 }
 
 /**
@@ -27,10 +36,15 @@ export function BuyModal({
   walletAddress,
   onClose,
   onCopyUrl,
+  onConnect,
+  connecting = false,
+  walletError,
 }: BuyModalProps) {
+  const { t } = useTranslation();
   const { status, result, error, buy, reset } = useBuyResource(walletAddress);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const displayPrice = formatPrice(price);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement as HTMLElement;
@@ -58,7 +72,7 @@ export function BuyModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4"
+      className="synapse-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
@@ -69,144 +83,166 @@ export function BuyModal({
         aria-modal="true"
         aria-labelledby="buy-title"
         tabIndex={-1}
-        className="h-full w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl outline-none sm:h-auto sm:max-w-md sm:rounded-2xl sm:p-6"
+        className="synapse-modal outline-none"
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="buy-title" className="text-lg font-semibold text-fg">
+        <div className="synapse-modal__header">
+          <h2 id="buy-title" className="synapse-modal__title">
             Buy resource
           </h2>
           <button
             onClick={handleClose}
             aria-label="Close"
             disabled={status === "paying"}
-            className="rounded-full p-2.5 text-fg-subtle hover:bg-surface-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-50"
+            className="synapse-icon-btn disabled:cursor-not-allowed disabled:opacity-50"
           >
-            ✕
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
           </button>
         </div>
 
-        {/* ── Confirm ─────────────────────────────────────────────────────── */}
-        {(status === "idle" || status === "paying") && (
-          <div className="space-y-4">
-            <p className="text-sm text-fg-muted">{resourceTitle}</p>
-            <dl className="space-y-2 rounded-lg bg-surface-sunken p-4 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-fg-muted">Price</dt>
-                <dd className="font-medium text-accent-text">{price} USDC</dd>
-              </div>
+        <div className="synapse-modal__body">
+          {/* ── Summary ───────────────────────────────────────────────────── */}
+          <div className="rounded-xl border border-line bg-surface-sunken p-4">
+            <p className="text-sm font-medium text-fg">{resourceTitle}</p>
+            <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-fg">{displayPrice} USDC</p>
+            <dl className="mt-3 space-y-1.5 border-t border-line pt-3 text-xs">
               <div className="flex justify-between gap-3">
                 <dt className="text-fg-muted">Pays to</dt>
-                <dd
-                  className="truncate font-mono text-xs text-fg"
-                  title={recipient}
-                >
-                  {recipient}
+                <dd className="font-mono text-fg" title={recipient}>
+                  {shortAddress(recipient)}
                 </dd>
               </div>
+              {walletAddress && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-fg-muted">From</dt>
+                  <dd className="font-mono text-fg" title={walletAddress}>
+                    {shortAddress(walletAddress)}
+                  </dd>
+                </div>
+              )}
             </dl>
+          </div>
 
-            {!walletAddress && (
-              <p className="text-sm text-warning">
-                Connect your Freighter wallet to pay, or use Copy URL below.
-              </p>
-            )}
+          {/* ── Confirm ───────────────────────────────────────────────────── */}
+          {(status === "idle" || status === "paying") && (
+            <>
+              {!walletAddress && (
+                <div className="space-y-3 rounded-xl border border-warning/30 bg-warning-soft p-3.5">
+                  <p className="text-sm text-warning">
+                    Connect your Freighter wallet to pay, or copy the access URL to use another x402 client.
+                  </p>
+                  {onConnect && (
+                    <button
+                      onClick={onConnect}
+                      disabled={connecting}
+                      aria-busy={connecting || undefined}
+                      className="synapse-btn synapse-btn--secondary synapse-btn--sm"
+                    >
+                      {connecting && <span className="synapse-spinner" aria-hidden="true" />}
+                      {t("buy.connect")}
+                    </button>
+                  )}
+                  {walletError && (
+                    <p role="alert" className="text-xs text-danger">
+                      {walletError}
+                      {/not found/i.test(walletError) && (
+                        <>
+                          {" "}
+                          <a href={FREIGHTER_INSTALL_URL} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
+                            {t("app.install_freighter")} ↗
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
 
-            {status === "paying" ? (
-              <div
-                role="status"
-                aria-busy="true"
-                className="flex items-center gap-3 text-sm text-fg-muted"
-              >
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-                Approve in Freighter and wait for settlement…
+              {status === "paying" ? (
+                <div role="status" aria-busy="true" className="flex items-center gap-3 text-sm text-fg-muted">
+                  <span className="synapse-spinner" aria-hidden="true" />
+                  Approve in Freighter and wait for settlement…
+                </div>
+              ) : (
+                <button
+                  onClick={() => buy(accessUrl)}
+                  disabled={!walletAddress}
+                  className="synapse-btn synapse-btn--primary synapse-btn--lg w-full"
+                >
+                  Pay {displayPrice} USDC
+                </button>
+              )}
+            </>
+          )}
+
+          {/* ── Success ───────────────────────────────────────────────────── */}
+          {status === "success" && result && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-success">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success-soft text-success" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3.5 8.5l3 3 6-7" />
+                  </svg>
+                </span>
+                Payment successful
               </div>
-            ) : (
+
+              {result.url && (
+                <a href={result.url} target="_blank" rel="noopener noreferrer" className="synapse-btn synapse-btn--primary w-full">
+                  Open resource ↗
+                </a>
+              )}
+
+              {result.download && (
+                <a href={result.download.objectUrl} download={result.download.filename} className="synapse-btn synapse-btn--primary w-full">
+                  Download {result.download.filename}
+                </a>
+              )}
+
+              {result.explorerUrl ? (
+                <a
+                  href={result.explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-accent-text hover:underline"
+                >
+                  View transaction on Stellar Explorer ↗
+                </a>
+              ) : (
+                <p className="text-xs text-fg-subtle">
+                  Settlement confirmed. Transaction hash unavailable for this payment.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ── Error ─────────────────────────────────────────────────────── */}
+          {status === "error" && (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft p-3.5 text-sm text-danger">
+                <svg className="mt-0.5 shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true">
+                  <circle cx="8" cy="8" r="6.25" />
+                  <path d="M8 5v3.5M8 11h.01" />
+                </svg>
+                <p>{error}</p>
+              </div>
               <button
                 onClick={() => buy(accessUrl)}
                 disabled={!walletAddress}
-                className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
+                className="synapse-btn synapse-btn--primary w-full"
               >
-                Pay {price} USDC
+                Try again
               </button>
-            )}
-          </div>
-        )}
-
-        {/* ── Success ─────────────────────────────────────────────────────── */}
-        {status === "success" && result && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-success">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success-soft text-success">
-                ✓
-              </span>
-              Payment successful
             </div>
+          )}
 
-            {result.url && (
-              <a
-                href={result.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block break-all rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent-text hover:bg-accent/15"
-              >
-                Open resource ↗
-              </a>
-            )}
-
-            {result.download && (
-              <a
-                href={result.download.objectUrl}
-                download={result.download.filename}
-                className="block rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-accent-text hover:bg-accent/15"
-              >
-                Download {result.download.filename}
-              </a>
-            )}
-
-            {result.explorerUrl ? (
-              <a
-                href={result.explorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-accent-text hover:text-accent-hover"
-              >
-                View transaction on Stellar Explorer ↗
-              </a>
-            ) : (
-              <p className="text-xs text-fg-subtle">
-                Settlement confirmed. Transaction hash unavailable for this payment.
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* ── Error ───────────────────────────────────────────────────────── */}
-        {status === "error" && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-2 text-sm text-danger">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-danger-soft text-danger">
-                ✕
-              </span>
-              <p>{error}</p>
-            </div>
-            <button
-              onClick={() => buy(accessUrl)}
-              disabled={!walletAddress}
-              className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:py-2"
-            >
-              Try again
+          {/* ── Copy URL fallback (always available) ───────────────────────── */}
+          <div className="border-t border-line pt-4">
+            <button onClick={() => onCopyUrl(accessUrl)} className="synapse-btn synapse-btn--ghost w-full">
+              Copy access URL instead
             </button>
           </div>
-        )}
-
-        {/* ── Copy URL fallback (always available) ─────────────────────────── */}
-        <div className="mt-4 border-t border-line pt-4">
-          <button
-            onClick={() => onCopyUrl(accessUrl)}
-            className="w-full rounded-lg px-4 py-3 text-sm font-medium text-fg-muted hover:bg-surface-hover sm:py-2"
-          >
-            Copy access URL instead
-          </button>
         </div>
       </div>
     </div>

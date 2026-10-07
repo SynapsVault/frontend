@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Toast } from "./components/Toast.js";
 import { ResourceGridSkeleton } from "./components/ResourceCardSkeleton.js";
 import { ErrorBanner } from "./components/ErrorBanner.js";
 import { CatalogStaleBanner } from "./components/CatalogStaleBanner.js";
 import { CatalogSearch } from "./components/CatalogSearch.js";
-import { ResourceCard, type Resource } from "./components/ResourceCard.js";
+import { ResourceCard, formatPrice, shortAddress, type Resource } from "./components/ResourceCard.js";
 import { KeyboardShortcutsHelp, type KeyboardShortcut } from "./components/KeyboardShortcutsHelp.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { useTheme } from "./hooks/useTheme.js";
@@ -18,6 +18,7 @@ import { fetchRegistryStatus } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 import { loadLocale } from "./i18n/config.js";
 import { STELLAR_NETWORK } from "./lib/config.js";
+import { FREIGHTER_INSTALL_URL } from "./lib/freighter.js";
 
 export type { Resource };
 
@@ -43,6 +44,29 @@ type ActiveModal =
   | null;
 
 type Tab = "catalog" | "dashboard" | "analytics" | "leaderboard" | "purchases" | "agent";
+type SortKey = "featured" | "price_asc" | "price_desc" | "title";
+
+const SORT_OPTIONS: { value: SortKey; labelKey: string }[] = [
+  { value: "featured", labelKey: "catalog.sort_featured" },
+  { value: "price_asc", labelKey: "catalog.sort_price_asc" },
+  { value: "price_desc", labelKey: "catalog.sort_price_desc" },
+  { value: "title", labelKey: "catalog.sort_title" },
+];
+
+const priceOf = (r: Resource) => {
+  const n = Number.parseFloat(r.price);
+  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+};
+
+/** Client-side ordering; "featured" keeps the server's order. */
+function sortResources(list: Resource[], sort: SortKey): Resource[] {
+  if (sort === "featured") return list;
+  const sorted = [...list];
+  if (sort === "price_asc") sorted.sort((a, b) => priceOf(a) - priceOf(b));
+  else if (sort === "price_desc") sorted.sort((a, b) => priceOf(b) - priceOf(a));
+  else sorted.sort((a, b) => a.title.localeCompare(b.title));
+  return sorted;
+}
 
 /* ─── constants ─────────────────────────────────────────────────────────── */
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
@@ -128,6 +152,11 @@ export default function App() {
   const [showPublish, setShowPublish]   = useState(false);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [sort, setSort]                 = useState<SortKey>("featured");
+  /** Last catalog fetched with no filters: drives "N of TOTAL" and the hero stats. */
+  const [unfiltered, setUnfiltered]     = useState<Resource[] | null>(null);
+  /** id → title for every resource seen, so Purchases can name what was bought. */
+  const resourceTitlesRef               = useRef<Record<string, string>>({});
   const searchInputRef                  = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme }          = useTheme();
   const wallet                          = useWalletConnection();
@@ -142,6 +171,7 @@ export default function App() {
     retry: retryResources,
     stale: catalogStale,
     syncedAt: catalogSyncedAt,
+    loadedFilters,
   } = useCatalog<Resource>(debouncedFilters);
 
   /* registry stats */
@@ -151,6 +181,28 @@ export default function App() {
     if (!rawResources) return [];
     return rawResources.map((r) => ({ ...r, ...(overrides[r.id] ?? {}) }));
   }, [rawResources, overrides]);
+
+  useEffect(() => {
+    if (resourcesStatus !== "success" || !loadedFilters || hasActiveFilters(loadedFilters)) return;
+    setUnfiltered(resources);
+  }, [resourcesStatus, loadedFilters, resources]);
+
+  useEffect(() => {
+    for (const r of resources) resourceTitlesRef.current[r.id] = r.title;
+  }, [resources]);
+
+  const sortedResources = useMemo(() => sortResources(resources, sort), [resources, sort]);
+
+  const heroStats = useMemo(() => {
+    const list = unfiltered ?? resources;
+    const prices = list.map(priceOf).filter(Number.isFinite);
+    const lowest = prices.length ? list.find((r) => priceOf(r) === Math.min(...prices))?.price ?? null : null;
+    return {
+      listings: list.length,
+      verified: list.filter((r) => r.verificationStatus === "verified").length,
+      lowest,
+    };
+  }, [unfiltered, resources]);
 
   const applyOverride = useCallback((id: string, patch: Partial<Resource>) => {
     setOverrides((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...patch } }));
@@ -168,6 +220,16 @@ export default function App() {
       setToast({ message: t("catalog.copy_this_url"), fallbackUrl: url });
     }
   }, [t]);
+
+  const handleCopyAddress = useCallback(async () => {
+    if (!wallet.address) return;
+    try {
+      await navigator.clipboard.writeText(wallet.address);
+      setToast({ message: t("app.address_copied") });
+    } catch {
+      setToast({ message: t("catalog.copy_this_url"), fallbackUrl: wallet.address });
+    }
+  }, [wallet.address, t]);
 
   const toggleLanguage = useCallback(async () => {
     const next = i18n.language === "en" ? "es" : "en";
@@ -283,40 +345,6 @@ export default function App() {
             {t("app.registry_onchain", { count: registryCount })}
           </div>
         )}
-        {wallet.status === "connected" && wallet.address ? (
-          <div className="synapse-wallet">
-            <span className="synapse-wallet-btn synapse-wallet-btn--static" title={wallet.address}>
-              <span className="synapse-wallet-dot synapse-wallet-dot--connected" aria-hidden="true" />
-              <span className="font-mono">{`${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`}</span>
-            </span>
-            <button className="synapse-icon-btn" onClick={wallet.disconnect}
-              aria-label={t("app.disconnect_wallet")} title={t("app.disconnect_wallet")}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M7 3H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M12 13l4-4-4-4M16 9H7"/>
-              </svg>
-            </button>
-          </div>
-        ) : (
-          <button
-            className="synapse-wallet-btn"
-            onClick={() => void wallet.connect()}
-            disabled={wallet.status === "connecting" || wallet.status === "restoring"}
-            aria-describedby={wallet.error ? "wallet-error" : undefined}
-          >
-            {wallet.status === "connecting" || wallet.status === "restoring"
-              ? <span className="synapse-spinner" aria-hidden="true" />
-              : <span className="synapse-wallet-dot" aria-hidden="true" />}
-            {wallet.status === "connecting" ? t("app.connecting_wallet") : t("app.connect_wallet")}
-          </button>
-        )}
-        {wallet.error && (
-          <p id="wallet-error" role="alert" className="synapse-wallet-error">
-            {wallet.error}
-            {/not found/i.test(wallet.error) && (
-              <> <a href="https://freighter.app" target="_blank" rel="noopener noreferrer">{t("app.install_freighter")} ↗</a></>
-            )}
-          </p>
-        )}
         <div className="synapse-sidebar__prefs">
           <button className="synapse-icon-btn" onClick={toggleTheme}
             aria-label={theme === "dark" ? t("app.theme_light") : t("app.theme_dark")}
@@ -342,6 +370,56 @@ export default function App() {
     </aside>
   );
 
+  /* ── Wallet (top bar) ────────────────────────────────────────────────── */
+  const walletBusy = wallet.status === "connecting" || wallet.status === "restoring";
+  const renderWallet = () =>
+    wallet.status === "connected" && wallet.address ? (
+      <div className="synapse-wallet">
+        <button className="synapse-wallet-btn" onClick={() => void handleCopyAddress()} title={wallet.address}>
+          <span className="synapse-wallet-dot synapse-wallet-dot--connected" aria-hidden="true" />
+          <span className="font-mono">{shortAddress(wallet.address)}</span>
+          <span className="synapse-sr-only">{t("app.copy_address")}</span>
+        </button>
+        <button className="synapse-icon-btn" onClick={wallet.disconnect}
+          aria-label={t("app.disconnect_wallet")} title={t("app.disconnect_wallet")}>
+          <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M7 3H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M12 13l4-4-4-4M16 9H7"/>
+          </svg>
+        </button>
+      </div>
+    ) : (
+      <button
+        className="synapse-btn synapse-btn--secondary synapse-btn--sm"
+        onClick={() => void wallet.connect()}
+        disabled={walletBusy}
+        aria-busy={walletBusy || undefined}
+        aria-label={t("app.connect_wallet")}
+        aria-describedby={wallet.error ? "wallet-error" : undefined}
+      >
+        {walletBusy ? (
+          <span className="synapse-spinner" aria-hidden="true" />
+        ) : (
+          <svg width="15" height="15" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M14.5 5.5V4a1 1 0 0 0-1-1h-9A1.5 1.5 0 0 0 3 4.5v9A1.5 1.5 0 0 0 4.5 15h9a1 1 0 0 0 1-1v-1.5"/>
+            <path d="M15.5 6.5h-4a2.5 2.5 0 0 0 0 5h4a.5.5 0 0 0 .5-.5V7a.5.5 0 0 0-.5-.5Z"/><path d="M11.5 9h.01"/>
+          </svg>
+        )}
+        <span className="synapse-topbar__label">
+          {wallet.status === "connecting" ? t("app.connecting_wallet") : t("app.connect_wallet")}
+        </span>
+      </button>
+    );
+
+  const renderWalletError = () =>
+    wallet.error && (
+      <p id="wallet-error" role="alert" className="synapse-wallet-error">
+        {wallet.error}
+        {/not found/i.test(wallet.error) && (
+          <> <a href={FREIGHTER_INSTALL_URL} target="_blank" rel="noopener noreferrer">{t("app.install_freighter")} ↗</a></>
+        )}
+      </p>
+    );
+
   /* ── Topbar ──────────────────────────────────────────────────────────── */
   const renderTopbar = () => (
     <header className="synapse-topbar">
@@ -355,11 +433,13 @@ export default function App() {
       <h1 className="synapse-topbar__title">{t(TAB_TITLE_KEYS[tab])}</h1>
       <div className="synapse-topbar__actions">
         {API_KEY && (
-          <button className="synapse-btn synapse-btn--primary synapse-btn--sm" onClick={() => setShowPublish(true)}>
+          <button className="synapse-btn synapse-btn--primary synapse-btn--sm" onClick={() => setShowPublish(true)}
+            aria-label={t("app.publish")}>
             <svg width="14" height="14" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><path d="M9 3v12M3 9h12"/></svg>
-            {t("app.publish")}
+            <span className="synapse-topbar__label">{t("app.publish")}</span>
           </button>
         )}
+        {renderWallet()}
       </div>
     </header>
   );
@@ -396,7 +476,7 @@ export default function App() {
     }
     return (
       <div className="synapse-resource-grid" aria-busy={isRefreshing}>
-        {resources.map((r) => (
+        {sortedResources.map((r) => (
           <ResourceCard key={r.id} resource={r}
             onPreview={(res) => setActiveModal({ kind: "preview", resource: res })}
             onBuy={(res) => setActiveModal({ kind: "buy", resource: res })} />
@@ -407,20 +487,59 @@ export default function App() {
 
   const renderCatalog = () => (
     <>
-      <section className="synapse-hero">
-        <p className="synapse-hero__eyebrow">x402 · Stellar · USDC</p>
-        <p className="synapse-hero__lead">{t("app.page_catalog_desc")}</p>
+      <section className="synapse-hero" aria-labelledby="hero-title">
+        <div className="synapse-hero__copy">
+          <p className="synapse-hero__eyebrow">x402 · Stellar · USDC</p>
+          <h2 id="hero-title" className="synapse-hero__title">{t("app.hero_title")}</h2>
+          <p className="synapse-hero__lead">{t("app.page_catalog_desc")}</p>
+        </div>
+        {!isFirstLoad && resourcesStatus !== "error" && (
+          <dl className="synapse-hero__stats">
+            <div className="synapse-hero__stat">
+              <dt>{t("app.stat_listings")}</dt>
+              <dd>{heroStats.listings}</dd>
+            </div>
+            <div className="synapse-hero__stat">
+              <dt>{t("app.stat_verified")}</dt>
+              <dd>{heroStats.verified}</dd>
+            </div>
+            {registryCount !== null && (
+              <div className="synapse-hero__stat">
+                <dt>{t("app.stat_onchain")}</dt>
+                <dd>{registryCount}</dd>
+              </div>
+            )}
+            {heroStats.lowest !== null && (
+              <div className="synapse-hero__stat">
+                <dt>{t("app.stat_from")}</dt>
+                <dd>{formatPrice(heroStats.lowest)}<small>USDC</small></dd>
+              </div>
+            )}
+          </dl>
+        )}
       </section>
 
       {catalogStale && resourcesStatus === "success" && <CatalogStaleBanner syncedAt={catalogSyncedAt} />}
 
       <CatalogSearch
         filters={filters}
-        total={resources.length}
+        total={unfiltered?.length ?? resources.length}
         filtered={resources.length}
         onChange={setFilters}
         onReset={() => setFilters(DEFAULT_FILTERS)}
         searchInputRef={searchInputRef}
+        sortSlot={
+          <select
+            aria-label={t("catalog.sort_label")}
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            className="synapse-input synapse-select"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{t(o.labelKey)}</option>
+            ))}
+          </select>
+        }
       />
 
       {renderCatalogBody()}
@@ -440,6 +559,7 @@ export default function App() {
         {renderTopbar()}
 
         <main id="main-content" className="synapse-content" tabIndex={-1}>
+          {renderWalletError()}
           {/* Keyed by tab: a crash stays inside this screen and resets on navigation. */}
           <ErrorBoundary key={tab} variant="section">
           {tab === "catalog" && renderCatalog()}
@@ -450,7 +570,9 @@ export default function App() {
           )}
           {tab === "purchases" && (
             <Suspense fallback={<LazyFallback label={t("app.loading")} />}>
-              <PurchasesDashboard initialWallet={wallet.address ?? ""} />
+              <PurchasesDashboard initialWallet={wallet.address ?? ""}
+                connectedWallet={wallet.status === "connected" ? wallet.address : null}
+                resourceTitles={resourceTitlesRef.current} />
             </Suspense>
           )}
           {tab === "agent" && (
@@ -488,6 +610,7 @@ export default function App() {
           <BuyModal resourceTitle={activeModal.resource.title} price={activeModal.resource.price}
             recipient={activeModal.resource.walletAddress} accessUrl={activeModal.resource.accessUrl}
             walletAddress={wallet.status === "connected" ? wallet.address : null}
+            onConnect={() => void wallet.connect()} connecting={walletBusy} walletError={wallet.error}
             onClose={closeModal} onCopyUrl={handleCopyUrl} />
         </Suspense>
       )}

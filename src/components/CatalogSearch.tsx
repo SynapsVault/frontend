@@ -26,6 +26,8 @@ interface Props {
   searchInputRef?: React.RefObject<HTMLInputElement>;
   /** Called when the filter row should be toggled (e.g. via the `f` shortcut). */
   onToggleFilters?: () => void;
+  /** Sort control rendered on the same row as the result count. */
+  sortSlot?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -42,6 +44,7 @@ export function CatalogSearch({
   onActivate,
   searchInputRef,
   onToggleFilters,
+  sortSlot,
 }: Props) {
   const hasActiveFilters =
     !!filters.search ||
@@ -272,8 +275,11 @@ export function CatalogSearch({
             Clear filters
           </button>
         )}
+      </div>
 
-        <span className="synapse-search__count">
+      {/* Count + sort share one row */}
+      <div className="synapse-search__meta">
+        <span className="synapse-search__count" aria-live="polite">
           {hasActiveFilters ? (
             <>
               <strong>{filtered}</strong> of {total}
@@ -283,6 +289,7 @@ export function CatalogSearch({
           )}{" "}
           resource{total !== 1 ? "s" : ""}
         </span>
+        {sortSlot}
       </div>
     </div>
   );

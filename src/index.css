@@ -288,15 +288,27 @@
 
   /* ── Catalog hero ──────────────────────────────────────────────────────── */
   .synapse-hero {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 16px;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px 32px;
     margin-bottom: 20px;
+    padding: 26px 28px;
+    border: 1px solid rgb(var(--sv-line));
+    border-radius: var(--sv-radius-xl);
+    background:
+      radial-gradient(120% 140% at 0% 0%, rgb(var(--sv-violet-500) / 0.16), transparent 55%),
+      radial-gradient(90% 120% at 100% 100%, rgb(var(--sv-cyan-500) / 0.12), transparent 60%),
+      rgb(var(--sv-surface));
+    box-shadow: var(--sv-shadow-sm);
   }
+  .synapse-hero__copy { flex: 1 1 340px; min-width: 0; }
   .synapse-hero__eyebrow {
-    flex-basis: 100%;
-    margin: 0;
+    display: inline-block;
+    margin: 0 0 8px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -306,7 +318,39 @@
     background-clip: text;
     color: transparent;
   }
+  .synapse-hero__title {
+    margin: 0 0 6px;
+    font-family: var(--sv-font-display);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
   .synapse-hero__lead { margin: 0; max-width: 62ch; color: rgb(var(--sv-fg-muted)); }
+
+  .synapse-hero__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+  }
+  .synapse-hero__stat {
+    min-width: 104px;
+    padding: 10px 14px;
+    border: 1px solid rgb(var(--sv-line));
+    border-radius: var(--sv-radius-md);
+    background: rgb(var(--sv-surface) / 0.7);
+    backdrop-filter: blur(6px);
+  }
+  .synapse-hero__stat dt { font-size: 11px; font-weight: 500; color: rgb(var(--sv-fg-muted)); }
+  .synapse-hero__stat dd {
+    margin: 2px 0 0;
+    font-family: var(--sv-font-display);
+    font-size: 18px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .synapse-hero__stat dd small { margin-left: 3px; font-family: var(--sv-font-sans); font-size: 11px; font-weight: 500; color: rgb(var(--sv-fg-subtle)); }
 
   /* ── Buttons ───────────────────────────────────────────────────────────── */
   .synapse-btn {
@@ -463,10 +507,16 @@
     color: rgb(var(--sv-fg-subtle));
     font-size: 12px;
   }
-  .synapse-search__price .synapse-input { width: 84px; }
+  .synapse-search__price .synapse-input { width: 84px; min-width: 0; }
   .synapse-search__unit { font-weight: 600; letter-spacing: 0.02em; }
+  .synapse-search__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .synapse-search__meta .synapse-select { height: 32px; font-size: 12.5px; }
   .synapse-search__count {
-    margin-left: auto;
     font-size: 12px;
     font-variant-numeric: tabular-nums;
     color: rgb(var(--sv-fg-subtle));
@@ -556,21 +606,24 @@
   .synapse-resource-card__type {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--sv-radius-sm);
+    gap: 5px;
+    height: 24px;
+    padding: 0 9px 0 7px;
+    border-radius: var(--sv-radius-full);
     background: rgb(var(--sv-accent-soft));
     color: rgb(var(--sv-accent-text));
+    font-size: 11.5px;
+    font-weight: 600;
   }
 
   .synapse-resource-card__price {
     font-family: var(--sv-font-mono);
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
   }
-  .synapse-resource-card__price span { font-size: 11px; color: rgb(var(--sv-fg-subtle)); }
+  .synapse-resource-card__price span { font-size: 11px; font-weight: 500; color: rgb(var(--sv-fg-subtle)); }
 
   .synapse-resource-card__title {
     margin: 0;
@@ -582,20 +635,58 @@
     word-spacing: 0.04em;
     overflow-wrap: anywhere;
   }
-  .synapse-resource-card__publisher { margin-top: 2px; font-size: 12.5px; color: rgb(var(--sv-fg-muted)); }
+  /* The title is a button whose ::after stretches over the whole card. */
+  .synapse-resource-card__title-btn {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .synapse-resource-card__title-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .synapse-resource-card__title-btn:focus-visible { outline: none; }
+  .synapse-resource-card__title-btn:focus-visible::after {
+    outline: 2px solid rgb(var(--sv-ring));
+    outline-offset: 2px;
+    border-radius: var(--sv-radius-lg);
+  }
+  .synapse-resource-card:hover .synapse-resource-card__title-btn { color: rgb(var(--sv-accent-text)); }
+
+  .synapse-resource-card__publisher {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: rgb(var(--sv-fg-muted));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   .synapse-resource-card__tags { display: flex; flex-wrap: wrap; gap: 6px; }
 
+  /* Interactive children sit above the title's stretched ::after. */
+  .synapse-resource-card__tags,
+  .synapse-resource-card__footer,
+  .synapse-resource-card__publisher a { position: relative; z-index: 1; }
+
   .synapse-resource-card__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin-top: auto;
     padding-top: 14px;
     border-top: 1px solid rgb(var(--sv-line));
   }
-  .synapse-resource-card__actions { display: flex; gap: 6px; }
   .synapse-resource-card__addr {
     font-family: var(--sv-font-mono);
     font-size: 11.5px;
@@ -669,11 +760,10 @@
 
   /* ── Wallet ────────────────────────────────────────────────────────────── */
   .synapse-wallet-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    width: 100%;
-    height: 36px;
+    height: 30px;
     padding: 0 12px;
     border: 1px solid rgb(var(--sv-line));
     border-radius: var(--sv-radius-sm);
@@ -689,12 +779,12 @@
   .synapse-wallet-btn:hover { border-color: rgb(var(--sv-accent) / 0.6); }
 
   .synapse-wallet-btn:disabled { cursor: progress; opacity: 0.8; }
-  .synapse-wallet-btn .synapse-spinner { width: 12px; height: 12px; border-width: 2px; }
-  .synapse-wallet-btn--static { cursor: default; flex: 1; min-width: 0; }
-  .synapse-wallet-btn--static:hover { border-color: rgb(var(--sv-line)); }
-  .synapse-wallet { display: flex; align-items: center; gap: 4px; }
+  .synapse-wallet-btn .synapse-spinner,
+  .synapse-btn .synapse-spinner { width: 14px; height: 14px; border-width: 2px; }
+  .synapse-wallet { display: flex; align-items: center; gap: 2px; }
+  .synapse-wallet .synapse-icon-btn { width: 30px; height: 30px; }
   .synapse-wallet-error {
-    margin: 0;
+    margin: 0 0 16px;
     padding: 8px 10px;
     border: 1px solid rgb(var(--sv-danger) / 0.25);
     border-radius: var(--sv-radius-sm);
@@ -707,6 +797,35 @@
 
   .synapse-wallet-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: rgb(var(--sv-fg-subtle)); }
   .synapse-wallet-dot--connected { background: rgb(var(--sv-success)); box-shadow: 0 0 0 3px rgb(var(--sv-success) / 0.2); }
+
+  /* ── Leaderboard ranks ─────────────────────────────────────────────────── */
+  .synapse-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgb(var(--sv-fg-muted));
+  }
+  .synapse-rank--gold   { background: rgb(234 179 8 / 0.18);   color: rgb(var(--sv-warning)); box-shadow: inset 0 0 0 1px rgb(234 179 8 / 0.45); }
+  .synapse-rank--silver { background: rgb(148 163 184 / 0.2);  color: rgb(var(--sv-fg-muted)); box-shadow: inset 0 0 0 1px rgb(148 163 184 / 0.5); }
+  .synapse-rank--bronze { background: rgb(234 88 12 / 0.14);   color: rgb(var(--sv-warning)); box-shadow: inset 0 0 0 1px rgb(234 88 12 / 0.4); }
+
+  .synapse-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   /* ── Loading ───────────────────────────────────────────────────────────── */
   .synapse-spinner {
@@ -757,7 +876,18 @@
   .synapse-content { padding: 18px 14px 32px; }
 
   .synapse-search__filters > .synapse-select { flex: 1 1 140px; }
-  .synapse-search__count { margin-left: 0; flex-basis: 100%; }
+  .synapse-search__price { flex: 1 1 100%; min-width: 0; }
+  .synapse-search__price .synapse-input { flex: 1; width: auto; min-width: 0; }
+
+  .synapse-hero { padding: 20px 18px; }
+  .synapse-hero__title { font-size: 19px; }
+  .synapse-hero__stats { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+
+  /* Icon-only top bar actions on phones; aria-labels keep the names. */
+  .synapse-topbar__label { display: none; }
+  .synapse-topbar__actions .synapse-btn--sm,
+  .synapse-topbar__actions .synapse-wallet-btn { min-height: 44px; padding: 0 12px; }
+  .synapse-wallet .synapse-icon-btn { width: 44px; height: 44px; }
 
   .synapse-btn, .synapse-nav-item, .synapse-icon-btn, .synapse-input { min-height: 44px; }
   .synapse-btn--sm { min-height: 36px; }

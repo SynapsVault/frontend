@@ -31,7 +31,14 @@
     "page_leaderboard": "Leaderboard",
     "page_agent": "AI Agent",
     "connecting_wallet": "Connecting…",
-    "install_freighter": "Install Freighter"
+    "install_freighter": "Install Freighter",
+    "hero_title": "Pay-per-access knowledge, settled on Stellar",
+    "stat_listings": "Listings",
+    "stat_verified": "Verified",
+    "stat_onchain": "On-chain registry",
+    "stat_from": "Lowest price",
+    "copy_address": "Copy wallet address",
+    "address_copied": "Wallet address copied"
   },
   "catalog": {
     "empty_title": "The catalog is empty",
@@ -50,11 +57,33 @@
     "view_tx": "View tx",
     "off_chain": "off-chain",
     "url_copied": "Access URL copied to clipboard",
-    "copy_this_url": "Copy this URL:"
+    "copy_this_url": "Copy this URL:",
+    "sort_label": "Sort resources",
+    "sort_featured": "Featured",
+    "sort_price_asc": "Price: low to high",
+    "sort_price_desc": "Price: high to low",
+    "sort_title": "Title: A–Z",
+    "anonymous_publisher": "Anonymous publisher",
+    "open_preview": "Open preview of {{title}}",
+    "type_file": "File",
+    "type_link": "Link"
   },
   "leaderboard": {
     "title": "Creator Leaderboard",
-    "description": "Top creators ranked by total USDC earned"
+    "description": "Top creators ranked by total USDC earned",
+    "rank": "Rank",
+    "creator": "Creator",
+    "wallet": "Wallet",
+    "resources": "Resources",
+    "sales": "Sales",
+    "earned": "Earned (USDC)",
+    "share": "Share of earnings",
+    "empty": "No publishers yet. Be the first to publish a resource!",
+    "loading": "Loading leaderboard…",
+    "load_failed": "Failed to load leaderboard.",
+    "creators_one": "{{count}} creator",
+    "creators_other": "{{count}} creators",
+    "total_earned": "{{amount}} USDC paid out"
   },
   "agent": {
     "title": "Verification Agent",
@@ -125,5 +154,39 @@
     "registered": "On-chain",
     "failed": "Failed",
     "none": "Off-chain"
+  },
+  "buy": {
+    "connect": "Connect Freighter"
+  },
+  "status_verify": {
+    "verified": "Verified",
+    "pending": "In review",
+    "rejected": "Rejected"
+  },
+  "status_chain": {
+    "registered": "On-chain",
+    "pending": "Registering",
+    "failed": "Registration failed",
+    "none": "Not on-chain",
+    "unregistered": "Not on-chain"
+  },
+  "purchases": {
+    "description": "Look up any Stellar wallet to see its purchase history and receipts.",
+    "wallet_label": "Wallet address",
+    "placeholder": "G…",
+    "look_up": "Look up",
+    "searching": "Looking up…",
+    "invalid_address": "Enter a valid Stellar address: 56 characters starting with G.",
+    "load_failed": "Failed to load purchases.",
+    "use_connected": "Use connected wallet",
+    "prompt_title": "Find your purchases",
+    "prompt_body": "Enter a wallet address above, or connect your wallet, to see receipts for every resource it has paid for.",
+    "empty_title": "No purchases yet",
+    "empty_body": "This wallet hasn't bought any resources. Browse the catalog to find something worth unlocking.",
+    "total_one": "{{count}} purchase · {{amount}} USDC total",
+    "total_other": "{{count}} purchases · {{amount}} USDC total",
+    "resource_fallback": "Resource #{{id}}",
+    "paid_to": "Paid to {{address}}",
+    "view_receipt": "View receipt"
   }
 }
