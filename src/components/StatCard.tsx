@@ -1,4 +1,5 @@
 import React from "react";
+import i18n from "../i18n/config.js";
 
 export type StatTone = "default" | "accent" | "success" | "danger" | "warning";
 
@@ -49,23 +50,23 @@ export function StatCard({ label, value, unit, note, tone = "default", progress 
   );
 }
 
-/** 1832 → "1,832". */
-export function formatCount(n: number): string {
-  return n.toLocaleString("en-US");
+/** 1832 → "1,832" (in en) or locale-formatted equivalent. */
+export function formatCount(n: number, locale: string = i18n.language || "en-US"): string {
+  return n.toLocaleString(locale);
 }
 
-/** Relative time: "just now", "3 min ago", "2 h ago", "4 d ago", then a date after a week. */
-export function timeAgo(iso: string, now: number = Date.now()): string {
+/** Relative time localized via i18n, then a locale-formatted date after a week. */
+export function timeAgo(iso: string, now: number = Date.now(), locale: string = i18n.language || "en"): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return iso;
   const minutes = Math.floor((now - then) / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return i18n.t("time.just_now", { lng: locale });
+  if (minutes < 60) return i18n.t("time.minutes_ago", { count: minutes, lng: locale });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24) return i18n.t("time.hours_ago", { count: hours, lng: locale });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} d ago`;
-  return new Date(then).toLocaleDateString();
+  if (days < 7) return i18n.t("time.days_ago", { count: days, lng: locale });
+  return new Date(then).toLocaleDateString(locale);
 }
 
 /**

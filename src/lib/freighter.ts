@@ -8,6 +8,30 @@
 
 export const FREIGHTER_INSTALL_URL = "https://freighter.app";
 
+export const FREIGHTER_NOT_FOUND_CODE = "FREIGHTER_NOT_FOUND" as const;
+export type WalletErrorCode = typeof FREIGHTER_NOT_FOUND_CODE;
+
+export const FREIGHTER_NOT_FOUND =
+  `Freighter wallet not found. Install the Freighter browser extension from ${FREIGHTER_INSTALL_URL}, then reload this page and try again.`;
+
+export class FreighterError extends Error {
+  readonly code?: WalletErrorCode;
+  constructor(message: string, code?: WalletErrorCode) {
+    super(message);
+    this.name = "FreighterError";
+    this.code = code;
+  }
+}
+
+export function isFreighterNotFoundError(err: unknown): boolean {
+  return (
+    Boolean(err) &&
+    typeof err === "object" &&
+    "code" in (err as Record<string, unknown>) &&
+    (err as { code?: unknown }).code === FREIGHTER_NOT_FOUND_CODE
+  );
+}
+
 export const loadFreighter = () => import("@stellar/freighter-api");
 
 /** Freighter v6 reports failures as `{ code, message }` objects. */
@@ -37,9 +61,7 @@ export async function isFreighterInstalled(): Promise<boolean> {
  */
 export async function signWithFreighter(xdr: string, networkPassphrase: string): Promise<string> {
   if (!(await isFreighterInstalled())) {
-    throw new Error(
-      `Freighter wallet not found. Install the Freighter browser extension from ${FREIGHTER_INSTALL_URL}, then reload this page and try again.`,
-    );
+    throw new FreighterError(FREIGHTER_NOT_FOUND, FREIGHTER_NOT_FOUND_CODE);
   }
   const freighter = await loadFreighter();
   const result = await freighter.signTransaction(xdr, { networkPassphrase });

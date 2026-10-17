@@ -1,5 +1,4 @@
-import { signedPublisherFetch } from "./requestSignature.js";
-import { apiFetch, apiUrl, getJson, isArray, readJson } from "./http.js";
+import { apiFetch, getJson, isArray, readJson } from "./http.js";
 
 export interface Resource {
   id: string;
@@ -15,9 +14,16 @@ export interface Resource {
   accessUrl: string;
 }
 
-/** Signed publisher request against a backend path like "/resources/1/price". */
+/** Authenticated publisher request against a backend path like "/resources/1/price". */
 function signedFetch(path: string, apiKey: string, init: RequestInit): Promise<Response> {
-  return signedPublisherFetch(apiUrl(path), apiKey, init);
+  const headers = new Headers(init.headers);
+  headers.set("x-api-key", apiKey);
+  return apiFetch(path, { ...init, headers });
+}
+
+/** Adds an `Idempotency-Key` header (when provided) so it is included in the signature. */
+function withIdempotencyKey(headers: Record<string, string>, idempotencyKey?: string): Record<string, string> {
+  return idempotencyKey ? { ...headers, "Idempotency-Key": idempotencyKey } : headers;
 }
 
 export interface CatalogFilters {
@@ -50,7 +56,7 @@ export async function fetchResourceMeta(id: string, signal?: AbortSignal): Promi
   return getJson<ResourceMeta>(`/resources/${id}/meta`, "Failed to load resource preview", { signal });
 }
 
-export async function fetchCatalog(filters?: CatalogFilters): Promise<unknown[]> {
+export async function fetchCatalog(filters?: CatalogFilters, signal?: AbortSignal): Promise<unknown[]> {
   const params = new URLSearchParams();
   if (filters?.search) params.set("search", filters.search);
   if (filters?.minPrice) params.set("minPrice", filters.minPrice);
@@ -61,17 +67,18 @@ export async function fetchCatalog(filters?: CatalogFilters): Promise<unknown[]>
     params.set("resourceType", filters.resourceType);
 
   const qs = params.toString();
-  return getJson<unknown[]>(`/resources${qs ? `?${qs}` : ""}`, "Couldn't load the catalog", undefined, isArray);
+  return getJson<unknown[]>(
+    `/resources${qs ? `?${qs}` : ""}`,
+    "Couldn't load the catalog",
+    { signal },
+    isArray,
+  );
 }
 
 /** Resources owned by the API key holder. Callers supply the row shape. */
 export async function fetchMyResources<T = unknown>(apiKey: string): Promise<T[]> {
-  return getJson<T[]>(
-    "/publishers/me/resources",
-    "Failed to fetch your resources",
-    { headers: { "x-api-key": apiKey } },
-    isArray,
-  );
+  const res = await signedFetch("/publishers/me/resources", apiKey, { method: "GET" });
+  return readJson(res, "Failed to fetch your resources", isArray);
 }
 
 export async function prepareRegisterTx(
@@ -88,9 +95,8 @@ export async function prepareRegisterTx(
     description?: string;
   };
 }> {
-  return getJson(`/resources/${resourceId}/register/prepare`, "Failed to prepare register transaction", {
-    headers: { "x-api-key": apiKey },
-  });
+  const res = await signedFetch(`/resources/${resourceId}/register/prepare`, apiKey, { method: "GET" });
+  return readJson(res, "Failed to prepare register transaction");
 }
 
 /**
@@ -127,10 +133,12 @@ export async function submitRegisterTx(
   resourceId: string,
   signedXdr: string,
   apiKey: string,
+  idempotencyKey?: string,
 ): Promise<{ id: string; onchainStatus: string; txHash: string }> {
   const body = JSON.stringify({ signedXdr });
   const res = await signedFetch(`/resources/${resourceId}/register`, apiKey, {
     method: "POST",
+    headers: withIdempotencyKey({}, idempotencyKey),
     body,
   });
   if (!res.ok && (res.headers.get("content-type") ?? "").includes("application/json")) {
@@ -152,9 +160,14 @@ export async function prepareSetPrice(
   resourceId: string,
   price: string,
   apiKey: string,
+  idempotencyKey?: string,
 ): Promise<{ unsignedXdr: string; networkPassphrase: string }> {
   const body = JSON.stringify({ price });
-  const res = await signedFetch(`/resources/${resourceId}/price/prepare`, apiKey, { method: "POST", body });
+  const res = await signedFetch(`/resources/${resourceId}/price/prepare`, apiKey, {
+    method: "POST",
+    headers: withIdempotencyKey({}, idempotencyKey),
+    body,
+  });
   return readJson(res, "Failed to prepare transaction");
 }
 
@@ -174,9 +187,14 @@ export async function prepareTransferOwnership(
   resourceId: string,
   newCreator: string,
   apiKey: string,
+  idempotencyKey?: string,
 ): Promise<{ unsignedXdr: string; networkPassphrase: string }> {
   const body = JSON.stringify({ newCreator });
-  const res = await signedFetch(`/resources/${resourceId}/ownership/prepare`, apiKey, { method: "POST", body });
+  const res = await signedFetch(`/resources/${resourceId}/ownership/prepare`, apiKey, {
+    method: "POST",
+    headers: withIdempotencyKey({}, idempotencyKey),
+    body,
+  });
   return readJson(res, "Failed to prepare transfer transaction");
 }
 
@@ -185,9 +203,14 @@ export async function submitTransferOwnership(
   signedXdr: string,
   newCreator: string,
   apiKey: string,
+  idempotencyKey?: string,
 ): Promise<{ id: string; newCreator: string; status: string }> {
   const body = JSON.stringify({ signedXdr, newCreator });
-  const res = await signedFetch(`/resources/${resourceId}/ownership`, apiKey, { method: "POST", body });
+  const res = await signedFetch(`/resources/${resourceId}/ownership`, apiKey, {
+    method: "POST",
+    headers: withIdempotencyKey({}, idempotencyKey),
+    body,
+  });
   return readJson(res, "Failed to submit transfer transaction");
 }
 
@@ -211,10 +234,20 @@ export async function publishLinkResource(
   data: { title: string; description?: string; price: string; externalUrl: string },
   apiKey: string,
   signal?: AbortSignal,
+  idempotencyKey?: string,
 ): Promise<unknown> {
+  let scheme: string;
+  try {
+    scheme = new URL(data.externalUrl).protocol;
+  } catch {
+    throw new Error("External URL must be a valid URL");
+  }
+  if (scheme !== "http:" && scheme !== "https:") {
+    throw new Error("External URL must use http or https");
+  }
   const res = await apiFetch("/resources", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+    headers: withIdempotencyKey({ "Content-Type": "application/json", "x-api-key": apiKey }, idempotencyKey),
     body: JSON.stringify(data),
     signal,
   });
@@ -225,10 +258,11 @@ export async function publishFileResource(
   formData: FormData,
   apiKey: string,
   signal?: AbortSignal,
+  idempotencyKey?: string,
 ): Promise<unknown> {
-  const res = await apiFetch("/resources", {
+  const res = await signedFetch("/resources", apiKey, {
     method: "POST",
-    headers: { "x-api-key": apiKey },
+    headers: withIdempotencyKey({ "x-api-key": apiKey }, idempotencyKey),
     body: formData,
     signal,
   });
@@ -240,8 +274,14 @@ export async function submitSetPrice(
   signedXdr: string,
   price: string,
   apiKey: string,
+  idempotencyKey?: string,
 ): Promise<{ id: string; price: string; status: string }> {
   const body = JSON.stringify({ signedXdr, price });
-  const res = await signedFetch(`/resources/${resourceId}/price`, apiKey, { method: "POST", body });
+  const res = await signedFetch(`/resources/${resourceId}/price`, apiKey, {
+    method: "POST",
+    headers: withIdempotencyKey({}, idempotencyKey),
+    body,
+  });
+  const res = await signedFetch(`/resources/${encodePathSegment(resourceId)}/price`, apiKey, { method: "POST", body });
   return readJson(res, "Failed to submit transaction");
 }

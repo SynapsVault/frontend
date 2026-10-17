@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTransferOwnership } from "../hooks/useTransferOwnership.js";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 interface Props {
   resourceId: string;
@@ -25,20 +26,32 @@ export function TransferOwnershipModal({ resourceId, apiKey, onClose, onConfirme
   );
 
   const busy = ["preparing", "signing", "submitting"].includes(status);
+  const dialogRef = useDialogA11y<HTMLDivElement>({ onClose, canClose: () => !busy });
+
+  useEffect(() => {
+    if (status === "confirmed" && newOwner) {
+      onConfirmed(newOwner);
+    }
+  }, [status, newOwner, onConfirmed]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     transferOwnership(newCreator.trim());
   }
 
-  if (status === "confirmed" && newOwner) {
-    onConfirmed(newOwner);
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl sm:max-w-sm sm:rounded-2xl sm:p-6">
-        <h2 className="mb-4 text-lg font-semibold text-fg">Transfer Ownership</h2>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="transfer-ownership-title"
+        tabIndex={-1}
+        className="w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl outline-none sm:max-w-sm sm:rounded-2xl sm:p-6"
+      >
+        <h2 id="transfer-ownership-title" className="mb-4 text-lg font-semibold text-fg">
+          Transfer Ownership
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

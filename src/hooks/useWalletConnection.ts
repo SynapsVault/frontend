@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { FREIGHTER_INSTALL_URL, freighterErrorMessage, loadFreighter } from "../lib/freighter.js";
+import {
+  FREIGHTER_INSTALL_URL,
+  FREIGHTER_NOT_FOUND_CODE,
+  freighterErrorMessage,
+  isFreighterNotFoundError,
+  loadFreighter,
+  type WalletErrorCode,
+} from "../lib/freighter.js";
 
 export type WalletStatus = "restoring" | "disconnected" | "connecting" | "connected" | "error";
 
@@ -7,6 +14,7 @@ export interface WalletState {
   status: WalletStatus;
   address: string | null;
   error: string | null;
+  errorCode: WalletErrorCode | null;
   connect: () => Promise<void>;
   disconnect: () => void;
 }
@@ -44,6 +52,7 @@ export function useWalletConnection(): WalletState {
   const [status, setStatus] = useState<WalletStatus>(() => (readStored() ? "restoring" : "disconnected"));
   const [address, setAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<WalletErrorCode | null>(null);
 
   // ── Restore on mount ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -81,6 +90,7 @@ export function useWalletConnection(): WalletState {
   // ── Connect ───────────────────────────────────────────────────────────────
   const connect = useCallback(async () => {
     setError(null);
+    setErrorCode(null);
     setStatus("connecting");
 
     try {
@@ -91,6 +101,7 @@ export function useWalletConnection(): WalletState {
         setError(
           `Freighter wallet not found. Install the Freighter browser extension from ${FREIGHTER_INSTALL_URL}, then reload this page.`,
         );
+        setErrorCode(FREIGHTER_NOT_FOUND_CODE);
         setStatus("error");
         return;
       }
@@ -104,6 +115,7 @@ export function useWalletConnection(): WalletState {
             "Connection was not approved. Open Freighter, unlock it, and approve the request.",
           ),
         );
+        setErrorCode(null);
         setStatus("error");
         return;
       }
@@ -118,6 +130,7 @@ export function useWalletConnection(): WalletState {
           "Failed to connect wallet. Make sure Freighter is installed and unlocked, then try again.",
         ),
       );
+      setErrorCode(isFreighterNotFoundError(err) ? FREIGHTER_NOT_FOUND_CODE : null);
       setStatus("error");
     }
   }, []);
@@ -128,7 +141,8 @@ export function useWalletConnection(): WalletState {
     setAddress(null);
     setStatus("disconnected");
     setError(null);
+    setErrorCode(null);
   }, []);
 
-  return { status, address, error, connect, disconnect };
+  return { status, address, error, errorCode, connect, disconnect };
 }

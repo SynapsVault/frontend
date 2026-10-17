@@ -1,54 +1,30 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { prepareTransferOwnership, submitTransferOwnership } from "../api/resources.js";
-import { checkNetwork } from "./useNetworkCheck.js";
-import { signWithFreighter } from "../lib/freighter.js";
-
-type Status = "idle" | "preparing" | "signing" | "submitting" | "confirmed" | "error";
+import { useSignedMutation } from "./useSignedMutation.js";
 
 export function useTransferOwnership(resourceId: string, apiKey: string) {
-  const [status, setStatus] = useState<Status>("idle");
-  const [newOwner, setNewOwner] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [networkWarning, setNetworkWarning] = useState<string | null>(null);
+  const callbacks = useMemo(
+    () => ({
+      prepare: (newCreator: string, idempotencyKey: string) =>
+        prepareTransferOwnership(resourceId, newCreator, apiKey, idempotencyKey),
+      submit: (newCreator: string, signedXdr: string, idempotencyKey: string) =>
+        submitTransferOwnership(resourceId, signedXdr, newCreator, apiKey, idempotencyKey),
+    }),
+    [resourceId, apiKey],
+  );
+
+  const { status, result, error, networkWarning, execute } =
+    useSignedMutation<string, { newCreator: string }>(callbacks);
 
   async function transferOwnership(newCreator: string) {
-    setError(null);
-    setNetworkWarning(null);
-    try {
-      // Step 1 — fetch unsigned XDR from the server
-      setStatus("preparing");
-      const { unsignedXdr, networkPassphrase } = await prepareTransferOwnership(
-        resourceId,
-        newCreator,
-        apiKey,
-      );
-
-      // Step 1b — warn if wallet is on the wrong network (non-blocking)
-      const warning = await checkNetwork(networkPassphrase);
-      if (warning) {
-        setNetworkWarning(warning);
-        setStatus("idle");
-        return;
-      }
-
-      // Step 2 — ask Freighter (or any SEP-43 wallet) to sign
-      setStatus("signing");
-      const signedXdr = await signWithFreighter(unsignedXdr, networkPassphrase);
-
-      // Step 3 — submit signed XDR and sync DB owner
-      setStatus("submitting");
-      const updated = await submitTransferOwnership(resourceId, signedXdr, newCreator, apiKey);
-      setNewOwner(updated.newCreator);
-      setStatus("confirmed");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while transferring ownership. Please check your wallet connection and try again.",
-      );
-      setStatus("error");
-    }
+    await execute(newCreator);
   }
 
-  return { status, newOwner, error, networkWarning, transferOwnership };
+  return {
+    status,
+    newOwner: result?.newCreator ?? null,
+    error,
+    networkWarning,
+    transferOwnership,
+  };
 }

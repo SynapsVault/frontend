@@ -3,33 +3,33 @@ import ReactDOM from "react-dom/client";
 import App from "./App.js";
 import { API_BASE, STELLAR_NETWORK } from "./lib/config.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
+import { captureException } from "./lib/sentry.js";
 import "./i18n/config.js";
 import "./index.css";
 
-// Defer error tracking initialization until after first paint to keep
-// @sentry/react out of the initial bundle.
-const scheduleIdle = (callback: () => void) => {
-  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-    window.requestIdleCallback(callback);
-  } else {
-    setTimeout(callback, 1);
+async function bootstrap() {
+  // Start Sentry before the first render so startup errors are captured while
+  // retaining the dynamic import and its separate vendor chunk.
+  try {
+    const { initSentry } = await import("./lib/sentry.js");
+    await initSentry();
+  } catch (error) {
+    console.error("Failed to initialize error tracking:", error);
   }
-};
 
-scheduleIdle(() => {
-  import("./lib/sentry.js")
-    .then(({ initSentry }) => {
-      initSentry();
-    })
-    .catch((error) => {
-      console.error("Failed to initialize error tracking:", error);
-    });
-});
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error("Root element not found. Check index.html for <div id=\"root\"></div>");
+  }
 
-const rootElement = document.getElementById("root");
-
-if (!rootElement) {
-  throw new Error("Root element not found. Check index.html for <div id=\"root\"></div>");
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </React.StrictMode>,
+  );
 }
 
 // Create React root and mount application
@@ -37,11 +37,12 @@ const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <ErrorBoundary>
+    <ErrorBoundary onError={captureException}>
       <App />
     </ErrorBoundary>
   </React.StrictMode>,
 );
+void bootstrap();
 
 // Log app version in development
 if (import.meta.env.DEV) {

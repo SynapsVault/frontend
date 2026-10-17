@@ -12,6 +12,7 @@ interface Props {
    */
   variant?: "page" | "section";
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  onReload?: () => void;
 }
 
 interface State {
@@ -38,7 +39,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
-    this.setState({ error: null });
+    if (this.props.onReload) {
+      this.props.onReload();
+    } else {
+      window.location.reload();
+    }
   };
 
   render() {

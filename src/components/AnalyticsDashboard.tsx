@@ -1,9 +1,11 @@
 import React, { useId, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAnalytics } from "../hooks/useAnalytics.js";
 import type { RecentPayment, ResourceStat } from "../api/analytics.js";
 import { ErrorBanner } from "./ErrorBanner.js";
 import { StatusTag, formatPrice, shortAddress } from "./ResourceCard.js";
 import { StatCard, formatCount, timeAgo } from "./StatCard.js";
+import { safeExternalUrl } from "../utils/safeExternalUrl.js";
 
 interface Props {
   apiKey: string;
@@ -15,6 +17,7 @@ const earnedOf = (r: ResourceStat) => {
 };
 
 export function AnalyticsDashboard({ apiKey }: Props) {
+  const { t } = useTranslation();
   const { data, loading, error, retry } = useAnalytics(apiKey);
 
   const sorted = useMemo(() => [...(data?.resources ?? [])].sort((a, b) => earnedOf(b) - earnedOf(a)), [data]);
@@ -36,9 +39,9 @@ export function AnalyticsDashboard({ apiKey }: Props) {
             <path d="M2.5 15.5 6.5 9l3 3.5 3-6 3 5" />
           </svg>
         </div>
-        <p className="synapse-empty__title">No resources yet</p>
+        <p className="synapse-empty__title">{t("analytics.empty_title")}</p>
         <p className="synapse-empty__body">
-          Publish your first resource to start earning USDC directly to your Stellar wallet.
+          {t("analytics.empty_body")}
         </p>
       </div>
     );
@@ -52,33 +55,33 @@ export function AnalyticsDashboard({ apiKey }: Props) {
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard
-          label="Total earned"
+          label={t("analytics.total_earned")}
           value={formatPrice(summary.totalEarned)}
           unit={summary.currency}
           tone="accent"
-          note="Paid directly to your Stellar wallet"
+          note={t("analytics.paid_note")}
         />
         <StatCard
-          label="Total sales"
+          label={t("analytics.total_sales")}
           value={formatCount(summary.totalSales)}
           note={
             summary.totalSales > 0
-              ? `avg sale ${formatPrice(avgSale.toFixed(2))} ${summary.currency}`
-              : `across ${summary.totalResources} resource${summary.totalResources !== 1 ? "s" : ""}`
+              ? t("analytics.avg_sale", { amount: formatPrice(avgSale.toFixed(2)), currency: summary.currency })
+              : t(summary.totalResources !== 1 ? "analytics.across_resources_plural" : "analytics.across_resources", { count: summary.totalResources })
           }
         />
         <StatCard
-          label="Listed resources"
+          label={t("analytics.listed_resources")}
           value={`${formatCount(summary.listedResources)} / ${formatCount(summary.totalResources)}`}
           progress={summary.listedResources / summary.totalResources}
           tone="success"
-          note={`${verified} verified · ${pending} pending · ${rejected} rejected`}
+          note={t("analytics.verification_summary", { verified, pending, rejected })}
         />
       </div>
 
       {/* Per-resource breakdown */}
       <div className="rounded-xl border border-line bg-surface shadow-sm">
-        <h2 className="border-b border-line px-4 py-3 text-base font-semibold text-fg sm:px-5">Earnings by resource</h2>
+        <h2 className="border-b border-line px-4 py-3 text-base font-semibold text-fg sm:px-5">{t("analytics.earnings_by_resource")}</h2>
         <ul role="list" className="divide-y divide-line">
           {sorted.map((r) => (
             <ResourceRow key={r.id} resource={r} share={totalEarned > 0 ? earnedOf(r) / totalEarned : 0} />
@@ -106,9 +109,11 @@ function AnalyticsSkeleton() {
 }
 
 function ResourceRow({ resource: r, share }: { resource: ResourceStat; share: number }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const pct = Math.round(share * 100);
+  const accessUrl = safeExternalUrl(r.accessUrl);
 
   return (
     <li>
@@ -136,11 +141,10 @@ function ResourceRow({ resource: r, share }: { resource: ResourceStat; share: nu
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-fg">{r.title}</p>
           <p className="mt-0.5 text-xs text-fg-muted">
-            {formatPrice(r.price)} USDC · {r.listed ? "listed" : "unlisted"} · {r.totalSales} sale
-            {r.totalSales !== 1 ? "s" : ""}
+            {formatPrice(r.price)} USDC · {r.listed ? t("analytics.listed") : t("analytics.unlisted")} · {r.totalSales} {t(r.totalSales !== 1 ? "analytics.sales" : "analytics.sale")}
           </p>
         </div>
-        <div className="hidden w-28 items-center gap-2 sm:flex" title={`${pct}% of earnings`}>
+        <div className="hidden w-28 items-center gap-2 sm:flex" title={t("analytics.percent_of_earnings", { percent: pct })}>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
             <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
           </div>
@@ -156,17 +160,21 @@ function ResourceRow({ resource: r, share }: { resource: ResourceStat; share: nu
         <div className="mb-3">
           <StatusTag status={r.verificationStatus} type="verify" />
         </div>
-        <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">Resource URL</p>
-        <a
-          href={r.accessUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 block truncate font-mono text-xs text-accent-text hover:underline"
-        >
-          {r.accessUrl}
-        </a>
+        <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">{t("analytics.resource_url")}</p>
+        {accessUrl ? (
+          <a
+            href={accessUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 block truncate font-mono text-xs text-accent-text hover:underline"
+          >
+            {r.accessUrl}
+          </a>
+        ) : (
+          <p className="mt-1 block truncate font-mono text-xs text-fg-subtle">{r.accessUrl}</p>
+        )}
 
-        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-fg-muted">Recent payments</p>
+        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-fg-muted">{t("analytics.recent_payments")}</p>
         {r.recentPayments.length > 0 ? (
           <ul className="mt-2 divide-y divide-line">
             {r.recentPayments.map((p, i) => (
@@ -174,7 +182,7 @@ function ResourceRow({ resource: r, share }: { resource: ResourceStat; share: nu
             ))}
           </ul>
         ) : (
-          <p className="mt-1 text-xs text-fg-subtle">No payments yet</p>
+          <p className="mt-1 text-xs text-fg-subtle">{t("analytics.no_payments")}</p>
         )}
       </div>
     </li>

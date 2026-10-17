@@ -1,4 +1,6 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
+import "../i18n/config.js";
 
 /**
  * Animated placeholder card shown while the resource catalog is loading.
@@ -34,16 +36,17 @@ export function ResourceCardSkeleton() {
 
 /** Renders `count` skeleton cards inside a matching grid. */
 export function ResourceGridSkeleton({ count = 6 }: { count?: number }) {
+  const { t } = useTranslation();
   return (
     <div
       role="status"
-      aria-label="Loading resources…"
+      aria-label={t("catalog.loading_resources")}
       className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
     >
       {Array.from({ length: count }).map((_, i) => (
         <ResourceCardSkeleton key={i} />
       ))}
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("app.loading")}</span>
     </div>
   );
 }

@@ -12,7 +12,7 @@ export function useCatalog<T>(filters: CatalogFilters) {
 
   const asyncState = useAsync<T[]>(
     async (signal) => {
-      const result = await fetchCatalogWithCache(filters);
+      const result = await fetchCatalogWithCache(filters, signal);
       // A superseded request must not relabel the data that's still shown.
       if (signal.aborted) return result.data as T[];
       setStale(result.stale);

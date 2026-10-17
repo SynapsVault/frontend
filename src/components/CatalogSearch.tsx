@@ -1,4 +1,6 @@
-import React, { useCallback, useId, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import "../i18n/config.js";
 import type { CatalogFilters } from "../api/resources.js";
 
 // ---------------------------------------------------------------------------
@@ -46,6 +48,8 @@ export function CatalogSearch({
   onToggleFilters,
   sortSlot,
 }: Props) {
+  const { t } = useTranslation();
+
   const hasActiveFilters =
     !!filters.search ||
     !!filters.minPrice ||
@@ -64,13 +68,11 @@ export function CatalogSearch({
 
   const hasResults = results && results.length > 0;
 
-  // Reset the active index whenever the results list changes.
-  const prevResultsRef = useRef<SearchResult[] | undefined>(undefined);
-  if (results !== prevResultsRef.current) {
-    prevResultsRef.current = results;
-    // Only reset if there's a real change (avoids resetting on stable renders).
-    if (activeIndex !== -1) setActiveIndex(-1);
-  }
+  // Reset the active index after the results list changes, never during render.
+  const resultsKey = results?.map((result) => result.id).join("\u0000");
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [resultsKey]);
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -151,12 +153,12 @@ export function CatalogSearch({
           ref={inputRef}
           type="search"
           role={hasResults ? "combobox" : undefined}
-          aria-label="Search resources"
+          aria-label={t("catalog.search_label")}
           aria-expanded={hasResults ? true : undefined}
           aria-controls={hasResults ? listboxId : undefined}
           aria-activedescendant={activeDescendant}
           aria-autocomplete={hasResults ? "list" : undefined}
-          placeholder="Search by title…"
+          placeholder={t("catalog.search_placeholder")}
           value={filters.search ?? ""}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
           onKeyDown={handleInputKeyDown}
@@ -166,7 +168,7 @@ export function CatalogSearch({
 
         {/* Keyboard-navigable results list (#311) */}
         {hasResults && (
-          <ul id={listboxId} role="listbox" aria-label="Search results" className="synapse-listbox">
+          <ul id={listboxId} role="listbox" aria-label={t("catalog.search_results")} className="synapse-listbox">
             {results!.map((result, index) => {
               const isActive = index === activeIndex;
               return (
@@ -202,7 +204,7 @@ export function CatalogSearch({
       {/* Filter row */}
       <div id="catalog-filter-row" className="synapse-search__filters">
         <select
-          aria-label="Filter by verification status"
+          aria-label={t("catalog.filter_verification_label")}
           value={filters.verificationStatus ?? "all"}
           onChange={(e) =>
             onChange({
@@ -212,14 +214,14 @@ export function CatalogSearch({
           }
           className="synapse-input synapse-select"
         >
-          <option value="all">All statuses</option>
-          <option value="verified">Verified</option>
-          <option value="pending">Pending</option>
-          <option value="rejected">Rejected</option>
+          <option value="all">{t("catalog.all_statuses")}</option>
+          <option value="verified">{t("status.verified")}</option>
+          <option value="pending">{t("status.pending")}</option>
+          <option value="rejected">{t("status.rejected")}</option>
         </select>
 
         <select
-          aria-label="Filter by resource type"
+          aria-label={t("catalog.filter_type_label")}
           value={filters.resourceType ?? "all"}
           onChange={(e) =>
             onChange({
@@ -229,16 +231,16 @@ export function CatalogSearch({
           }
           className="synapse-input synapse-select"
         >
-          <option value="all">All types</option>
-          <option value="file">File</option>
-          <option value="link">Link</option>
+          <option value="all">{t("catalog.all_types")}</option>
+          <option value="file">{t("catalog.type_file")}</option>
+          <option value="link">{t("catalog.type_link")}</option>
         </select>
 
         <div className="synapse-search__price">
           <input
             type="number"
-            aria-label="Minimum price in USDC"
-            placeholder="Min"
+            aria-label={t("catalog.min_price_label")}
+            placeholder={t("catalog.min_price_placeholder")}
             min="0"
             step="0.01"
             value={filters.minPrice ?? ""}
@@ -248,8 +250,8 @@ export function CatalogSearch({
           <span aria-hidden="true">–</span>
           <input
             type="number"
-            aria-label="Maximum price in USDC"
-            placeholder="Max"
+            aria-label={t("catalog.max_price_label")}
+            placeholder={t("catalog.max_price_placeholder")}
             min="0"
             step="0.01"
             value={filters.maxPrice ?? ""}
@@ -266,13 +268,13 @@ export function CatalogSearch({
             aria-controls="catalog-filter-row"
             className="synapse-btn synapse-btn--ghost synapse-btn--sm"
           >
-            Toggle filters
+            {t("catalog.toggle_filters")}
           </button>
         )}
 
         {hasActiveFilters && (
           <button onClick={onReset} className="synapse-btn synapse-btn--ghost synapse-btn--sm">
-            Clear filters
+            {t("catalog.clear_filters")}
           </button>
         )}
       </div>
@@ -282,12 +284,12 @@ export function CatalogSearch({
         <span className="synapse-search__count" aria-live="polite">
           {hasActiveFilters ? (
             <>
-              <strong>{filtered}</strong> of {total}
+              <strong>{filtered}</strong> {t("catalog.filtered_of_total", { total })}
             </>
           ) : (
             <strong>{total}</strong>
           )}{" "}
-          resource{total !== 1 ? "s" : ""}
+          {t("catalog.resources_count", { count: total })}
         </span>
         {sortSlot}
       </div>

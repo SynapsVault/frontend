@@ -1,4 +1,6 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
+import "../i18n/config.js";
 
 interface Props {
   message: string;
@@ -11,6 +13,8 @@ interface Props {
  * Used wherever an async fetch fails.
  */
 export function ErrorBanner({ message, hint, onRetry }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div
       role="alert"
@@ -44,7 +48,7 @@ export function ErrorBanner({ message, hint, onRetry }: Props) {
           onClick={onRetry}
           className="synapse-btn synapse-btn--danger synapse-btn--sm mt-1"
         >
-          Try again
+          {t("errors.try_again")}
         </button>
       )}
     </div>

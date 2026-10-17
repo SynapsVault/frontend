@@ -11,15 +11,18 @@ RUN npm ci
 COPY . .
 
 # Build arguments for environment configuration
-ARG VITE_API_URL=http://localhost:3000
+ARG VITE_API_URL
 ARG VITE_API_KEY=""
+ARG VITE_API_URL=http://localhost:3000
 ARG VITE_NETWORK=testnet
 ARG VITE_SENTRY_DSN=""
 
 ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_API_KEY=$VITE_API_KEY
 ENV VITE_NETWORK=$VITE_NETWORK
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+
+# Fail fast: a production image must be built against a real backend URL
+RUN test -n "$VITE_API_URL" || (echo "VITE_API_URL build arg is required" >&2 && exit 1)
 
 # Type check and build
 RUN npm run typecheck

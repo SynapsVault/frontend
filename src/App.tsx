@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Toast } from "./components/Toast.js";
+import { ServiceWorkerUpdatePrompt } from "./components/ServiceWorkerUpdatePrompt.js";
 import { ResourceGridSkeleton } from "./components/ResourceCardSkeleton.js";
 import { ErrorBanner } from "./components/ErrorBanner.js";
 import { CatalogStaleBanner } from "./components/CatalogStaleBanner.js";
@@ -18,7 +19,7 @@ import { fetchRegistryStatus } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 import { loadLocale } from "./i18n/config.js";
 import { STELLAR_NETWORK } from "./lib/config.js";
-import { FREIGHTER_INSTALL_URL } from "./lib/freighter.js";
+import { FREIGHTER_INSTALL_URL, FREIGHTER_NOT_FOUND_CODE } from "./lib/freighter.js";
 
 export type { Resource };
 
@@ -69,7 +70,6 @@ function sortResources(list: Resource[], sort: SortKey): Resource[] {
 }
 
 /* ─── constants ─────────────────────────────────────────────────────────── */
-const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 const PUBLISHING_DOCS_URL = "https://docs.synapsvault.app/publishing";
 
 const DEFAULT_FILTERS: CatalogFilters = {
@@ -82,8 +82,8 @@ const DEFAULT_FILTERS: CatalogFilters = {
 
 const MARKETPLACE_TABS: Tab[] = ["catalog", "leaderboard", "purchases", "agent"];
 const CREATOR_TABS: Tab[] = ["dashboard", "analytics"];
-/** Number-key shortcuts, in display order. Creator tabs only bind with an API key. */
-const TAB_HOTKEYS: Tab[] = [...MARKETPLACE_TABS, ...(API_KEY ? CREATOR_TABS : [])];
+/** Number-key shortcuts, in display order. Creator tabs only bind when authenticated. */
+const TAB_HOTKEYS: Tab[] = [...MARKETPLACE_TABS, ...CREATOR_TABS];
 
 const TAB_LABEL_KEYS: Record<Tab, string> = {
   catalog: "app.tab_catalog", leaderboard: "app.tab_leaderboard", purchases: "app.tab_purchases",
@@ -156,11 +156,15 @@ export default function App() {
   /** Last catalog fetched with no filters: drives "N of TOTAL" and the hero stats. */
   const [unfiltered, setUnfiltered]     = useState<Resource[] | null>(null);
   /** id → title for every resource seen, so Purchases can name what was bought. */
-  const resourceTitlesRef               = useRef<Record<string, string>>({});
+  const [resourceTitles, setResourceTitles] = useState<Record<string, string>>({});
   const searchInputRef                  = useRef<HTMLInputElement>(null);
   const { theme, toggleTheme }          = useTheme();
   const wallet                          = useWalletConnection();
   const { t, i18n }                     = useTranslation();
+  /** Session token obtained via wallet-signature login; gates creator features. */
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [signingIn, setSigningIn]       = useState(false);
+  const isAuthenticated                 = Boolean(sessionToken);
 
   /* catalog — debounced so typing doesn't fire a request per keystroke */
   const debouncedFilters = useDebouncedValue(filters, 250);
@@ -179,6 +183,35 @@ export default function App() {
 
   const resources = useMemo((): Resource[] => {
     if (!rawResources) return [];
+    
+    // Clear overrides that don't match the current server state
+    setOverrides((prev) => {
+      const reconciled: Record<string, Partial<Resource>> = {};
+      for (const [id, override] of Object.entries(prev)) {
+        const serverResource = rawResources.find((r) => r.id === id);
+        if (!serverResource) continue;
+        
+        const stillValid: Partial<Resource> = {};
+        // Keep price override only if server hasn't changed
+        if (override.price !== undefined && override.price !== serverResource.price) {
+          stillValid.price = override.price;
+        }
+        // Keep owner override only if server hasn't changed
+        if (override.walletAddress !== undefined && override.walletAddress !== serverResource.walletAddress) {
+          stillValid.walletAddress = override.walletAddress;
+        }
+        // Keep other overrides
+        if (override.onchainStatus !== undefined && override.onchainStatus !== serverResource.onchainStatus) {
+          stillValid.onchainStatus = override.onchainStatus;
+        }
+        
+        if (Object.keys(stillValid).length > 0) {
+          reconciled[id] = stillValid;
+        }
+      }
+      return reconciled;
+    });
+    
     return rawResources.map((r) => ({ ...r, ...(overrides[r.id] ?? {}) }));
   }, [rawResources, overrides]);
 
@@ -188,7 +221,11 @@ export default function App() {
   }, [resourcesStatus, loadedFilters, resources]);
 
   useEffect(() => {
-    for (const r of resources) resourceTitlesRef.current[r.id] = r.title;
+    setResourceTitles((prev) => {
+      const updated = { ...prev };
+      for (const r of resources) updated[r.id] = r.title;
+      return updated;
+    });
   }, [resources]);
 
   const sortedResources = useMemo(() => sortResources(resources, sort), [resources, sort]);
@@ -233,7 +270,15 @@ export default function App() {
 
   const toggleLanguage = useCallback(async () => {
     const next = i18n.language === "en" ? "es" : "en";
-    await loadLocale(next);
+    try {
+
+      await loadLocale(next);
+
+    } catch (error) {
+
+      console.error("Failed to load locale", error);
+
+    }
     await i18n.changeLanguage(next);
     document.documentElement.lang = next;
   }, [i18n]);
@@ -242,6 +287,33 @@ export default function App() {
     setTab(next);
     setSidebarOpen(false);
   }, []);
+
+  /* ── Wallet-signature login ──────────────────────────────────────────── */
+  const signIn = useCallback(async () => {
+    if (signingIn) return;
+    setSigningIn(true);
+    try {
+      let address = wallet.address;
+      if (wallet.status !== "connected" || !address) {
+        address = await wallet.connect();
+      }
+      if (!address) throw new Error(t("app.signin_failed"));
+      const message = `Sign in to ${t("app.title")}\nAddress: ${address}\nIssued: ${new Date().toISOString()}`;
+      const token = await wallet.signMessage(message);
+      if (!token) throw new Error(t("app.signin_failed"));
+      setSessionToken(token);
+      setToast({ message: t("app.signed_in") });
+    } catch (err) {
+      setToast({ message: err instanceof Error ? err.message : t("app.signin_failed") });
+    } finally {
+      setSigningIn(false);
+    }
+  }, [signingIn, wallet, t]);
+
+  const signOut = useCallback(() => {
+    setSessionToken(null);
+    if (tab === "dashboard" || tab === "analytics") setTab("catalog");
+  }, [tab]);
 
   // Keep showing the current results while a refetch is in flight; only show
   // skeletons on the very first load.
@@ -276,11 +348,12 @@ export default function App() {
       },
     };
     TAB_HOTKEYS.forEach((target, i) => {
+      if (!isAuthenticated && CREATOR_TABS.includes(target)) return;
       map[`tab-${target}`] = { key: String(i + 1), handler: () => goTo(target) };
     });
-    if (API_KEY) map.publish = { key: "p", handler: () => setShowPublish(true) };
+    if (isAuthenticated) map.publish = { key: "p", handler: () => setShowPublish(true) };
     return map;
-  }, [activeModal, showPublish, sidebarOpen, toggleTheme, toggleLanguage, goTo]);
+  }, [activeModal, showPublish, sidebarOpen, toggleTheme, toggleLanguage, goTo, isAuthenticated]);
 
   // While the help dialog is open it owns the keyboard (it handles Escape).
   useKeyboardShortcuts(shortcuts, !showShortcutsHelp);
@@ -290,15 +363,17 @@ export default function App() {
     const actions = t("shortcuts.group_actions");
     const help = t("shortcuts.group_help");
     return [
-      ...TAB_HOTKEYS.map((target, i) => ({ keys: String(i + 1), description: t(TAB_SHORTCUT_KEYS[target]), group: nav })),
+      ...TAB_HOTKEYS
+        .filter((target) => isAuthenticated || !CREATOR_TABS.includes(target))
+        .map((target) => ({ keys: String(TAB_HOTKEYS.indexOf(target) + 1), description: t(TAB_SHORTCUT_KEYS[target]), group: nav })),
       { keys: "/", description: t("shortcuts.search"), group: actions },
-      ...(API_KEY ? [{ keys: "P", description: t("shortcuts.publish"), group: actions }] : []),
+      ...(isAuthenticated ? [{ keys: "P", description: t("shortcuts.publish"), group: actions }] : []),
       { keys: "T", description: t("shortcuts.toggle_theme"), group: actions },
       { keys: "L", description: t("shortcuts.toggle_language"), group: actions },
       { keys: "?", description: t("shortcuts.show_shortcuts"), group: help },
       { keys: "Esc", description: t("shortcuts.escape"), group: help },
     ];
-  }, [t]);
+  }, [t, isAuthenticated]);
 
   /* ── Sidebar ─────────────────────────────────────────────────────────── */
   const renderNavItem = (target: Tab) => (
@@ -326,7 +401,7 @@ export default function App() {
         <div className="synapse-nav-label">{t("app.nav_marketplace")}</div>
         {MARKETPLACE_TABS.map(renderNavItem)}
 
-        {API_KEY && (
+        {isAuthenticated && (
           <div className="synapse-nav-group">
             <div className="synapse-nav-label">{t("app.nav_creator")}</div>
             {CREATOR_TABS.map(renderNavItem)}
@@ -380,6 +455,20 @@ export default function App() {
           <span className="font-mono">{shortAddress(wallet.address)}</span>
           <span className="synapse-sr-only">{t("app.copy_address")}</span>
         </button>
+        {isAuthenticated ? (
+          <button className="synapse-icon-btn" onClick={signOut}
+            aria-label={t("app.sign_out")} title={t("app.sign_out")}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M7 3H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M12 13l4-4-4-4M16 9H7"/>
+            </svg>
+          </button>
+        ) : (
+          <button className="synapse-btn synapse-btn--secondary synapse-btn--sm" onClick={() => void signIn()}
+            disabled={signingIn} aria-busy={signingIn || undefined} aria-label={t("app.sign_in")}>
+            {signingIn ? <span className="synapse-spinner" aria-hidden="true" /> : null}
+            <span className="synapse-topbar__label">{t("app.sign_in")}</span>
+          </button>
+        )}
         <button className="synapse-icon-btn" onClick={wallet.disconnect}
           aria-label={t("app.disconnect_wallet")} title={t("app.disconnect_wallet")}>
           <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -414,7 +503,7 @@ export default function App() {
     wallet.error && (
       <p id="wallet-error" role="alert" className="synapse-wallet-error">
         {wallet.error}
-        {/not found/i.test(wallet.error) && (
+        {wallet.errorCode === FREIGHTER_NOT_FOUND_CODE && (
           <> <a href={FREIGHTER_INSTALL_URL} target="_blank" rel="noopener noreferrer">{t("app.install_freighter")} ↗</a></>
         )}
       </p>
@@ -432,7 +521,7 @@ export default function App() {
       </button>
       <h1 className="synapse-topbar__title">{t(TAB_TITLE_KEYS[tab])}</h1>
       <div className="synapse-topbar__actions">
-        {API_KEY && (
+        {isAuthenticated && (
           <button className="synapse-btn synapse-btn--primary synapse-btn--sm" onClick={() => setShowPublish(true)}
             aria-label={t("app.publish")}>
             <svg width="14" height="14" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true"><path d="M9 3v12M3 9h12"/></svg>
@@ -572,7 +661,7 @@ export default function App() {
             <Suspense fallback={<LazyFallback label={t("app.loading")} />}>
               <PurchasesDashboard initialWallet={wallet.address ?? ""}
                 connectedWallet={wallet.status === "connected" ? wallet.address : null}
-                resourceTitles={resourceTitlesRef.current} />
+                resourceTitles={resourceTitles} />
             </Suspense>
           )}
           {tab === "agent" && (
@@ -580,17 +669,17 @@ export default function App() {
               <AgentStatusPage />
             </Suspense>
           )}
-          {tab === "dashboard" && API_KEY && (
+          {tab === "dashboard" && isAuthenticated && (
             <Suspense fallback={<LazyFallback label={t("app.loading")} />}>
-              <CreatorDashboard apiKey={API_KEY}
+              <CreatorDashboard apiKey={sessionToken ?? ""}
                 onEditPrice={(r) => setActiveModal({ kind: "editPrice", resource: r as Resource })}
                 onTransferOwnership={(r) => setActiveModal({ kind: "transferOwnership", resource: r as Resource })}
                 onRegister={(r) => setActiveModal({ kind: "register", resource: r as Resource })} />
             </Suspense>
           )}
-          {tab === "analytics" && API_KEY && (
+          {tab === "analytics" && isAuthenticated && (
             <Suspense fallback={<LazyFallback label={t("app.loading")} />}>
-              <AnalyticsDashboard apiKey={API_KEY} />
+              <AnalyticsDashboard apiKey={sessionToken ?? ""} />
             </Suspense>
           )}
           </ErrorBoundary>
@@ -611,33 +700,34 @@ export default function App() {
             recipient={activeModal.resource.walletAddress} accessUrl={activeModal.resource.accessUrl}
             walletAddress={wallet.status === "connected" ? wallet.address : null}
             onConnect={() => void wallet.connect()} connecting={walletBusy} walletError={wallet.error}
+            walletErrorCode={wallet.errorCode}
             onClose={closeModal} onCopyUrl={handleCopyUrl} />
         </Suspense>
       )}
       {activeModal?.kind === "editPrice" && (
         <Suspense fallback={<LazyModalFallback />}>
           <EditPriceModal resourceId={activeModal.resource.id} currentPrice={activeModal.resource.price}
-            apiKey={API_KEY} onClose={closeModal}
+            apiKey={sessionToken ?? ""} onClose={closeModal}
             onConfirmed={(price) => { applyOverride(activeModal.resource.id, { price }); closeModal(); }} />
         </Suspense>
       )}
       {activeModal?.kind === "transferOwnership" && (
         <Suspense fallback={<LazyModalFallback />}>
-          <TransferOwnershipModal resourceId={activeModal.resource.id} apiKey={API_KEY}
+          <TransferOwnershipModal resourceId={activeModal.resource.id} apiKey={sessionToken ?? ""}
             onClose={closeModal}
             onConfirmed={(addr) => { applyOverride(activeModal.resource.id, { walletAddress: addr }); closeModal(); }} />
         </Suspense>
       )}
       {activeModal?.kind === "register" && (
         <Suspense fallback={<LazyModalFallback />}>
-          <RegisterModal resourceId={activeModal.resource.id} apiKey={API_KEY}
+          <RegisterModal resourceId={activeModal.resource.id} apiKey={sessionToken ?? ""}
             onClose={closeModal}
             onConfirmed={() => { applyOverride(activeModal.resource.id, { onchainStatus: "registered" }); closeModal(); }} />
         </Suspense>
       )}
-      {showPublish && API_KEY && (
+      {showPublish && isAuthenticated && (
         <Suspense fallback={<LazyModalFallback />}>
-          <PublishModal apiKey={API_KEY} onClose={() => setShowPublish(false)}
+          <PublishModal apiKey={sessionToken ?? ""} onClose={() => setShowPublish(false)}
             onPublished={() => retryResources()} />
         </Suspense>
       )}
@@ -645,6 +735,7 @@ export default function App() {
       {toast && (
         <Toast message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={dismissToast} />
       )}
+      <ServiceWorkerUpdatePrompt />
     </div>
   );
 }

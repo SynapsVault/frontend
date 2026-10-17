@@ -43,7 +43,7 @@ SynapsVault-contracts  (Soroban — vault-registry, access-lease, subscription)
 | i18n | i18next (English + Español included) |
 | Testing | Vitest + React Testing Library |
 | Error tracking | Sentry |
-| Deployment | Vercel (via GitHub Actions) |
+| CI | GitHub Actions (lint, typecheck, test, build, Docker smoke test) |
 
 ## Quick start
 
@@ -84,6 +84,8 @@ docker run -p 8080:80 synapsvault-frontend
 | `VITE_API_URL` | Production | Backend API base URL. Leave empty in development: the dev server proxies all API routes to `VITE_DEV_PROXY_TARGET` (default `http://localhost:3000`). **Must** be set for production builds, or API calls return the app's HTML. |
 | `VITE_DEV_PROXY_TARGET` | ❌ | Backend the dev server proxies to (default `http://localhost:3000`) |
 | `VITE_API_KEY` | Publisher only | API key for creator features |
+
+> **Security warning:** `VITE_API_KEY` is bundled into client-side JavaScript and is visible to every visitor. Do not use it for a secret publisher credential.
 | `VITE_NETWORK` | ✅ | `testnet` or `mainnet`: payments, signing, explorer links |
 | `VITE_SENTRY_DSN` | ❌ | Sentry DSN for error tracking |
 
@@ -93,17 +95,13 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full branch strategy and commit
 
 ### CI/CD pipeline
 
-Every push and PR runs three jobs: **lint + typecheck + test**, **build + bundle
+Every push to `main` or `dev`, and every PR targeting those branches, runs three jobs: **lint + typecheck + test**, **build + bundle
 budgets** (initial JS ≤ 250 KB gz, any chunk ≤ 800 KB gz, total ≤ 1 MB gz, and no
 circular chunk imports — see `scripts/check-bundle-size.mjs`), and a **Docker
 smoke test** that boots nginx and checks `/health` and SPA routing.
 
 ```
-Push to feat/* ──► CI (lint + typecheck + test + build + docker)
-                         │
-Merge to dev   ──► CI + preview deploy
-                         │
-Merge to main  ──► CI + production deploy (Vercel)
+Push to main/dev or PR to main/dev ──► CI (lint + typecheck + test + build + docker)
 ```
 
 ## Design system

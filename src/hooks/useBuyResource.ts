@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { checkNetwork } from "./useNetworkCheck.js";
 import {
   expectedNetworkPassphrase,
@@ -13,6 +13,7 @@ export interface BuyState {
   status: BuyStatus;
   result: PurchaseResult | null;
   error: string | null;
+  errorCode?: string | null;
   /** Start a purchase for the given paywalled access URL. */
   buy: (accessUrl: string) => Promise<void>;
   /** Reset back to the idle state (e.g. when the modal closes). */
@@ -30,6 +31,7 @@ export function useBuyResource(address: string | null): BuyState {
   const [status, setStatus] = useState<BuyStatus>("idle");
   const [result, setResult] = useState<PurchaseResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   // Guards against overlapping clicks resolving out of order.
   const inFlight = useRef(false);
 
@@ -40,12 +42,14 @@ export function useBuyResource(address: string | null): BuyState {
       if (!address) {
         setStatus("error");
         setError("Your wallet is not connected. Click Connect Wallet, then try again.");
+        setErrorCode(null);
         return;
       }
 
       inFlight.current = true;
       setStatus("paying");
       setError(null);
+      setErrorCode(null);
       setResult(null);
 
       try {
@@ -63,6 +67,11 @@ export function useBuyResource(address: string | null): BuyState {
             ? err.message
             : "Purchase failed. Please check that your wallet is on the correct network and has enough balance, then try again.",
         );
+        setErrorCode(
+          err && typeof err === "object" && "code" in err && typeof (err as { code?: unknown }).code === "string"
+            ? (err as { code: string }).code
+            : null,
+        );
         setStatus("error");
       } finally {
         inFlight.current = false;
@@ -76,7 +85,17 @@ export function useBuyResource(address: string | null): BuyState {
     setStatus("idle");
     setResult(null);
     setError(null);
+    setErrorCode(null);
   }, []);
 
-  return { status, result, error, buy, reset };
+  // Revoke object URLs when the result changes or the component unmounts to avoid blob leaks.
+  useEffect(() => {
+    return () => {
+      if (result?.download?.objectUrl) {
+        URL.revokeObjectURL(result.download.objectUrl);
+      }
+    };
+  }, [result?.download?.objectUrl]);
+
+  return { status, result, error, errorCode, buy, reset };
 }

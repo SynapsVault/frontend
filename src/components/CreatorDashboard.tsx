@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAsync } from "../hooks/useAsync.js";
 import { ErrorBanner } from "./ErrorBanner.js";
 import { ResourceGridSkeleton } from "./ResourceCardSkeleton.js";
@@ -37,6 +38,7 @@ const needsRegistration = (r: DashboardResource) =>
  * transfer-ownership, and register flows (#164).
  */
 export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onRegister }: Props) {
+  const { t } = useTranslation();
   const { status, data, error, retry } = useAsync<DashboardResource[]>(
     () => fetchMyResources<DashboardResource>(apiKey),
     [apiKey],
@@ -56,7 +58,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
   if (isLoading) return <ResourceGridSkeleton count={6} />;
 
   if (status === "error") {
-    return <ErrorBanner message={error ?? "Failed to load your resources."} onRetry={retry} />;
+    return <ErrorBanner message={error ?? t("creator.error")} onRetry={retry} />;
   }
 
   if (resources.length === 0) {
@@ -68,8 +70,8 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
             <path d="M3 7.5 12 12l9-4.5M12 12v9" />
           </svg>
         </div>
-        <p className="synapse-empty__title">No resources yet</p>
-        <p className="synapse-empty__body">Publish a resource to see it show up here.</p>
+        <p className="synapse-empty__title">{t("creator.empty_title")}</p>
+        <p className="synapse-empty__body">{t("creator.empty_body")}</p>
       </div>
     );
   }
@@ -80,29 +82,28 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
     <div className="space-y-6">
       {/* Summary row */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard label="Total resources" value={formatCount(total)} />
+        <StatCard label={t("creator.total_resources")} value={formatCount(total)} />
         <StatCard
-          label="Listed"
+          label={t("creator.listed")}
           value={formatCount(listed)}
-          note={total - listed > 0 ? `${formatCount(total - listed)} unlisted` : undefined}
+          note={total - listed > 0 ? `${formatCount(total - listed)} ${t("creator.unlisted")}` : undefined}
         />
-        <StatCard label="Verified" value={formatCount(verified)} tone="success" progress={verified / total} />
-        <StatCard label="Registered on-chain" value={formatCount(registered)} tone="accent" progress={registered / total} />
+        <StatCard label={t("creator.verified")} value={formatCount(verified)} tone="success" progress={verified / total} />
+        <StatCard label={t("creator.registered_on_chain")} value={formatCount(registered)} tone="accent" progress={registered / total} />
       </div>
 
       {pending.length > 0 && (
         <div className="flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm">
             <p className="font-semibold text-warning">
-              {pending.length} verified resource{pending.length !== 1 ? "s" : ""} not yet registered on-chain
+              {t(pending.length !== 1 ? "creator.pending_title_plural" : "creator.pending_title", { count: pending.length })}
             </p>
             <p className="mt-0.5 text-warning">
-              Registering records the creator, title and price in the on-chain vault registry, so buyers and agents can
-              verify who owns a resource without trusting SynapsVault.
+              {t("creator.pending_body")}
             </p>
           </div>
           <button onClick={() => onRegister(pending[0])} className="synapse-btn synapse-btn--primary synapse-btn--sm shrink-0">
-            Register next
+            {t("creator.register_next")}
           </button>
         </div>
       )}
@@ -112,13 +113,13 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
         <table className="min-w-full divide-y divide-line">
           <thead className="bg-surface-sunken">
             <tr>
-              <Th>Title</Th>
-              <Th align="right">Price</Th>
-              <Th>Listing</Th>
-              <Th>Verification</Th>
-              <Th>On-chain</Th>
+              <Th>{t("creator.title")}</Th>
+              <Th align="right">{t("creator.price")}</Th>
+              <Th>{t("creator.listing")}</Th>
+              <Th>{t("creator.verification")}</Th>
+              <Th>{t("creator.on_chain")}</Th>
               <Th>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{t("creator.actions")}</span>
               </Th>
             </tr>
           </thead>
@@ -136,7 +137,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                 </td>
                 <td className="px-3 py-3 sm:px-4">
                   <span className={`synapse-tag ${r.listed ? "synapse-tag--success" : "synapse-tag--neutral"}`}>
-                    {r.listed ? "Listed" : "Unlisted"}
+                    {r.listed ? t("creator.listed") : t("creator.unlisted")}
                   </span>
                 </td>
                 <td className="px-3 py-3 sm:px-4">
@@ -148,7 +149,7 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                     {r.onchainStatus === "registered" && r.onchainTxHash && (
                       <ExplorerLink type="tx" value={r.onchainTxHash} className="text-xs">
                         <span aria-hidden="true">↗</span>
-                        <span className="sr-only">View registration transaction</span>
+                        <span className="sr-only">{t("creator.view_registration_transaction")}</span>
                       </ExplorerLink>
                     )}
                   </div>
@@ -157,14 +158,14 @@ export function CreatorDashboard({ apiKey, onEditPrice, onTransferOwnership, onR
                   <div className="flex justify-end gap-1.5">
                     {needsRegistration(r) && (
                       <button onClick={() => onRegister(r)} className="synapse-btn synapse-btn--primary synapse-btn--sm">
-                        Register
+                        {t("creator.register")}
                       </button>
                     )}
                     <button onClick={() => onEditPrice(r)} className="synapse-btn synapse-btn--secondary synapse-btn--sm">
-                      Edit price
+                      {t("creator.edit_price")}
                     </button>
                     <button onClick={() => onTransferOwnership(r)} className="synapse-btn synapse-btn--ghost synapse-btn--sm">
-                      Transfer
+                      {t("creator.transfer")}
                     </button>
                   </div>
                 </td>

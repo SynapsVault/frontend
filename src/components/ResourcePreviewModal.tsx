@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchResourceMeta } from "../api/resources.js";
 import { useAsync } from "../hooks/useAsync.js";
 import { ErrorBanner } from "./ErrorBanner.js";
@@ -58,10 +59,11 @@ function LazyImage({ src, alt, className = "" }: LazyImageProps) {
   if (!src || errored) {
     return (
       <div
-        aria-label={alt}
+        role="img"
+        aria-label={`${alt} (no preview available)`}
         className={`flex items-center justify-center rounded-lg bg-surface-hover text-fg-subtle text-xs ${className}`}
       >
-        No preview
+        {t("preview.no_preview")}
       </div>
     );
   }
@@ -97,6 +99,7 @@ export function ResourcePreviewModal({
   onCopyUrl,
   onBuy,
 }: ResourcePreviewModalProps) {
+  const { t } = useTranslation();
   // Fetch is initiated only when the modal mounts (i.e. when it opens), so
   // content is loaded on-demand, not before the modal is rendered (#310).
   const { status, data, error, retry } = useAsync(
@@ -108,17 +111,6 @@ export function ResourcePreviewModal({
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Focus management
-  useEffect(() => {
-    previousFocusRef.current = document.activeElement as HTMLElement;
-    if (dialogRef.current) {
-      dialogRef.current.focus();
-    }
-    return () => {
-      if (previousFocusRef.current) {
-        previousFocusRef.current.focus();
-      }
-    };
-  }, []);
 
   // Escape key handler
   useEffect(() => {
@@ -157,10 +149,10 @@ export function ResourcePreviewModal({
 
   // Lock body scroll
   useEffect(() => {
-    const originalStyle = window.getComputedStyle(document.body).overflow;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = originalStyle;
+      document.body.style.overflow = previousOverflow;
     };
   }, []);
 
@@ -187,11 +179,11 @@ export function ResourcePreviewModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="preview-title" className="text-xl font-bold text-fg">
-            Resource Preview
+            {t("preview.title")}
           </h2>
           <button
             onClick={onClose}
-            aria-label="Close preview"
+            aria-label={t("preview.close")}
             className="rounded-full p-1.5 text-fg-subtle hover:bg-surface-hover hover:text-fg"
           >
             <svg
@@ -211,7 +203,7 @@ export function ResourcePreviewModal({
         <div className="mt-4">
           {/* Skeleton placeholder while loading (#310) */}
           {(status === "idle" || status === "loading") && (
-            <div role="status" aria-busy="true" aria-label="Loading preview…" className="space-y-3">
+            <div role="status" aria-busy="true" aria-label={t("preview.loading")} className="space-y-3">
               {/* Thumbnail skeleton */}
               <div className="h-32 w-full animate-pulse rounded-lg bg-line" />
               {/* Title skeleton */}
@@ -219,7 +211,7 @@ export function ResourcePreviewModal({
               {/* Meta skeletons */}
               <div className="h-4 w-1/2 animate-pulse rounded bg-line" />
               <div className="h-4 w-full animate-pulse rounded bg-line" />
-              <span className="sr-only">Loading preview…</span>
+              <span className="sr-only">{t("preview.loading")}</span>
             </div>
           )}
 
@@ -249,14 +241,14 @@ export function ResourcePreviewModal({
                 </h3>
                 {data.publisherName && (
                   <p className="text-sm text-fg-muted">
-                    by {data.publisherName}
+                    {t("preview.by", { name: data.publisherName })}
                   </p>
                 )}
               </div>
 
               <div>
                 <h4 className="text-sm font-medium text-fg">
-                  Description
+                  {t("preview.description")}
                 </h4>
                 {data.description ? (
                   <p id="preview-desc" className="mt-1 text-sm text-fg-muted">
@@ -267,7 +259,7 @@ export function ResourcePreviewModal({
                     id="preview-desc"
                     className="mt-1 text-sm italic text-fg-subtle"
                   >
-                    No description provided.
+                    {t("preview.no_description")}
                   </p>
                 )}
               </div>
@@ -275,7 +267,7 @@ export function ResourcePreviewModal({
               <div className="grid grid-cols-1 gap-4 rounded-lg bg-surface-sunken p-4 sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-medium uppercase text-fg-muted">
-                    Price
+                    {t("preview.price")}
                   </p>
                   <p className="mt-1 font-medium text-accent-text">
                     {data.price} USDC
@@ -283,15 +275,15 @@ export function ResourcePreviewModal({
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase text-fg-muted">
-                    Type
+                    {t("preview.type")}
                   </p>
                   <p className="mt-1 font-medium text-fg">
-                    {data.resourceType}
+                    {data.resource{t("preview.type")}}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase text-fg-muted">
-                    Verification
+                    {t("preview.verification")}
                   </p>
                   <p className="mt-1 font-medium text-fg">
                     {data.verificationStatus}
@@ -299,11 +291,11 @@ export function ResourcePreviewModal({
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase text-fg-muted">
-                    On-chain Status
+                    {t("preview.on_chain_status")}
                   </p>
                   <div className="mt-1 flex items-center gap-1.5">
                     <span className="font-medium text-fg">
-                      {data.onchainStatus === "none" ? "not on-chain" : data.onchainStatus}
+                      {data.onchainStatus === "none" ? t("preview.not_on_chain") : data.onchainStatus}
                     </span>
                     {data.onchainStatus === "registered" && data.onchainTxHash && (
                       <ExplorerLink
@@ -320,14 +312,12 @@ export function ResourcePreviewModal({
 
               <div>
                 <h4 className="text-sm font-medium text-fg">
-                  Content integrity
+                  {t("preview.content_integrity")}
                 </h4>
                 {data.contentHash ? (
                   <div className="mt-1 space-y-2">
                     <p className="text-xs text-fg-muted">
-                      SHA-256 integrity anchor recorded in the on-chain registry metadata when this
-                      resource was registered. It identifies the exact content but is not a live
-                      re-verification of the delivered bytes.
+                      {t("preview.integrity_description")}
                     </p>
                     <div className="flex items-start gap-2 rounded-lg bg-surface-sunken p-2">
                       <code className="break-all font-mono text-xs text-fg">
@@ -338,10 +328,10 @@ export function ResourcePreviewModal({
                         onClick={() => {
                           navigator.clipboard?.writeText(data.contentHash ?? "");
                         }}
-                        aria-label="Copy content hash"
+                        aria-label={t("preview.copy_content_hash")}
                         className="shrink-0 rounded px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-accent-soft"
                       >
-                        Copy
+                        {t("preview.copy")}
                       </button>
                     </div>
                     {data.onchainStatus === "registered" && data.onchainTxHash && (
@@ -350,13 +340,13 @@ export function ResourcePreviewModal({
                         value={data.onchainTxHash}
                         className="text-xs text-accent-text hover:text-accent-hover"
                       >
-                        View registration on Stellar Explorer ↗
+                        {t("preview.view_registration")}
                       </ExplorerLink>
                     )}
                   </div>
                 ) : (
                   <p className="mt-1 text-sm italic text-fg-subtle">
-                    No integrity anchor available for this resource.
+                    {t("preview.no_integrity")}
                   </p>
                 )}
               </div>
@@ -366,7 +356,7 @@ export function ResourcePreviewModal({
                   onClick={onClose}
                   className="w-full rounded-lg px-4 py-3 text-sm font-medium text-fg hover:bg-surface-hover sm:w-auto sm:py-2"
                 >
-                  Close
+                  {t("preview.close")}
                 </button>
                 <button
                   onClick={() => {
@@ -374,14 +364,14 @@ export function ResourcePreviewModal({
                   }}
                   className="w-full rounded-lg border border-line-strong px-4 py-3 text-sm font-medium text-fg hover:bg-surface-hover sm:w-auto sm:py-2"
                 >
-                  Copy access URL
+                  {t("preview.copy_access_url")}
                 </button>
                 {onBuy && (
                   <button
                     onClick={onBuy}
                     className="synapse-btn synapse-btn--primary w-full sm:w-auto"
                   >
-                    Buy {data.price} USDC
+                    {t("preview.buy", { price: data.price })}
                   </button>
                 )}
               </div>

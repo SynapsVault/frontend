@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useEditPrice } from "../hooks/useEditPrice.js";
+import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 interface Props {
   resourceId: string;
@@ -23,20 +24,32 @@ export function EditPriceModal({ resourceId, currentPrice, apiKey, onClose, onCo
   const { status, newPrice, error, networkWarning, editPrice } = useEditPrice(resourceId, apiKey);
 
   const busy = ["preparing", "signing", "submitting"].includes(status);
+  const dialogRef = useDialogA11y<HTMLDivElement>({ onClose, canClose: () => !busy });
+
+  useEffect(() => {
+    if (status === "confirmed" && newPrice) {
+      onConfirmed(newPrice);
+    }
+  }, [status, newPrice, onConfirmed]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     editPrice(price);
   }
 
-  if (status === "confirmed" && newPrice) {
-    onConfirmed(newPrice);
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl sm:max-w-sm sm:rounded-2xl sm:p-6">
-        <h2 className="mb-4 text-lg font-semibold text-fg">Edit Price</h2>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-price-title"
+        tabIndex={-1}
+        className="w-full max-w-none overflow-y-auto rounded-none bg-surface-raised p-4 shadow-xl outline-none sm:max-w-sm sm:rounded-2xl sm:p-6"
+      >
+        <h2 id="edit-price-title" className="mb-4 text-lg font-semibold text-fg">
+          Edit Price
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

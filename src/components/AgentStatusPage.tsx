@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { fetchAgentStatus, type AgentActivity } from "../api/agent.js";
 import { useAsync } from "../hooks/useAsync.js";
 import { ErrorBanner } from "./ErrorBanner.js";
@@ -24,13 +25,14 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * activity feed is visible on the Agent page" claim holds without using MCP.
  */
 export function AgentStatusPage() {
+  const { t } = useTranslation();
   const { status, data, error, retry } = useAsync((signal) => fetchAgentStatus(signal), []);
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (!data && (status === "idle" || status === "loading")) {
     return (
       <div role="status" aria-busy="true">
-        <span className="sr-only">Loading agent status…</span>
+        <span className="sr-only">{t("agent.loading")}</span>
         <div className="animate-pulse space-y-6" aria-hidden="true">
           <div className="h-24 rounded-xl bg-surface-hover" />
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -45,7 +47,7 @@ export function AgentStatusPage() {
 
   // ── Error ─────────────────────────────────────────────────────────────────
   if (status === "error") {
-    return <ErrorBanner message={error ?? "Failed to load agent status."} onRetry={retry} />;
+    return <ErrorBanner message={error ?? t("agent.error")} onRetry={retry} />;
   }
 
   if (!data) return null;
@@ -74,51 +76,51 @@ export function AgentStatusPage() {
             </h2>
             <span className={`synapse-tag ${healthy ? "synapse-tag--success" : "synapse-tag--neutral"}`}>
               <span className="synapse-tag__dot" aria-hidden="true" />
-              {agent.status}
+              {t(`agent.statuses.${agent.status.toLowerCase()}`, { defaultValue: capitalize(agent.status) })}
             </span>
           </div>
           <p className="mt-1 text-sm text-fg-muted">
-            Owner{" "}
+            {t("agent.owner")}{" "}
             <ExplorerLink type="account" value={agent.walletAddress} className="font-mono text-fg-muted">
               {shortAddress(agent.walletAddress)} ↗
             </ExplorerLink>
             <span aria-hidden="true"> · </span>
             {capitalize(agent.network)}
             <span aria-hidden="true"> · </span>
-            {formatPrice(agent.pricePerVerification)} {agent.currency} per verification
+            {formatPrice(agent.pricePerVerification)} {agent.currency} {t("agent.per_verification")}
           </p>
         </div>
       </div>
 
       {/* ── Stat cards ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard label="Verifications processed" value={formatCount(stats.totalVerifications)} />
+        <StatCard label={t("agent.verifications_processed")} value={formatCount(stats.totalVerifications)} />
         <StatCard
-          label="Approved"
+          label={t("agent.approved")}
           value={formatCount(stats.verified)}
           tone="success"
           progress={approvalRate}
-          note={`${Math.round(approvalRate * 100)}% approval rate`}
+          note={t("agent.approval_rate", { percent: Math.round(approvalRate * 100) })}
         />
         <StatCard
-          label="Rejected"
+          label={t("agent.rejected")}
           value={formatCount(stats.rejected)}
           tone="danger"
           progress={decided > 0 ? stats.rejected / decided : 0}
         />
         <StatCard
-          label="USDC earned"
+          label={t("agent.usdc_earned")}
           value={stats.totalEarned}
           unit="USDC"
           tone="accent"
-          note={avgConfidence !== null ? `avg confidence ${avgConfidence}%` : undefined}
+          note={avgConfidence !== null ? t("agent.avg_confidence", { percent: avgConfidence }) : undefined}
         />
       </div>
 
-      {/* ── Recent activity ────────────────────────────────────────────────── */}
+      {/* ── {t("agent.recent_activity")} ────────────────────────────────────────────────── */}
       <div className="rounded-xl border border-line bg-surface shadow-sm">
         <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
-          <h3 className="text-base font-semibold text-fg">Recent activity</h3>
+          <h3 className="text-base font-semibold text-fg">{t("agent.recent_activity")}</h3>
           <button onClick={retry} disabled={refreshing} className="synapse-btn synapse-btn--ghost synapse-btn--sm">
             {refreshing ? (
               <span className="synapse-spinner" aria-hidden="true" />
@@ -127,13 +129,12 @@ export function AgentStatusPage() {
                 <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" />
               </svg>
             )}
-            Refresh
+            {t("agent.refresh")}
           </button>
         </div>
         {recentActivity.length === 0 ? (
           <p className="px-5 py-10 text-center text-sm text-fg-subtle">
-            No verifications yet. Activity will appear here once the agent processes its first
-            request.
+            {t("agent.no_verifications")}
           </p>
         ) : (
           <ul role="list" className="divide-y divide-line">
@@ -176,7 +177,7 @@ function ActivityRow({ activity: a }: { activity: AgentActivity }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2" title="Confidence">
+      <div className="flex items-center gap-2" title={t("agent.confidence")}>
         <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
           <div
             className={`h-full rounded-full ${a.isOriginal ? "bg-success" : "bg-danger"}`}
@@ -184,7 +185,7 @@ function ActivityRow({ activity: a }: { activity: AgentActivity }) {
           />
         </div>
         <span className="w-9 text-right text-xs tabular-nums text-fg-muted">
-          <span className="sr-only">Confidence </span>
+          <span className="sr-only">{t("agent.confidence")} </span>
           {confidence}%
         </span>
       </div>
@@ -192,7 +193,7 @@ function ActivityRow({ activity: a }: { activity: AgentActivity }) {
       <span
         className={`synapse-tag w-[5.5rem] justify-center ${a.isOriginal ? "synapse-tag--success" : "synapse-tag--danger"}`}
       >
-        {a.isOriginal ? "approved" : "rejected"}
+        {a.isOriginal ? t("agent.approved_status") : t("agent.rejected_status")}
       </span>
     </li>
   );
