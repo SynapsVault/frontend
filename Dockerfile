@@ -29,7 +29,7 @@ RUN npm run typecheck
 RUN npm run build
 
 # ── Production stage ─────────────────────────────────────────────────────────
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -39,8 +39,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --start-interval=2s \
-  CMD wget -qO- http://127.0.0.1/health || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
-EXPOSE 80
+# Runs as the unprivileged nginx user (UID 101) on 8080
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]

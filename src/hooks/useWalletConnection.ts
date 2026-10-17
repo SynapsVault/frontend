@@ -87,6 +87,35 @@ export function useWalletConnection(): WalletState {
     };
   }, []);
 
+  // ── Account switches ──────────────────────────────────────────────────────
+  // Freighter has no account-change event here, so re-read the active account
+  // whenever the window regains focus (the user usually switches in the extension).
+  useEffect(() => {
+    if (status !== "connected") return;
+
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const freighter = await loadFreighter();
+        const result = await freighter.getAddress();
+        // Transient errors keep the current address; a real account is adopted.
+        if (cancelled || result.error || !result.address) return;
+        if (result.address !== address) {
+          writeStored(result.address);
+          setAddress(result.address);
+        }
+      } catch {
+        // Ignore: the next focus or the signing check will re-read the account.
+      }
+    };
+
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", refresh);
+    };
+  }, [status, address]);
+
   // ── Connect ───────────────────────────────────────────────────────────────
   const connect = useCallback(async () => {
     setError(null);

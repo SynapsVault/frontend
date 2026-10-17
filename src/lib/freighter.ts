@@ -32,6 +32,8 @@ export function isFreighterNotFoundError(err: unknown): boolean {
   );
 }
 
+import { TransactionBuilder } from "@stellar/stellar-sdk";
+
 export const loadFreighter = () => import("@stellar/freighter-api");
 
 /** Freighter v6 reports failures as `{ code, message }` objects. */
@@ -58,13 +60,32 @@ export async function isFreighterInstalled(): Promise<boolean> {
 /**
  * Sign a transaction XDR with Freighter and return the signed XDR.
  * Throws with Freighter's own message on rejection or a locked wallet.
+ *
+ * The account that must sign is the transaction's source account. Freighter signs
+ * with whichever account is active, so check that first and fail before signing
+ * instead of producing a signature the network will reject.
  */
 export async function signWithFreighter(xdr: string, networkPassphrase: string): Promise<string> {
   if (!(await isFreighterInstalled())) {
     throw new FreighterError(FREIGHTER_NOT_FOUND, FREIGHTER_NOT_FOUND_CODE);
   }
+  const parsed = TransactionBuilder.fromXDR(xdr, networkPassphrase);
+  const expected = "innerTransaction" in parsed ? parsed.innerTransaction.source : parsed.source;
+
   const freighter = await loadFreighter();
-  const result = await freighter.signTransaction(xdr, { networkPassphrase });
+  const active = await freighter.getAddress();
+  if (active.error || !active.address) {
+    throw new Error(
+      freighterErrorMessage(active.error, "Could not read the active Freighter account. Unlock Freighter and try again."),
+    );
+  }
+  if (active.address !== expected) {
+    throw new Error(
+      `Freighter's active account (${active.address}) is not the account that must sign this transaction (${expected}). Switch to ${expected} in Freighter and try again.`,
+    );
+  }
+
+  const result = await freighter.signTransaction(xdr, { networkPassphrase, address: expected });
   if (result.error) {
     throw new Error(
       freighterErrorMessage(
