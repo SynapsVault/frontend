@@ -40,15 +40,7 @@
     />
 
     <!-- Apply the saved/system theme before first paint to avoid a light flash. -->
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem("synapsvault-theme");
-          var dark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-          if (dark) document.documentElement.classList.add("dark");
-        } catch (e) {}
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
