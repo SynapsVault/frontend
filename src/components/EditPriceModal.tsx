@@ -10,6 +10,21 @@ interface Props {
   onConfirmed: (price: string) => void;
 }
 
+const PRICE_PATTERN = /^\d+(\.\d{1,7})?$/;
+// Stellar amounts are int64 stroops with 7 decimals (USDC included).
+const MAX_STROOPS = 9223372036854775807n;
+const STROOPS_PER_UNIT = BigInt(10000000);
+
+function validatePrice(value: string): string | null {
+  const v = value.trim();
+  if (!PRICE_PATTERN.test(v)) return "Enter a price with up to 7 decimal places.";
+  const [whole, frac = ""] = v.split(".");
+  const stroops = BigInt(whole) * STROOPS_PER_UNIT + BigInt((frac + "0000000").slice(0, 7));
+  if (stroops <= BigInt(0)) return "Price must be greater than 0.";
+  if (stroops > MAX_STROOPS) return "Price is too large.";
+  return null;
+}
+
 const STATUS_LABELS: Record<string, string> = {
   idle: "",
   preparing: "Building transaction…",
@@ -21,6 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function EditPriceModal({ resourceId, currentPrice, apiKey, onClose, onConfirmed }: Props) {
   const [price, setPrice] = useState(currentPrice);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const { status, newPrice, error, networkWarning, editPrice } = useEditPrice(resourceId, apiKey);
 
   const busy = ["preparing", "signing", "submitting"].includes(status);
@@ -34,7 +50,10 @@ export function EditPriceModal({ resourceId, currentPrice, apiKey, onClose, onCo
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    editPrice(price);
+    const problem = validatePrice(price);
+    setPriceError(problem);
+    if (problem) return;
+    editPrice(price.trim());
   }
 
   return (
@@ -59,10 +78,13 @@ export function EditPriceModal({ resourceId, currentPrice, apiKey, onClose, onCo
             <input
               id="price"
               type="number"
-              min="0.01"
-              step="0.01"
+              min="0.0000001"
+              step="0.0000001"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => {
+                setPrice(e.target.value);
+                setPriceError(null);
+              }}
               disabled={busy}
               className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
               required
@@ -79,6 +101,7 @@ export function EditPriceModal({ resourceId, currentPrice, apiKey, onClose, onCo
             </p>
           )}
 
+          {priceError && <p className="text-sm text-danger">{priceError}</p>}
           {error && <p className="text-sm text-danger">{error}</p>}
 
           {status === "confirmed" && (
