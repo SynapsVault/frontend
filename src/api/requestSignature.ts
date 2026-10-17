@@ -1,6 +1,11 @@
 /**
  * HMAC-SHA256 request signing for publisher mutations.
  * Mirrors server/src/utils/requestSignature.ts — keep in sync when changing the scheme.
+ *
+ * Replay protection: the signature covers a Unix-seconds timestamp but no nonce, so a
+ * captured signed request can be replayed for as long as the server accepts that timestamp.
+ * Replay defence must be enforced server-side: bound the accepted timestamp window and reject
+ * repeated Idempotency-Keys / signatures within it. Mutations should send a unique Idempotency-Key.
  */
 
 import { networkFetch } from "./http.js";
@@ -100,6 +105,9 @@ export async function signedPublisherFetch(
 ): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
   const body = typeof init.body === "string" ? init.body : undefined;
+  const path = new URL(url).pathname + new URL(url).search;
+  const requestHeaders = new Headers(init.headers);
+  const idempotencyKey = requestHeaders.get("Idempotency-Key") ?? undefined;
   const parsed = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
   const path = parsed.pathname + parsed.search;
   const idempotencyKey =
@@ -115,7 +123,7 @@ export async function signedPublisherFetch(
     idempotencyKey,
   });
 
-  const headers = new Headers(init.headers);
+  const headers = requestHeaders;
   headers.set("x-api-key", apiKey);
   if (body) {
     headers.set("Content-Type", "application/json");
