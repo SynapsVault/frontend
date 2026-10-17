@@ -84,30 +84,17 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Custom fallback")).toBeInTheDocument();
   });
 
-  it("reload button resets error state with non-throwing child", async () => {
+  it("reload button reloads the page", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-
-    function Controlled() {
-      const [throwErr, setThrowErr] = React.useState(true);
-      return (
-        <>
-          <button onClick={() => setThrowErr(false)}>Fix it</button>
-          <ErrorBoundary>
-            <Bomb shouldThrow={throwErr} />
-          </ErrorBoundary>
-        </>
-      );
-    }
-
+    const reload = vi.fn();
     const user = userEvent.setup();
-    render(<Controlled />);
-
+    render(
+      <ErrorBoundary onReload={reload}>
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>,
+    );
     await screen.findByText("Something went wrong");
-
-    // Fix the error source first, THEN reload
-    await user.click(screen.getByRole("button", { name: "Fix it" }));
     await user.click(screen.getByRole("button", { name: "Reload" }));
-
-    expect(await screen.findByText("all good")).toBeInTheDocument();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

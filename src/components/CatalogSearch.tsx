@@ -1,4 +1,4 @@
-import React, { useCallback, useId, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../i18n/config.js";
 import type { CatalogFilters } from "../api/resources.js";
@@ -68,13 +68,11 @@ export function CatalogSearch({
 
   const hasResults = results && results.length > 0;
 
-  // Reset the active index whenever the results list changes.
-  const prevResultsRef = useRef<SearchResult[] | undefined>(undefined);
-  if (results !== prevResultsRef.current) {
-    prevResultsRef.current = results;
-    // Only reset if there's a real change (avoids resetting on stable renders).
-    if (activeIndex !== -1) setActiveIndex(-1);
-  }
+  // Reset the active index after the results list changes, never during render.
+  const resultsKey = results?.map((result) => result.id).join("\u0000");
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [resultsKey]);
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {

@@ -1,3 +1,5 @@
+import type { ErrorInfo } from "react";
+
 const SENSITIVE_KEYS = [
   "password",
   "secret",
@@ -79,6 +81,16 @@ export async function initSentry(): Promise<void> {
     beforeSend(event) {
       return scrubEvent(event);
     },
+  });
+}
+
+/** Capture an error caught by a React error boundary without eagerly loading Sentry. */
+export async function captureException(error: Error, errorInfo?: ErrorInfo): Promise<void> {
+  const Sentry = await import("@sentry/react");
+  Sentry.captureException(error, {
+    contexts: errorInfo
+      ? { react: { componentStack: errorInfo.componentStack } }
+      : undefined,
   });
 }
 
