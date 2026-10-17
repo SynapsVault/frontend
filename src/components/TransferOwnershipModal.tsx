@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useTransferOwnership } from "../hooks/useTransferOwnership.js";
+import { StrKey } from "@stellar/stellar-sdk";
 import { useDialogA11y } from "../hooks/useDialogA11y.js";
 
 interface Props {
   resourceId: string;
+  resourceTitle: string;
   apiKey: string;
   onClose: () => void;
   onConfirmed: (newCreator: string) => void;
@@ -18,14 +20,17 @@ const STATUS_LABELS: Record<string, string> = {
   error: "",
 };
 
-export function TransferOwnershipModal({ resourceId, apiKey, onClose, onConfirmed }: Props) {
+export function TransferOwnershipModal({ resourceId, resourceTitle, apiKey, onClose, onConfirmed }: Props) {
   const [newCreator, setNewCreator] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const { status, newOwner, error, networkWarning, transferOwnership } = useTransferOwnership(
     resourceId,
     apiKey,
   );
 
   const busy = ["preparing", "signing", "submitting"].includes(status);
+  const recipient = newCreator.trim();
+  const recipientValid = StrKey.isValidEd25519PublicKey(recipient);
   const dialogRef = useDialogA11y<HTMLDivElement>({ onClose, canClose: () => !busy });
 
   useEffect(() => {
@@ -36,7 +41,13 @@ export function TransferOwnershipModal({ resourceId, apiKey, onClose, onConfirme
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    transferOwnership(newCreator.trim());
+    if (!recipientValid) return;
+    // Transfer is irreversible: require a second, explicit confirmation of the recipient.
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    transferOwnership(recipient);
   }
 
   return (
@@ -64,11 +75,26 @@ export function TransferOwnershipModal({ resourceId, apiKey, onClose, onConfirme
               placeholder="G…"
               value={newCreator}
               onChange={(e) => setNewCreator(e.target.value)}
-              disabled={busy}
+              disabled={busy || confirming}
+              aria-invalid={recipient.length > 0 && !recipientValid}
               className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
               required
             />
+            {recipient.length > 0 && !recipientValid && (
+              <p className="mt-1 text-sm text-danger">
+                Enter a valid Stellar public key: 56 characters starting with G.
+              </p>
+            )}
           </div>
+
+          {confirming && status === "idle" && (
+            <div className="space-y-2 rounded-lg bg-warning-soft px-3 py-2 text-sm text-warning">
+              <p>
+                Transfer <span className="font-medium">{resourceTitle}</span> to this address? This cannot be undone.
+              </p>
+              <p className="break-all font-mono">{recipient}</p>
+            </div>
+          )}
 
           {STATUS_LABELS[status] && (
             <p className="text-sm text-accent-text">{STATUS_LABELS[status]}</p>
@@ -97,13 +123,22 @@ export function TransferOwnershipModal({ resourceId, apiKey, onClose, onConfirme
             >
               {status === "confirmed" ? "Close" : "Cancel"}
             </button>
+            {confirming && status !== "confirmed" && !busy && (
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="w-full rounded-lg px-4 py-3 text-sm text-fg-muted hover:bg-surface-hover sm:w-auto sm:py-2"
+              >
+                Back
+              </button>
+            )}
             {status !== "confirmed" && (
               <button
                 type="submit"
-                disabled={busy || !newCreator.trim()}
+                disabled={busy || !recipientValid}
                 className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
               >
-                {busy ? "Working…" : "Transfer"}
+                {busy ? "Working…" : confirming ? "Confirm transfer" : "Review transfer"}
               </button>
             )}
           </div>
