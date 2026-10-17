@@ -63,21 +63,30 @@ export function useWalletConnection(): WalletState {
     (async () => {
       try {
         const freighter = await loadFreighter();
-        const [{ isConnected }, { isAllowed }] = await Promise.all([
+        const [connected, allowed] = await Promise.all([
           freighter.isConnected(),
           freighter.isAllowed(),
         ]);
-        if (!isConnected || !isAllowed) throw new Error("not allowed");
+        if (cancelled) return;
+        // Freighter reported an error: treat as transient and keep the stored address.
+        if (connected.error || allowed.error) throw new Error("freighter error");
+
+        if (!connected.isConnected || !allowed.isAllowed) {
+          // Freighter explicitly says this site is not connected or not allowed.
+          writeStored(null);
+          setStatus("disconnected");
+          return;
+        }
 
         const result = await freighter.getAddress();
-        if (result.error || !result.address) throw new Error("no address");
         if (cancelled) return;
+        if (result.error || !result.address) throw new Error("no address");
         writeStored(result.address);
         setAddress(result.address);
         setStatus("connected");
       } catch {
+        // Transient failure (extension or network glitch): keep the stored address so a reload can retry.
         if (cancelled) return;
-        writeStored(null);
         setStatus("disconnected");
       }
     })();

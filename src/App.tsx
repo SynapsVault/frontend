@@ -713,7 +713,8 @@ export default function App() {
       )}
       {activeModal?.kind === "transferOwnership" && (
         <Suspense fallback={<LazyModalFallback />}>
-          <TransferOwnershipModal resourceId={activeModal.resource.id} apiKey={sessionToken ?? ""}
+          <TransferOwnershipModal resourceId={activeModal.resource.id} resourceTitle={activeModal.resource.title}
+            apiKey={sessionToken ?? ""}
             onClose={closeModal}
             onConfirmed={(addr) => { applyOverride(activeModal.resource.id, { walletAddress: addr }); closeModal(); }} />
         </Suspense>
