@@ -3,10 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { TransferOwnershipModal } from "./TransferOwnershipModal.js";
 import { useTransferOwnership } from "../hooks/useTransferOwnership.js";
+import { I18nProvider } from "../i18n/I18nProvider.js";
 
 vi.mock("../hooks/useTransferOwnership.js", () => ({
   useTransferOwnership: vi.fn(),
 }));
+
+const renderWithI18n = (ui: React.ReactElement) =>
+  render(<I18nProvider>{ui}</I18nProvider>);
 
 describe("TransferOwnershipModal", () => {
   const onClose = vi.fn();
@@ -25,7 +29,7 @@ describe("TransferOwnershipModal", () => {
   });
 
   it("renders with labeled owner address input", () => {
-    render(
+    renderWithI18n(
       <TransferOwnershipModal
         resourceId="res-1"
         apiKey="key-1"
@@ -41,7 +45,7 @@ describe("TransferOwnershipModal", () => {
 
   it("submits new owner on happy path", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithI18n(
       <TransferOwnershipModal
         resourceId="res-1"
         apiKey="key-1"
@@ -65,7 +69,7 @@ describe("TransferOwnershipModal", () => {
       transferOwnership: mockTransfer,
     });
 
-    render(
+    renderWithI18n(
       <TransferOwnershipModal
         resourceId="res-1"
         apiKey="key-1"
@@ -87,7 +91,7 @@ describe("TransferOwnershipModal", () => {
       transferOwnership: mockTransfer,
     });
 
-    render(
+    renderWithI18n(
       <TransferOwnershipModal
         resourceId="res-1"
         apiKey="key-1"
@@ -108,7 +112,7 @@ describe("TransferOwnershipModal", () => {
       transferOwnership: mockTransfer,
     });
 
-    render(
+    renderWithI18n(
       <TransferOwnershipModal
         resourceId="res-1"
         apiKey="key-1"
@@ -125,7 +129,7 @@ describe("TransferOwnershipModal", () => {
 
   it("closes when cancel is clicked", async () => {
     const user = userEvent.setup();
-    render(
+    renderWithI18n(
       <TransferOwnershipModal
         resourceId="res-1"
         apiKey="key-1"
