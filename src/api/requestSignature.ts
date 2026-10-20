@@ -105,15 +105,13 @@ export async function signedPublisherFetch(
 ): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
   const body = typeof init.body === "string" ? init.body : undefined;
-  const path = new URL(url).pathname + new URL(url).search;
-  const requestHeaders = new Headers(init.headers);
-  const idempotencyKey = requestHeaders.get("Idempotency-Key") ?? undefined;
   const parsed = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
   const path = parsed.pathname + parsed.search;
-  const idempotencyKey =
-    init.headers instanceof Headers
-      ? (init.headers.get("Idempotency-Key") ?? undefined)
-      : (init.headers as Record<string, string> | undefined)?.["Idempotency-Key"];
+
+  // Normalize headers to ensure array-form headers are properly read.
+  // Without normalization, Idempotency-Key from array-form headers would be missed.
+  const requestHeaders = new Headers(init.headers);
+  const idempotencyKey = requestHeaders.get("Idempotency-Key") ?? undefined;
 
   const signatureHeaders = await signPublisherRequestHeaders({
     apiKey,
