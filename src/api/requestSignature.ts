@@ -2,10 +2,23 @@
  * HMAC-SHA256 request signing for publisher mutations.
  * Mirrors server/src/utils/requestSignature.ts — keep in sync when changing the scheme.
  *
- * Replay protection: the signature covers a Unix-seconds timestamp but no nonce, so a
- * captured signed request can be replayed for as long as the server accepts that timestamp.
- * Replay defence must be enforced server-side: bound the accepted timestamp window and reject
- * repeated Idempotency-Keys / signatures within it. Mutations should send a unique Idempotency-Key.
+ * Replay protection: the signature covers a Unix-seconds timestamp but no nonce. A captured
+ * signed request can be replayed as long as the server accepts that timestamp. The server
+ * MUST implement replay defense:
+ *
+ * 1. **Timestamp window**: Enforce a reasonable window (e.g., ±5 minutes from server time).
+ *    Requests outside this window are rejected, limiting the replay attack window.
+ *
+ * 2. **Idempotency-Key deduplication**: Track recent Idempotency-Keys per API key and reject
+ *    replayed signatures within the timestamp window. Combined with the timestamp check, this
+ *    prevents the same signed request from being submitted twice.
+ *
+ * 3. **Nonce (optional)**: For higher security, the server may require a server-provided nonce
+ *    in the signature and invalidate used nonces. This prevents even timestamp-replayed requests
+ *    outside the window. Nonces are not yet implemented in this client but are compatible with
+ *    this signing scheme (add nonce to the canonical string before signing).
+ *
+ * Client responsibility: Always provide a unique Idempotency-Key for each mutation.
  */
 
 import { networkFetch } from "./http.js";
@@ -105,15 +118,13 @@ export async function signedPublisherFetch(
 ): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
   const body = typeof init.body === "string" ? init.body : undefined;
-  const path = new URL(url).pathname + new URL(url).search;
-  const requestHeaders = new Headers(init.headers);
-  const idempotencyKey = requestHeaders.get("Idempotency-Key") ?? undefined;
   const parsed = new URL(url, typeof window !== "undefined" ? window.location.origin : "http://localhost");
   const path = parsed.pathname + parsed.search;
-  const idempotencyKey =
-    init.headers instanceof Headers
-      ? (init.headers.get("Idempotency-Key") ?? undefined)
-      : (init.headers as Record<string, string> | undefined)?.["Idempotency-Key"];
+
+  // Normalize headers to ensure array-form headers are properly read.
+  // Without normalization, Idempotency-Key from array-form headers would be missed.
+  const requestHeaders = new Headers(init.headers);
+  const idempotencyKey = requestHeaders.get("Idempotency-Key") ?? undefined;
 
   const signatureHeaders = await signPublisherRequestHeaders({
     apiKey,
