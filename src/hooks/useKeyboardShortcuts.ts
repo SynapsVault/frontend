@@ -65,7 +65,7 @@ export function useKeyboardShortcuts(
   // Keep the latest shortcuts in a ref so the listener doesn't need to be
   // re-registered on every render.
   const shortcutsRef = useRef<ShortcutMap>(shortcuts);
-  shortcutsRef.current = shortcuts;
+  useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     const definitions = Object.values(shortcutsRef.current);

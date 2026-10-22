@@ -1,5 +1,5 @@
 # ── Build stage ─────────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -11,9 +11,7 @@ RUN npm ci
 COPY . .
 
 # Build arguments for environment configuration
-ARG VITE_API_URL
-ARG VITE_API_KEY=""
-ARG VITE_API_URL=http://localhost:3000
+ARG VITE_API_URL=/api
 ARG VITE_NETWORK=testnet
 ARG VITE_SENTRY_DSN=""
 

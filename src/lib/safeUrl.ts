@@ -29,3 +29,4 @@ export function safeExternalUrl(url: string | undefined | null): string | null {
 }
 
 export default safeExternalUrl;
+export const isSafeUrl = (url: string | null | undefined): boolean => safeExternalUrl(url) !== null;

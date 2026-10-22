@@ -25,23 +25,13 @@ async function bootstrap() {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <ErrorBoundary>
+      <ErrorBoundary onError={captureException}>
         <App />
       </ErrorBoundary>
     </React.StrictMode>,
   );
 }
 
-// Create React root and mount application
-const root = ReactDOM.createRoot(rootElement);
-
-root.render(
-  <React.StrictMode>
-    <ErrorBoundary onError={captureException}>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
-);
 void bootstrap();
 
 // Log app version in development

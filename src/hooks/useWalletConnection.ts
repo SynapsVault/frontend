@@ -15,7 +15,7 @@ export interface WalletState {
   address: string | null;
   error: string | null;
   errorCode: WalletErrorCode | null;
-  connect: () => Promise<void>;
+  connect: () => Promise<string | null>;
   disconnect: () => void;
 }
 
@@ -141,7 +141,7 @@ export function useWalletConnection(): WalletState {
         );
         setErrorCode(FREIGHTER_NOT_FOUND_CODE);
         setStatus("error");
-        return;
+        return null;
       }
 
       // Opens Freighter's "connect to this site" prompt if not yet allowed.
@@ -155,12 +155,13 @@ export function useWalletConnection(): WalletState {
         );
         setErrorCode(null);
         setStatus("error");
-        return;
+        return null;
       }
 
       writeStored(access.address);
       setAddress(access.address);
       setStatus("connected");
+      return access.address;
     } catch (err) {
       setError(
         freighterErrorMessage(
@@ -170,6 +171,7 @@ export function useWalletConnection(): WalletState {
       );
       setErrorCode(isFreighterNotFoundError(err) ? FREIGHTER_NOT_FOUND_CODE : null);
       setStatus("error");
+      return null;
     }
   }, []);
 

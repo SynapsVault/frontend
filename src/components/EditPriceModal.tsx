@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useEditPrice } from "../hooks/useEditPrice.js";
 import { useDialogA11y } from "../hooks/useDialogA11y.js";
-import { useTranslation } from "../i18n/index.js";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   resourceId: string;

@@ -1,4 +1,4 @@
-import colors from "tailwindcss/colors.js";
+import colors from "tailwindcss/colors";
 
 /**
  * Builds a Tailwind color scale whose values read from the CSS custom

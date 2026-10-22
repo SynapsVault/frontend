@@ -163,10 +163,16 @@ async function readErrorMessage(res: Response): Promise<string | undefined> {
  * `fallback` is used when the backend gives no error message of its own.
  */
 export async function ensureOk(res: Response, fallback: string): Promise<void> {
+  if (UNREACHABLE_STATUSES.has(res.status)) throw unreachable(res.status);
   if (isHtml(res)) throw misconfigured(res.status);
   if (res.ok) return;
-  // Gateway errors mean the backend itself didn't answer.
-  if (UNREACHABLE_STATUSES.has(res.status)) throw unreachable(res.status);
+  if (res.status === 500 && res.headers.get("content-type")?.includes("text/plain")) {
+    const detail = await res.clone().text();
+    if (detail.includes("FUNCTION_INVOCATION_FAILED")) {
+      console.error("SynapsVault backend crashed: Vercel FUNCTION_INVOCATION_FAILED. Inspect backend function logs.");
+      throw new ApiError("The SynapsVault API encountered a server error. Please try again later.", "http", 500);
+    }
+  }
   const message = await readErrorMessage(res);
   throw new ApiError(message ?? `${fallback} (HTTP ${res.status})`, "http", res.status);
 }
@@ -189,6 +195,7 @@ export const hasKeys =
  */
 export async function readJson<T>(res: Response, fallback: string, isValid?: Validator): Promise<T> {
   await ensureOk(res, fallback);
+  if (res.status === 204) return undefined as T;
   let body: unknown;
   try {
     body = await res.json();

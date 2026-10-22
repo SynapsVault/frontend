@@ -21,7 +21,8 @@ describe("captureException", () => {
     await captureException(error);
 
     expect(Sentry.captureException).toHaveBeenCalledWith(error, { contexts: undefined });
-import { describe, it, expect } from "vitest";
+  });
+});
 import { scrubEvent, isSensitiveKey } from "./sentry";
 
 describe("Sentry PII scrubbing", () => {

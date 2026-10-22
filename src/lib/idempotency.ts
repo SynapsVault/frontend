@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 
 /**
  * Generates a new idempotency key.

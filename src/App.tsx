@@ -18,6 +18,9 @@ import { useKeyboardShortcuts, type ShortcutMap } from "./hooks/useKeyboardShort
 import { fetchRegistryStatus } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 import { loadLocale } from "./i18n/config.js";
+import { authenticateWithWallet, getSessionToken, clearSession, authState } from "./lib/session.js";
+import { sessionApi } from "./api/session.js";
+import { loadFreighter } from "./lib/freighter.js";
 import { STELLAR_NETWORK } from "./lib/config.js";
 import { FREIGHTER_INSTALL_URL, FREIGHTER_NOT_FOUND_CODE } from "./lib/freighter.js";
 
@@ -147,7 +150,7 @@ export default function App() {
   const [activeModal, setActiveModal]   = useState<ActiveModal>(null);
   const [toast, setToast]               = useState<{ message: string; fallbackUrl?: string } | null>(null);
   const [filters, setFilters]           = useState<CatalogFilters>(DEFAULT_FILTERS);
-  const [overrides, setOverrides]       = useState<Record<string, Partial<Resource>>>({});
+  const [overrides, setOverrides]       = useState<Record<string, { source: Resource[] | null; patch: Partial<Resource> }>>({});
   const [tab, setTab]                   = useState<Tab>("catalog");
   const [showPublish, setShowPublish]   = useState(false);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
@@ -162,9 +165,10 @@ export default function App() {
   const wallet                          = useWalletConnection();
   const { t, i18n }                     = useTranslation();
   /** Session token obtained via wallet-signature login; gates creator features. */
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(() => getSessionToken());
   const [signingIn, setSigningIn]       = useState(false);
   const isAuthenticated                 = Boolean(sessionToken);
+  useEffect(() => authState.subscribe((state) => setSessionToken(state.token)), []);
 
   /* catalog — debounced so typing doesn't fire a request per keystroke */
   const debouncedFilters = useDebouncedValue(filters, 250);
@@ -184,43 +188,20 @@ export default function App() {
   const resources = useMemo((): Resource[] => {
     if (!rawResources) return [];
     
-    // Clear overrides that don't match the current server state
-    setOverrides((prev) => {
-      const reconciled: Record<string, Partial<Resource>> = {};
-      for (const [id, override] of Object.entries(prev)) {
-        const serverResource = rawResources.find((r) => r.id === id);
-        if (!serverResource) continue;
-        
-        const stillValid: Partial<Resource> = {};
-        // Keep price override only if server hasn't changed
-        if (override.price !== undefined && override.price !== serverResource.price) {
-          stillValid.price = override.price;
-        }
-        // Keep owner override only if server hasn't changed
-        if (override.walletAddress !== undefined && override.walletAddress !== serverResource.walletAddress) {
-          stillValid.walletAddress = override.walletAddress;
-        }
-        // Keep other overrides
-        if (override.onchainStatus !== undefined && override.onchainStatus !== serverResource.onchainStatus) {
-          stillValid.onchainStatus = override.onchainStatus;
-        }
-        
-        if (Object.keys(stillValid).length > 0) {
-          reconciled[id] = stillValid;
-        }
-      }
-      return reconciled;
-    });
-    
-    return rawResources.map((r) => ({ ...r, ...(overrides[r.id] ?? {}) }));
+    // A fresh server response supersedes optimistic edits from the previous response.
+    return rawResources.map((r) => ({ ...r, ...(overrides[r.id]?.source === rawResources ? overrides[r.id].patch : {}) }));
   }, [rawResources, overrides]);
 
   useEffect(() => {
     if (resourcesStatus !== "success" || !loadedFilters || hasActiveFilters(loadedFilters)) return;
+    // Retain the last unfiltered response across subsequent filtered searches.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUnfiltered(resources);
   }, [resourcesStatus, loadedFilters, resources]);
 
   useEffect(() => {
+    // Remember titles from prior pages for purchase receipt labels.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResourceTitles((prev) => {
       const updated = { ...prev };
       for (const r of resources) updated[r.id] = r.title;
@@ -242,8 +223,8 @@ export default function App() {
   }, [unfiltered, resources]);
 
   const applyOverride = useCallback((id: string, patch: Partial<Resource>) => {
-    setOverrides((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...patch } }));
-  }, []);
+    setOverrides((prev) => ({ ...prev, [id]: { source: rawResources, patch: { ...(prev[id]?.source === rawResources ? prev[id].patch : {}), ...patch } } }));
+  }, [rawResources]);
 
   const closeModal = useCallback(() => setActiveModal(null), []);
   const dismissToast = useCallback(() => setToast(null), []);
@@ -298,10 +279,17 @@ export default function App() {
         address = await wallet.connect();
       }
       if (!address) throw new Error(t("app.signin_failed"));
-      const message = `Sign in to ${t("app.title")}\nAddress: ${address}\nIssued: ${new Date().toISOString()}`;
-      const token = await wallet.signMessage(message);
-      if (!token) throw new Error(t("app.signin_failed"));
-      setSessionToken(token);
+      const session = await authenticateWithWallet(address, async (challenge) => {
+        const freighter = await loadFreighter();
+        const result = await freighter.signMessage(challenge, { address });
+        if (result.error || !result.signedMessage || result.signerAddress !== address) {
+          throw new Error("Wallet authentication was not approved for this account.");
+        }
+        return typeof result.signedMessage === "string"
+          ? result.signedMessage
+          : btoa(String.fromCharCode(...result.signedMessage));
+      }, sessionApi);
+      setSessionToken(session.token);
       setToast({ message: t("app.signed_in") });
     } catch (err) {
       setToast({ message: err instanceof Error ? err.message : t("app.signin_failed") });
@@ -311,6 +299,7 @@ export default function App() {
   }, [signingIn, wallet, t]);
 
   const signOut = useCallback(() => {
+    clearSession();
     setSessionToken(null);
     if (tab === "dashboard" || tab === "analytics") setTab("catalog");
   }, [tab]);
@@ -469,7 +458,7 @@ export default function App() {
             <span className="synapse-topbar__label">{t("app.sign_in")}</span>
           </button>
         )}
-        <button className="synapse-icon-btn" onClick={wallet.disconnect}
+        <button className="synapse-icon-btn" onClick={() => { signOut(); wallet.disconnect(); }}
           aria-label={t("app.disconnect_wallet")} title={t("app.disconnect_wallet")}>
           <svg width="16" height="16" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M7 3H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3M12 13l4-4-4-4M16 9H7"/>

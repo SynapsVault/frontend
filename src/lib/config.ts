@@ -11,7 +11,7 @@
  * Backend base URL without a trailing slash. Empty means "same origin": in
  * development the Vite dev server proxies API paths to the backend.
  */
-export const API_BASE = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+export const API_BASE = (import.meta.env.VITE_API_URL?.trim() || (import.meta.env.PROD ? "/api" : "")).trim().replace(/\/+$/, "");
 
 export type StellarNetwork = "testnet" | "mainnet";
 

@@ -5,6 +5,10 @@ import App from "./App.js";
 import { fetchCatalog, fetchRegistryStatus } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 
+vi.mock("./hooks/useBuyResource.js", () => ({ useBuyResource: () => ({ status: "idle", result: null, error: null, errorCode: null, buy: vi.fn(), reset: vi.fn() }) }));
+
+vi.mock("./lib/pwa.js", () => ({ registerAppServiceWorker: () => () => {} }));
+
 vi.mock("@stellar/freighter-api", () => ({
   isConnected: vi.fn().mockResolvedValue({ isConnected: false }),
   isAllowed: vi.fn().mockResolvedValue({ isAllowed: false }),

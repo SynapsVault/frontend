@@ -16,7 +16,7 @@ export function registerAppServiceWorker(onUpdateAvailable: ServiceWorkerUpdateH
         if ("requestIdleCallback" in window) {
           window.requestIdleCallback(activate, { timeout: 30_000 });
         } else {
-          window.setTimeout(activate, 1_000);
+          globalThis.setTimeout(activate, 1_000);
         }
       });
     },

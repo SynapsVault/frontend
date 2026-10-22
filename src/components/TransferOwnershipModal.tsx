@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useTransferOwnership } from "../hooks/useTransferOwnership.js";
 import { StrKey } from "@stellar/stellar-sdk";
 import { useDialogA11y } from "../hooks/useDialogA11y.js";
-import { useTranslation } from "../i18n/index.js";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   resourceId: string;

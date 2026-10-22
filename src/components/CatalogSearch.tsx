@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import React, { useCallback, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../i18n/config.js";
 import type { CatalogFilters } from "../api/resources.js";
@@ -61,7 +61,7 @@ export function CatalogSearch({
 
   const listboxId = useId();
   // Index of the currently focused result (-1 means none).
-  const [activeIndex, setActiveIndex] = useState(-1);
+  const [selection, setSelection] = useState({ key: "", index: -1 });
   const internalInputRef = useRef<HTMLInputElement>(null);
   const inputRef = searchInputRef ?? internalInputRef;
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -70,8 +70,12 @@ export function CatalogSearch({
 
   // Reset the active index after the results list changes, never during render.
   const resultsKey = results?.map((result) => result.id).join("\u0000");
-  useEffect(() => {
-    setActiveIndex(-1);
+  const activeIndex = selection.key === resultsKey ? selection.index : -1;
+  const setActiveIndex = useCallback((next: number | ((previous: number) => number)) => {
+    setSelection((previous) => {
+      const index = previous.key === resultsKey ? previous.index : -1;
+      return { key: resultsKey ?? "", index: typeof next === "function" ? next(index) : next };
+    });
   }, [resultsKey]);
 
   const handleInputKeyDown = useCallback(
@@ -95,7 +99,7 @@ export function CatalogSearch({
         setActiveIndex(-1);
       }
     },
-    [hasResults, results, activeIndex, onActivate],
+    [hasResults, results, activeIndex, onActivate, setActiveIndex],
   );
 
   const handleItemKeyDown = useCallback(
@@ -126,7 +130,7 @@ export function CatalogSearch({
         inputRef.current?.focus();
       }
     },
-    [results, onActivate, inputRef],
+    [results, onActivate, inputRef, setActiveIndex],
   );
 
   const activeDescendant =

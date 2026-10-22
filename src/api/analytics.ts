@@ -1,5 +1,4 @@
-import { getJson, hasKeys } from "./http.js";
-import { signedHeaders } from "./signing.js";
+import { getJson, hasKeys, authHeaders } from "./http.js";
 
 export interface RecentPayment {
   payerAddress: string;
@@ -36,7 +35,7 @@ export async function fetchAnalytics(apiKey: string): Promise<AnalyticsData> {
   return getJson<AnalyticsData>(
     "/publishers/me/analytics",
     "Failed to load analytics",
-    { headers: signedHeaders(apiKey) },
+    { headers: authHeaders(apiKey) },
     hasKeys("summary", "resources"),
   );
 }

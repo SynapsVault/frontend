@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   signTransaction: vi.fn(),
 }));
 
+vi.mock("../lib/freighter.js", () => ({ signWithFreighter: async () => "signed-xdr" }));
+
 vi.mock("@stellar/freighter-api", () => ({
   isConnected: mocks.isConnected,
   signTransaction: mocks.signTransaction,
@@ -64,7 +66,7 @@ describe("RegisterModal", () => {
     );
 
     await waitFor(() => {
-      expect(mocks.prepareRegisterTx).toHaveBeenCalledWith("res-1", "key-1");
+      expect(mocks.prepareRegisterTx).toHaveBeenCalledWith("res-1", "key-1", expect.any(String));
     });
     expect(screen.getByText(/ready to sign transaction/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign & submit/i })).toBeInTheDocument();
@@ -94,7 +96,7 @@ describe("RegisterModal", () => {
     await user.click(screen.getByRole("button", { name: /sign & submit/i }));
 
     await waitFor(() => {
-      expect(mocks.submitRegisterTx).toHaveBeenCalledWith("res-1", "signed-xdr", "key-1");
+      expect(mocks.submitRegisterTx).toHaveBeenCalledWith("res-1", "signed-xdr", "key-1", expect.any(String));
     });
     expect(screen.getByText(/registration successful/i)).toBeInTheDocument();
     expect(onConfirmed).toHaveBeenCalledWith("tx-hash-123");

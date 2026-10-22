@@ -38,6 +38,11 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
     e.preventDefault();
     setErrorMsg("");
 
+    if (!title.trim() || !/^\d+(\.\d{1,7})?$/.test(price) || Number(price) <= 0) {
+      setErrorMsg("Enter a title and a positive price with up to 7 decimal places.");
+      setStep("error");
+      return;
+    }
     const idempotencyKey =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
@@ -55,6 +60,7 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
         await publishLinkResource(
           { title, description: description || undefined, price, externalUrl },
           apiKey,
+          undefined,
           idempotencyKey,
         );
       } else {
@@ -64,7 +70,7 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
         if (description) formData.append("description", description);
         formData.append("price", price);
         formData.append("file", file);
-        await publishFileResource(formData, apiKey, idempotencyKey);
+        await publishFileResource(formData, apiKey, undefined, idempotencyKey);
       }
       setStep("success");
       onPublished();
@@ -94,9 +100,8 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
             </svg>
           </div>
           <h3 id="publish-success-title" className="text-lg font-semibold text-fg">
-            Published!
+            {t("publish.success_title")}
           </h3>
-          <h3 className="text-lg font-semibold text-fg">{t("publish.success_title")}</h3>
           <p className="mt-2 text-sm text-fg-muted">
             {t("publish.success_description")}
           </p>
@@ -114,10 +119,8 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
   return (
     <Overlay onClose={onClose} labelledBy="publish-title" canClose={() => step !== "submitting"}>
       <h2 id="publish-title" className="mb-4 text-lg font-semibold text-fg">
-        Publish a Resource
+        {t("publish.title")}
       </h2>
-    <Overlay onClose={onClose}>
-      <h2 className="mb-4 text-lg font-semibold text-fg">{t("publish.title")}</h2>
 
       {/* Type toggle */}
       <div className="mb-4 flex gap-2">
@@ -129,7 +132,7 @@ export function PublishModal({ apiKey, onClose, onPublished }: Props) {
         </TypeButton>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form noValidate onSubmit={handleSubmit} className="space-y-4">
         <Field label={t("publish.title_field")} required>
           <input
             type="text"
@@ -230,6 +233,7 @@ function Overlay({
   labelledBy: string;
   canClose?: () => boolean;
 }) {
+  const { t } = useTranslation();
   const dialogRef = useDialogA11y<HTMLDivElement>({ onClose, canClose });
 
   return (
@@ -245,7 +249,7 @@ function Overlay({
       >
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => { if (!canClose || canClose()) onClose(); }}
           className="absolute right-4 top-4 text-fg-subtle hover:text-fg"
           aria-label={t("publish.close")}
         >

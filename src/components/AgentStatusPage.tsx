@@ -149,6 +149,7 @@ export function AgentStatusPage() {
 }
 
 function ActivityRow({ activity: a }: { activity: AgentActivity }) {
+  const { t } = useTranslation();
   const confidence = toPercent(a.confidence) ?? 0;
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-5">

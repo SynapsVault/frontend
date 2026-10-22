@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EditPriceModal } from "./EditPriceModal.js";
 import { useEditPrice } from "../hooks/useEditPrice.js";
-import { I18nProvider } from "../i18n/I18nProvider.js";
-import { en } from "../i18n/locales/en.js";
+import "../i18n/config.js";
+import en from "../i18n/locales/en.json";
 
 vi.mock("../hooks/useEditPrice.js", () => ({
   useEditPrice: vi.fn(),
@@ -18,9 +18,9 @@ function renderModal(props: {
   onConfirmed: (price: string) => void;
 }) {
   return render(
-    <I18nProvider locale="en">
+    <>
       <EditPriceModal {...props} />
-    </I18nProvider>,
+    </>,
   );
 }
 
@@ -55,7 +55,7 @@ describe("EditPriceModal", () => {
     const input = screen.getByLabelText(en.editPrice.newPriceLabel);
     expect(input).toHaveValue(2.5);
     expect(
-      screen.getByRole("button", { name: en.editPrice.submit }),
+      screen.getByRole("button", { name: en.editPrice.updatePrice }),
     ).toBeInTheDocument();
   });
 
@@ -72,7 +72,7 @@ describe("EditPriceModal", () => {
     const input = screen.getByLabelText(en.editPrice.newPriceLabel);
     await user.clear(input);
     await user.type(input, "3.00");
-    await user.click(screen.getByRole("button", { name: en.editPrice.submit }));
+    await user.click(screen.getByRole("button", { name: en.editPrice.updatePrice }));
 
     expect(mockEditPrice).toHaveBeenCalledWith("3");
   });
@@ -98,7 +98,7 @@ describe("EditPriceModal", () => {
       screen.getByText(en.editPrice.status.signing),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: en.editPrice.working }),
+      screen.getByRole("button", { name: en.common.working }),
     ).toBeDisabled();
   });
 
@@ -157,7 +157,7 @@ describe("EditPriceModal", () => {
       onConfirmed,
     });
 
-    await user.click(screen.getByRole("button", { name: en.editPrice.cancel }));
+    await user.click(screen.getByRole("button", { name: en.common.cancel }));
     expect(onClose).toHaveBeenCalled();
   });
 });

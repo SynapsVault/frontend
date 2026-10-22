@@ -43,7 +43,7 @@ describe("fetchCatalogWithCache", () => {
   });
 
   it("drops corrupt cached JSON and rethrows the network error", async () => {
-    const networkError = new Error("Network down");
+    const networkError = new ApiError("Network down", "unreachable");
     vi.mocked(fetchCatalog).mockRejectedValue(networkError);
     sessionStorage.setItem('synapsvault-catalog:{"search":"corrupt"}', "not-json");
 
@@ -58,6 +58,8 @@ describe("fetchCatalogWithCache", () => {
     await fetchCatalogWithCache({ search: "signal" }, signal);
 
     expect(fetchCatalog).toHaveBeenCalledWith({ search: "signal" }, signal);
+  });
+
   it("rethrows non-network errors even when cached data exists", async () => {
     vi.mocked(fetchCatalog)
       .mockResolvedValueOnce([{ id: "1", title: "A" }])

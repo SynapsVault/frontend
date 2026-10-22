@@ -48,14 +48,14 @@ SynapsVault-contracts  (Soroban — vault-registry, access-lease, subscription)
 ## Quick start
 
 ```bash
-# Prerequisites: Node 20+
+# Prerequisites: Node 24.15+
 git clone https://github.com/SynapsVault/frontend SynapsVault-frontend
 cd SynapsVault-frontend
 npm install
 
 # Environment
 cp .env.example .env
-# Edit .env — VITE_API_KEY if you're a publisher. Leave VITE_API_URL empty in dev.
+# Leave VITE_API_URL empty in dev. Never put API keys in VITE_* variables.
 
 # Run the backend (SynapsVault/backend) on http://localhost:3000, then:
 npm run dev         # http://localhost:5173 (API routes are proxied to the backend)
@@ -70,24 +70,43 @@ npm run check       # everything CI runs: lint, typecheck, test, build + bundle 
 
 ```bash
 docker build \
-  --build-arg VITE_API_URL=https://api.yourdomain.com \
+  --build-arg VITE_API_URL=/api \
   --build-arg VITE_NETWORK=mainnet \
   -t synapsvault-frontend .
 
-docker run -p 8080:80 synapsvault-frontend
+docker run -p 8080:8080 synapsvault-frontend
 ```
 
 ## Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_API_URL` | Production | Backend API base URL. Leave empty in development: the dev server proxies all API routes to `VITE_DEV_PROXY_TARGET` (default `http://localhost:3000`). **Must** be set for production builds, or API calls return the app's HTML. |
-| `VITE_DEV_PROXY_TARGET` | ❌ | Backend the dev server proxies to (default `http://localhost:3000`) |
-| `VITE_API_KEY` | Publisher only | API key for creator features |
+| `VITE_API_URL` | No | Defaults to `/api` in production and same-origin backend paths in development. Vercel and Docker forward `/api/*` to the configured backend. |
+| `VITE_DEV_PROXY_TARGET` | No | Development backend (default `http://localhost:3000`). |
+| `VITE_AUTH_PROXY_URL` | Sign-in only | Optional wallet authentication service; see `.env.example` for the challenge/session contract. The marketplace backend currently has no session endpoints. |
+| `VITE_NETWORK` | No | `testnet` (default) or `mainnet`. |
+| `VITE_SENTRY_DSN` | No | Sentry DSN. |
 
-> **Security warning:** `VITE_API_KEY` is bundled into client-side JavaScript and is visible to every visitor. Do not use it for a secret publisher credential.
-| `VITE_NETWORK` | ✅ | `testnet` or `mainnet`: payments, signing, explorer links |
-| `VITE_SENTRY_DSN` | ❌ | Sentry DSN for error tracking |
+### Vercel API connection troubleshooting
+
+Use an empty `VITE_API_URL` or `/api` for Vercel builds. The rewrites in
+`vercel.json` forward requests to `https://backend-1bhj.vercel.app`;
+update the destination if the backend moves. Redeploy after changing build variables.
+The Docker proxy destination is in `nginx.conf`.
+
+On 2026-10-22 the live frontend bundle pointed to `https://backend-two-virid-26.vercel.app`, and
+`GET /resources` returned HTTP 500 with `FUNCTION_INVOCATION_FAILED`.
+This means the backend function crashed. Inspect **the backend project's Vercel
+function logs**, correct the reported startup/runtime error and required environment
+variables, and redeploy it. In particular, `src/config.ts` exits during startup if
+production `BASE_URL` or `WEB_APP_URL` is missing, or if required database,
+Supabase, OpenRouter, and Stellar settings fail validation. The function log
+identifies the actual missing or invalid value; do not put these secrets in the frontend.
+Verify `/resources` returns a JSON array before testing
+the frontend catalog. Changing the frontend's error text cannot restore a crashed API.
+
+Publisher secrets must stay on a server that authenticates and authorizes each
+user. A wallet signature is not itself an API key or server-issued session token.
 
 ## Workflow
 

@@ -3,28 +3,28 @@ import { fetchReceipt, receiptUrl } from './payments';
 
 describe('receiptUrl', () => {
   it('constructs a URL for a simple receipt id', () => {
-    expect(receiptUrl('abc123')).toBe('/api/payments/receipts/abc123');
+    expect(receiptUrl('abc123')).toBe('/payments/abc123/receipt');
   });
 
   it('encodes a forward slash in the receipt id', () => {
-    expect(receiptUrl('a/b')).toBe('/api/payments/receipts/a%2Fb');
+    expect(receiptUrl('a/b')).toBe('/payments/a%2Fb/receipt');
   });
 
   it('encodes a question mark in the receipt id', () => {
-    expect(receiptUrl('a?b')).toBe('/api/payments/receipts/a%3Fb');
+    expect(receiptUrl('a?b')).toBe('/payments/a%3Fb/receipt');
   });
 
   it('encodes a hash in the receipt id', () => {
-    expect(receiptUrl('a#b')).toBe('/api/payments/receipts/a%23b');
+    expect(receiptUrl('a#b')).toBe('/payments/a%23b/receipt');
   });
 
   it('encodes spaces in the receipt id', () => {
-    expect(receiptUrl('a b')).toBe('/api/payments/receipts/a%20b');
+    expect(receiptUrl('a b')).toBe('/payments/a%20b/receipt');
   });
 
   it('encodes multiple reserved characters in the receipt id', () => {
     expect(receiptUrl('a/b?c#d e')).toBe(
-      '/api/payments/receipts/a%2Fb%3Fc%23d%20e',
+      '/payments/a%2Fb%3Fc%23d%20e/receipt',
     );
   });
 });
@@ -42,7 +42,7 @@ describe('fetchReceipt', () => {
   });
 
   it('requests the encoded URL for a simple receipt id', async () => {
-    const mockResponse = { ok: true, json: async () => ({ id: 'abc123' }) };
+    const mockResponse = new Response(JSON.stringify({ id: 'abc123' }), { headers: { 'content-type': 'application/json' } });
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockResponse,
     );
@@ -50,12 +50,12 @@ describe('fetchReceipt', () => {
     await fetchReceipt('abc123');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/payments/receipts/abc123',
+      '/payments/abc123/receipt', expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
   it('encodes a forward slash in the receipt id', async () => {
-    const mockResponse = { ok: true, json: async () => ({ id: 'a/b' }) };
+    const mockResponse = new Response(JSON.stringify({ id: 'a/b' }), { headers: { 'content-type': 'application/json' } });
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockResponse,
     );
@@ -63,12 +63,12 @@ describe('fetchReceipt', () => {
     await fetchReceipt('a/b');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/payments/receipts/a%2Fb',
+      '/payments/a%2Fb/receipt', expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
   it('encodes a question mark in the receipt id', async () => {
-    const mockResponse = { ok: true, json: async () => ({ id: 'a?b' }) };
+    const mockResponse = new Response(JSON.stringify({ id: 'a?b' }), { headers: { 'content-type': 'application/json' } });
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockResponse,
     );
@@ -76,12 +76,12 @@ describe('fetchReceipt', () => {
     await fetchReceipt('a?b');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/payments/receipts/a%3Fb',
+      '/payments/a%3Fb/receipt', expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
   it('encodes a hash in the receipt id', async () => {
-    const mockResponse = { ok: true, json: async () => ({ id: 'a#b' }) };
+    const mockResponse = new Response(JSON.stringify({ id: 'a#b' }), { headers: { 'content-type': 'application/json' } });
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockResponse,
     );
@@ -89,12 +89,12 @@ describe('fetchReceipt', () => {
     await fetchReceipt('a#b');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/payments/receipts/a%23b',
+      '/payments/a%23b/receipt', expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
   it('encodes spaces in the receipt id', async () => {
-    const mockResponse = { ok: true, json: async () => ({ id: 'a b' }) };
+    const mockResponse = new Response(JSON.stringify({ id: 'a b' }), { headers: { 'content-type': 'application/json' } });
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockResponse,
     );
@@ -102,12 +102,12 @@ describe('fetchReceipt', () => {
     await fetchReceipt('a b');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/payments/receipts/a%20b',
+      '/payments/a%20b/receipt', expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 
   it('encodes multiple reserved characters in the receipt id', async () => {
-    const mockResponse = { ok: true, json: async () => ({ id: 'a/b?c#d e' }) };
+    const mockResponse = new Response(JSON.stringify({ id: 'a/b?c#d e' }), { headers: { 'content-type': 'application/json' } });
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
       mockResponse,
     );
@@ -115,7 +115,7 @@ describe('fetchReceipt', () => {
     await fetchReceipt('a/b?c#d e');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      '/api/payments/receipts/a%2Fb%3Fc%23d%20e',
+      '/payments/a%2Fb%3Fc%23d%20e/receipt', expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
 });

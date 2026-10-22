@@ -61,6 +61,8 @@ export function PurchasesDashboard({ initialWallet = "", connectedWallet = null,
   );
 
   useEffect(() => {
+    // Start the external request when its input changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialWallet) void search(initialWallet);
   }, [initialWallet, search]);
 

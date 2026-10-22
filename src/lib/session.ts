@@ -1,4 +1,19 @@
-import { writable, type Readable } from 'svelte/store';
+import { setTokenProvider } from '../api/http.js';
+
+type Subscriber<T> = (value: T) => void;
+interface Readable<T> { subscribe: (subscriber: Subscriber<T>) => () => void }
+function writable<T>(initial: T) {
+  let value = initial;
+  const subscribers = new Set<Subscriber<T>>();
+  return {
+    set(next: T) { value = next; subscribers.forEach((subscriber) => subscriber(value)); },
+    subscribe(subscriber: Subscriber<T>) {
+      subscribers.add(subscriber);
+      subscriber(value);
+      return () => { subscribers.delete(subscriber); };
+    },
+  };
+}
 
 const SESSION_STORAGE_KEY = 'session_token';
 
@@ -14,6 +29,7 @@ export interface AuthState {
 }
 
 let currentSession: SessionToken | null = null;
+let expiryTimer: ReturnType<typeof setTimeout> | undefined;
 
 const authStore = writable<AuthState>({
   authenticated: false,
@@ -22,7 +38,7 @@ const authStore = writable<AuthState>({
 });
 
 function isExpired(session: SessionToken): boolean {
-  return Date.now() >= session.expiresAt;
+  return !Number.isFinite(session.expiresAt) || Date.now() >= session.expiresAt;
 }
 
 function persistSession(session: SessionToken | null): void {
@@ -47,6 +63,7 @@ function loadPersistedSession(): SessionToken | null {
     if (
       !parsed ||
       typeof parsed.token !== 'string' ||
+      !parsed.token.trim() ||
       typeof parsed.expiresAt !== 'number'
     ) {
       return null;
@@ -87,12 +104,17 @@ export function getSessionToken(): string | null {
 }
 
 export function setSession(session: SessionToken): void {
+  if (!session.token.trim() || isExpired(session)) throw new SessionAuthError("Invalid or expired session");
+  if (expiryTimer) clearTimeout(expiryTimer);
   currentSession = session;
   persistSession(session);
   syncStore();
+  expiryTimer = setTimeout(clearSession, Math.min(session.expiresAt - Date.now(), 2_147_483_647));
 }
 
 export function clearSession(): void {
+  if (expiryTimer) clearTimeout(expiryTimer);
+  expiryTimer = undefined;
   currentSession = null;
   persistSession(null);
   syncStore();
@@ -142,7 +164,7 @@ export async function authenticateWithWallet(
   api: SessionApi
 ): Promise<SessionToken> {
   const challengeResponse = await api.requestChallenge(address);
-  if (!challengeResponse || !challengeResponse.challenge) {
+  if (!challengeResponse?.challenge || !Number.isFinite(challengeResponse.expiresAt) || challengeResponse.expiresAt <= Date.now()) {
     throw new SessionAuthError('Failed to obtain authentication challenge');
   }
 
@@ -176,7 +198,7 @@ export async function authenticateWithWallet(
 
 // Restore any persisted session on module load.
 currentSession = loadPersistedSession();
-syncStore();
-</｜｜DSML｜｜ parameter>
-</｜｜DSML｜｜ invoke>
-</｜｜DSML｜｜ calls>
+if (currentSession) setSession(currentSession);
+else syncStore();
+
+setTokenProvider(getSessionToken);

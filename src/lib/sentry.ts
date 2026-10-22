@@ -3,12 +3,14 @@ import type { ErrorInfo } from "react";
 const SENSITIVE_KEYS = [
   "password",
   "secret",
-  "key",
+  "apikey",
+  "privatekey",
+  "sharedsecret",
   "token",
   "authorization",
   "x-payment",
   "x402",
-  "signedXdr",
+  "signedxdr",
 ];
 
 export function isSensitiveKey(key: string): boolean {

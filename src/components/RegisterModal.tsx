@@ -22,7 +22,7 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
   const [txHash, setTxHash] = useState<string>("");
   const [unsignedXdr, setUnsignedXdr] = useState<string>("");
   const [networkPassphrase, setNetworkPassphrase] = useState<string>("");
-  const [idempotencyKey, setIdempotencyKey] = useState<string>("");
+  const [idempotencyKey] = useState<string>(() => generateIdempotencyKey());
 
   function generateIdempotencyKey(): string {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -39,7 +39,6 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
       setNextSteps([]);
       setFailedTxHash("");
       const key = idempotencyKey || generateIdempotencyKey();
-      setIdempotencyKey(key);
       const result = await prepareRegisterTx(resourceId, apiKey, key);
       setUnsignedXdr(result.unsignedXdr);
       setNetworkPassphrase(result.networkPassphrase);
@@ -55,6 +54,8 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
   }, [resourceId, apiKey, idempotencyKey, t]);
 
   React.useEffect(() => {
+    // Start the external request when its input changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     prepareTransaction();
   }, [prepareTransaction]);
 
@@ -110,7 +111,6 @@ export function RegisterModal({ resourceId, apiKey, onClose, onConfirmed }: Regi
           <h2 id="register-title" className="text-lg font-semibold text-fg">
             Register on Blockchain
           </h2>
-          <h2 className="text-lg font-semibold text-fg">{t("register.title")}</h2>
           <button
             type="button"
             onClick={onClose}

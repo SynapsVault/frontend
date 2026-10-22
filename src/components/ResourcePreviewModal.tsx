@@ -25,6 +25,7 @@ interface LazyImageProps {
 }
 
 function LazyImage({ src, alt, className = "" }: LazyImageProps) {
+  const { t } = useTranslation();
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -111,6 +112,11 @@ export function ResourcePreviewModal({
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Focus management
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+    return () => previousFocusRef.current?.focus();
+  }, []);
 
   // Escape key handler
   useEffect(() => {
@@ -278,7 +284,7 @@ export function ResourcePreviewModal({
                     {t("preview.type")}
                   </p>
                   <p className="mt-1 font-medium text-fg">
-                    {data.resource{t("preview.type")}}
+                    {data.resourceType}
                   </p>
                 </div>
                 <div>

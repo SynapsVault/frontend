@@ -28,14 +28,16 @@ export function useDialogA11y<T extends HTMLElement = HTMLDivElement>({
   onClose,
   canClose,
   isOpen = true,
-}: UseDialogA11yOptions): RefObject<T | null> {
+}: UseDialogA11yOptions): RefObject<T> {
   const dialogRef = useRef<T>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
   const canCloseRef = useRef(canClose);
 
-  onCloseRef.current = onClose;
-  canCloseRef.current = canClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    canCloseRef.current = canClose;
+  }, [onClose, canClose]);
 
   useEffect(() => {
     if (!isOpen) return;

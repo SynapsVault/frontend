@@ -3,6 +3,8 @@
 interface ImportMetaEnv {
   /** Backend base URL. Empty → same origin (dev server proxies API paths). */
   readonly VITE_API_URL?: string;
+  /** Optional challenge/session service base URL; no credentials belong here. */
+  readonly VITE_AUTH_PROXY_URL?: string;
   /** "testnet" (default) or "mainnet". */
   readonly VITE_NETWORK?: string;
   /** @deprecated Use VITE_NETWORK. */

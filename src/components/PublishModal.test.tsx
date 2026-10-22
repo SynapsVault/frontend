@@ -49,6 +49,8 @@ describe("PublishModal", () => {
           externalUrl: "https://example.com/data.csv",
         },
         apiKey,
+        undefined,
+        expect.any(String),
       );
     });
 
@@ -84,7 +86,7 @@ describe("PublishModal", () => {
     await user.click(screen.getByRole("button", { name: /^publish$/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/must be a valid http\(s\) url/i)).toBeInTheDocument();
+      expect(screen.getByText(/valid URL starting with http/i)).toBeInTheDocument();
     });
     expect(publishLinkResource).not.toHaveBeenCalled();
     expect(onPublished).not.toHaveBeenCalled();
@@ -101,7 +103,7 @@ describe("PublishModal", () => {
     await user.click(screen.getByRole("button", { name: /^publish$/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/must be a valid http\(s\) url/i)).toBeInTheDocument();
+      expect(screen.getByText(/valid URL starting with http/i)).toBeInTheDocument();
     });
     expect(publishLinkResource).not.toHaveBeenCalled();
     expect(onPublished).not.toHaveBeenCalled();
@@ -127,6 +129,8 @@ describe("PublishModal", () => {
           externalUrl: "http://example.com/data.csv",
         },
         apiKey,
+        undefined,
+        expect.any(String),
       );
     });
     expect(onPublished).toHaveBeenCalled();
@@ -152,6 +156,8 @@ describe("PublishModal", () => {
           externalUrl: "https://example.com/data.csv",
         },
         apiKey,
+        undefined,
+        expect.any(String),
       );
     });
     expect(onPublished).toHaveBeenCalled();

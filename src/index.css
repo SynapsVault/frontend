@@ -1,9 +1,9 @@
 /* @import must precede all other rules. Fonts are loaded via <link> in index.html. */
+@import "tailwindcss";
 @import "./styles/tokens.css";
+@config "../tailwind.config.js";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SynapsVault UI

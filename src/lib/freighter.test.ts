@@ -1,3 +1,4 @@
+import { Keypair, Networks } from "@stellar/stellar-sdk";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   FREIGHTER_INSTALL_URL,
@@ -9,11 +10,18 @@ import {
 vi.mock('@stellar/freighter-api', () => ({
   isConnected: vi.fn(),
   signTransaction: vi.fn(),
+  getAddress: vi.fn(),
 }));
 
+// Valid unsigned payment transaction generated with the Stellar SDK on Node.
+const source = "GDXSP2FM67LLLYJM7BPG2XIEILIL5TMMTVEEGITCZWUHRSGQCSFMFT7T";
+const unsignedXdr = "AAAAAgAAAADvJ+is99a14Sz4Xm1dBELQvs2MnUhDImLNqHjI0BSKwgAAAGQAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAABq2me3AAAAAAAAAAEAAAAAAAAAAQAAAADvJ+is99a14Sz4Xm1dBELQvs2MnUhDImLNqHjI0BSKwgAAAAAAAAAAAJiWgAAAAAAAAAAA";
+
 describe('freighter.ts', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const api = await import("@stellar/freighter-api");
+    vi.mocked(api.getAddress).mockResolvedValue({ address: source });
   });
 
   describe('FREIGHTER_INSTALL_URL', () => {
@@ -48,7 +56,7 @@ describe('freighter.ts', () => {
   describe('isFreighterInstalled', () => {
     it('returns true when isConnected returns isConnected: true without error', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true });
 
       const installed = await isFreighterInstalled();
       expect(installed).toBe(true);
@@ -56,7 +64,7 @@ describe('freighter.ts', () => {
 
     it('returns false when isConnected returns isConnected: false', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: false } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: false });
 
       const installed = await isFreighterInstalled();
       expect(installed).toBe(false);
@@ -64,7 +72,7 @@ describe('freighter.ts', () => {
 
     it('returns false when isConnected returns an error', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ error: 'Extension not found', isConnected: true } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ error: { message: 'Extension not found', code: -1 }, isConnected: true });
 
       const installed = await isFreighterInstalled();
       expect(installed).toBe(false);
@@ -80,42 +88,50 @@ describe('freighter.ts', () => {
   });
 
   describe('signWithFreighter', () => {
+    it('rejects a wallet account that does not match the transaction source', async () => {
+      const api = await import('@stellar/freighter-api');
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true });
+      vi.mocked(api.getAddress).mockResolvedValue({ address: Keypair.random().publicKey() });
+      await expect(signWithFreighter(unsignedXdr, Networks.TESTNET)).rejects.toThrow(/not the account/);
+      expect(api.signTransaction).not.toHaveBeenCalled();
+    });
     it('throws helpful error if Freighter is not installed', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: false } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: false });
 
-      await expect(signWithFreighter('dummy_xdr', 'Test SDF Network ; September 2015')).rejects.toThrow(
+      await expect(signWithFreighter(unsignedXdr, 'Test SDF Network ; September 2015')).rejects.toThrow(
         /Freighter wallet not found/i,
       );
     });
 
     it('throws error when signTransaction returns an error', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true } as any);
-      vi.mocked(api.signTransaction).mockResolvedValue({ error: { message: 'User rejected' } } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true });
+      vi.mocked(api.signTransaction).mockResolvedValue({ error: { message: 'User rejected', code: -1 }, signedTxXdr: '', signerAddress: '' });
 
-      await expect(signWithFreighter('dummy_xdr', 'Test SDF Network')).rejects.toThrow('User rejected');
+      await expect(signWithFreighter(unsignedXdr, Networks.TESTNET)).rejects.toThrow('User rejected');
     });
 
     it('throws error when signTransaction returns no signedTxXdr', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true } as any);
-      vi.mocked(api.signTransaction).mockResolvedValue({ signedTxXdr: '' } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true });
+      vi.mocked(api.signTransaction).mockResolvedValue({ signedTxXdr: '', signerAddress: '' });
 
-      await expect(signWithFreighter('dummy_xdr', 'Test SDF Network')).rejects.toThrow(
+      await expect(signWithFreighter(unsignedXdr, Networks.TESTNET)).rejects.toThrow(
         /No signed transaction returned/i,
       );
     });
 
     it('returns signedTxXdr on successful signing', async () => {
       const api = await import('@stellar/freighter-api');
-      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true } as any);
-      vi.mocked(api.signTransaction).mockResolvedValue({ signedTxXdr: 'AAAA_SIGNED_XDR' } as any);
+      vi.mocked(api.isConnected).mockResolvedValue({ isConnected: true });
+      vi.mocked(api.signTransaction).mockResolvedValue({ signedTxXdr: 'AAAA_SIGNED_XDR', signerAddress: '' });
 
-      const res = await signWithFreighter('dummy_xdr', 'Test SDF Network ; September 2015');
+      const res = await signWithFreighter(unsignedXdr, 'Test SDF Network ; September 2015');
       expect(res).toBe('AAAA_SIGNED_XDR');
-      expect(api.signTransaction).toHaveBeenCalledWith('dummy_xdr', {
+      expect(api.signTransaction).toHaveBeenCalledWith(unsignedXdr, {
         networkPassphrase: 'Test SDF Network ; September 2015',
+        address: source,
       });
     });
   });

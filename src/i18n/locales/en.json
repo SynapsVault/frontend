@@ -402,5 +402,45 @@
     "copy": "Copy",
     "copy_access_url": "Copy access URL",
     "buy": "Buy {{price}} USDC"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "working": "Working…",
+    "back": "Back"
+  },
+  "editPrice": {
+    "title": "Edit Price",
+    "newPriceLabel": "New Price (USDC)",
+    "updatePrice": "Update Price",
+    "networkWarning": "{{warning}}",
+    "success": "Price updated to {{price}} USDC",
+    "errors": {
+      "invalidFormat": "Enter a valid price with up to 7 decimal places",
+      "notPositive": "Price must be greater than zero",
+      "tooLarge": "Price is too large"
+    },
+    "status": {
+      "preparing": "Preparing transaction…",
+      "signing": "Waiting for wallet signature…",
+      "submitting": "Submitting transaction…",
+      "confirmed": "Transaction confirmed"
+    }
+  },
+  "transferOwnership": {
+    "title": "Transfer Ownership",
+    "newOwnerLabel": "New Owner Address",
+    "invalidKey": "Enter a valid Stellar public key",
+    "networkWarning": "{{warning}}",
+    "success": "Ownership transferred to {{newOwner}}",
+    "reviewTransfer": "Review Transfer",
+    "confirmTransfer": "Confirm Transfer",
+    "confirmPrompt": "Transfer {{title}} to this address? This cannot be undone.",
+    "status": {
+      "preparing": "Preparing transaction…",
+      "signing": "Waiting for wallet signature…",
+      "submitting": "Submitting transaction…",
+      "confirmed": "Transaction confirmed"
+    }
   }
 }

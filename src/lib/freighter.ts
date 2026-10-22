@@ -32,7 +32,6 @@ export function isFreighterNotFoundError(err: unknown): boolean {
   );
 }
 
-import { TransactionBuilder } from "@stellar/stellar-sdk";
 
 export const loadFreighter = () => import("@stellar/freighter-api");
 
@@ -69,6 +68,7 @@ export async function signWithFreighter(xdr: string, networkPassphrase: string):
   if (!(await isFreighterInstalled())) {
     throw new FreighterError(FREIGHTER_NOT_FOUND, FREIGHTER_NOT_FOUND_CODE);
   }
+  const { TransactionBuilder } = await import("@stellar/stellar-sdk");
   const parsed = TransactionBuilder.fromXDR(xdr, networkPassphrase);
   const expected = "innerTransaction" in parsed ? parsed.innerTransaction.source : parsed.source;
 

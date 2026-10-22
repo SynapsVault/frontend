@@ -174,7 +174,7 @@ describe("ResourcePreviewModal", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     // Close button works
-    const closeBtn = screen.getByRole("button", { name: "Close" });
+    const closeBtn = screen.getAllByRole("button", { name: "Close preview" })[0];
     await user.click(closeBtn);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 

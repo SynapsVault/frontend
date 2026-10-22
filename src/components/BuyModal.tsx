@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useBuyResource } from "../hooks/useBuyResource.js";
 import { FREIGHTER_INSTALL_URL, FREIGHTER_NOT_FOUND_CODE, type WalletErrorCode } from "../lib/freighter.js";

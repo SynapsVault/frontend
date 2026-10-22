@@ -26,8 +26,6 @@ export async function fetchCatalogWithCache(
   const key = cacheKey(filters);
   try {
     const data = await fetchCatalog(filters, signal);
-    sessionStorage.setItem(key, JSON.stringify({ data, at: Date.now() }));
-    const data = await fetchCatalog(filters);
     try {
       sessionStorage.setItem(key, JSON.stringify({ data, at: Date.now() }));
     } catch {
@@ -38,7 +36,8 @@ export async function fetchCatalogWithCache(
     // Only network-level failures fall back to cache; HTTP errors, validation
     // failures and aborts are surfaced to the caller.
     if (!(err instanceof ApiError && err.kind === "unreachable")) throw err;
-    const raw = sessionStorage.getItem(key);
+    let raw: string | null = null;
+    try { raw = sessionStorage.getItem(key); } catch { throw err; }
     if (raw) {
       try {
         const parsed: unknown = JSON.parse(raw);
@@ -56,7 +55,7 @@ export async function fetchCatalogWithCache(
       } catch {
         // Corrupt cache entries must never mask the original network error.
       }
-      sessionStorage.removeItem(key);
+      try { sessionStorage.removeItem(key); } catch { /* Best effort. */ }
     }
     throw err;
   }

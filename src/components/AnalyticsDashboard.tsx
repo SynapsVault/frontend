@@ -5,7 +5,7 @@ import type { RecentPayment, ResourceStat } from "../api/analytics.js";
 import { ErrorBanner } from "./ErrorBanner.js";
 import { StatusTag, formatPrice, shortAddress } from "./ResourceCard.js";
 import { StatCard, formatCount, timeAgo } from "./StatCard.js";
-import { safeExternalUrl } from "../utils/safeExternalUrl.js";
+import { safeExternalUrl } from "../lib/safeUrl.js";
 
 interface Props {
   apiKey: string;

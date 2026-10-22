@@ -12,10 +12,11 @@ describe("requestSignature", () => {
     window,
     "isSecureContext",
   );
-  const originalSubtle = Object.getOwnPropertyDescriptor(crypto, "subtle");
+  const originalSubtle = Object.getOwnPropertyDescriptor(crypto, "subtle") ?? { configurable: true, value: crypto.subtle };
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    Object.defineProperty(window, "isSecureContext", { configurable: true, value: true });
   });
 
   afterEach(() => {
@@ -29,8 +30,7 @@ describe("requestSignature", () => {
     if (originalSubtle) {
       Object.defineProperty(crypto, "subtle", originalSubtle);
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (crypto as any).subtle;
+      Object.defineProperty(crypto, "subtle", { configurable: true, value: undefined });
     }
   });
 
@@ -48,9 +48,8 @@ describe("requestSignature", () => {
         configurable: true,
         get: () => true,
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (crypto as any).subtle;
-      expect(() => assertSecureContext()).toThrow(/secure context/i);
+      Object.defineProperty(crypto, "subtle", { configurable: true, value: undefined });
+      expect(() => assertSecureContext()).toThrow(/Web Crypto API/i);
     });
   });
 
