@@ -12,6 +12,8 @@ interface FixtureProps {
   canClose?: boolean;
   onClose?: () => void;
   withControls?: boolean;
+  withHiddenAndInertControls?: boolean;
+  onlyHiddenAndInertControls?: boolean;
 }
 
 function DialogFixture({
@@ -19,20 +21,19 @@ function DialogFixture({
   canClose = true,
   onClose,
   withControls = true,
+  withHiddenAndInertControls = false,
+  onlyHiddenAndInertControls = false,
 }: FixtureProps) {
   const [isOpen, setIsOpen] = useState(initialOpen);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
 
-  useDialogA11y({
+  const dialogRef = useDialogA11y<HTMLDivElement>({
     isOpen,
     onClose: () => {
       onClose?.();
       setIsOpen(false);
     },
-    canClose,
-    dialogRef,
-    triggerRef,
+    canClose: () => canClose,
   });
 
   return (
@@ -43,12 +44,40 @@ function DialogFixture({
       {isOpen && (
         <div ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1}>
           <h2>Dialog title</h2>
-          {withControls && (
+          {onlyHiddenAndInertControls ? (
             <>
-              <button>First action</button>
-              <input aria-label="Text field" />
-              <button>Last action</button>
+              <input type="hidden" name="secret" value="1" />
+              <div hidden>
+                <button>Hidden control</button>
+              </div>
+              <div inert="">
+                <button>Inert control</button>
+              </div>
             </>
+          ) : (
+            withControls && (
+              <>
+                {withHiddenAndInertControls && (
+                  <>
+                    <input type="hidden" name="leading-hidden" value="a" />
+                    <div hidden>
+                      <button>Hidden before</button>
+                    </div>
+                  </>
+                )}
+                <button>First action</button>
+                <input aria-label="Text field" />
+                <button>Last action</button>
+                {withHiddenAndInertControls && (
+                  <>
+                    <div inert="">
+                      <button>Inert after</button>
+                    </div>
+                    <input type="hidden" name="trailing-hidden" value="b" />
+                  </>
+                )}
+              </>
+            )
           )}
         </div>
       )}
@@ -114,6 +143,35 @@ describe('useDialogA11y', () => {
 
     it('keeps focus on the dialog when there are no focusable controls', () => {
       render(<DialogFixture initialOpen withControls={false} />);
+
+      const dialog = screen.getByRole('dialog');
+      dialog.focus();
+      expect(document.activeElement).toBe(dialog);
+
+      fireEvent.keyDown(dialog, { key: 'Tab' });
+      expect(document.activeElement).toBe(dialog);
+
+      fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(dialog);
+    });
+
+    it('excludes hidden inputs and hidden or inert descendants when cycling focus', () => {
+      render(<DialogFixture initialOpen withHiddenAndInertControls />);
+
+      const dialog = screen.getByRole('dialog');
+      const first = screen.getByRole('button', { name: 'First action' });
+      const last = screen.getByRole('button', { name: 'Last action' });
+
+      last.focus();
+      fireEvent.keyDown(dialog, { key: 'Tab' });
+      expect(document.activeElement).toBe(first);
+
+      fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(last);
+    });
+
+    it('preserves the no-controls fallback when all controls are hidden or inert', () => {
+      render(<DialogFixture initialOpen onlyHiddenAndInertControls />);
 
       const dialog = screen.getByRole('dialog');
       dialog.focus();

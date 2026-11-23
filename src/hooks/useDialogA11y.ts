@@ -2,7 +2,7 @@ import { useEffect, useRef, type RefObject } from "react";
 
 /** Elements that can receive keyboard focus inside a dialog. */
 const FOCUSABLE =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Whether an element is effectively disabled, i.e. disabled itself or by an
@@ -23,10 +23,30 @@ function isEffectivelyDisabled(element: HTMLElement): boolean {
   return false;
 }
 
-/** Focusable controls inside `dialog`, excluding effectively disabled ones. */
+/**
+ * Whether an element is hidden or inside a hidden/inert subtree.
+ */
+function isHiddenOrInert(element: HTMLElement, dialog: HTMLElement): boolean {
+  if (element.closest("[hidden], [inert]") !== null) {
+    return true;
+  }
+
+  let current: HTMLElement | null = element;
+  while (current && current !== dialog) {
+    const style = window.getComputedStyle(current);
+    if (style.display === "none" || style.visibility === "hidden") {
+      return true;
+    }
+    current = current.parentElement;
+  }
+
+  return false;
+}
+
+/** Focusable controls inside `dialog`, excluding disabled, hidden, or inert ones. */
 function getFocusable(dialog: HTMLElement): HTMLElement[] {
   return Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-    (element) => !isEffectivelyDisabled(element),
+    (element) => !isEffectivelyDisabled(element) && !isHiddenOrInert(element, dialog),
   );
 }
 

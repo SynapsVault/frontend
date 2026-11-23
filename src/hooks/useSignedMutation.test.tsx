@@ -15,7 +15,10 @@ vi.mock("./useNetworkCheck.js", () => ({
 const mockedSignWithFreighter = vi.mocked(signWithFreighter);
 const mockedCheckNetwork = vi.mocked(checkNetwork);
 
-const PREPARED = { unsignedXdr: "prepared-xdr", networkPassphrase: "testnet-pass" };
+const PREPARED = {
+  unsignedXdr: "prepared-xdr",
+  networkPassphrase: "testnet-pass",
+};
 const SIGNED_XDR = "signed-xdr";
 const PARAMS = "price-param";
 
@@ -291,4 +294,62 @@ describe("useSignedMutation", () => {
       }
     });
   });
+
+  it("uses fallback idempotency key when crypto.randomUUID is unavailable", async () => {
+    const originalCrypto = globalThis.crypto;
+    vi.stubGlobal("crypto", {});
+
+    try {
+      const prepare = vi.fn().mockResolvedValue(PREPARED);
+      const submit = vi.fn().mockResolvedValue({ hash: "tx-hash" });
+      mockedSignWithFreighter.mockResolvedValue(SIGNED_XDR);
+
+      const { result } = renderHook(() =>
+        useSignedMutation<string, { hash: string }>({ prepare, submit }),
+      );
+
+      await act(async () => {
+        await result.current.execute(PARAMS);
+      });
+
+      await waitFor(() => {
+        expect(result.current.status).toBe("confirmed");
+      });
+
+      const key = prepare.mock.calls[0][1];
+      expect(typeof key).toBe("string");
+      expect(key.length).toBeGreaterThan(0);
+      expect(submit.mock.calls[0][2]).toBe(key);
+    } finally {
+      vi.stubGlobal("crypto", originalCrypto);
+    }
+  });
+
+  it("sets error state without calling prepare when idempotency key generation throws", async () => {
+    vi.spyOn(globalThis.crypto, "randomUUID").mockImplementation(() => {
+      throw new Error("entropy source unavailable");
+    });
+
+    const prepare = vi.fn().mockResolvedValue(PREPARED);
+    const submit = vi.fn().mockResolvedValue({ hash: "tx-hash" });
+
+    const { result } = renderHook(() =>
+      useSignedMutation<string, { hash: string }>({ prepare, submit }),
+    );
+
+    await act(async () => {
+      await result.current.execute(PARAMS);
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("error");
+    });
+
+    expect(result.current.error).toBe("entropy source unavailable");
+    expect(result.current.result).toBeNull();
+    expect(prepare).not.toHaveBeenCalled();
+    expect(mockedSignWithFreighter).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
+  });
+});
 });

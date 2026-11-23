@@ -1,10 +1,17 @@
 import React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook, render, screen, fireEvent } from "@testing-library/react";
-import { useKeyboardShortcuts, type ShortcutMap } from "./useKeyboardShortcuts.js";
+import {
+  useKeyboardShortcuts,
+  type ShortcutMap,
+} from "./useKeyboardShortcuts.js";
 import { KeyboardShortcutsHelp } from "../components/KeyboardShortcutsHelp.js";
 
-function press(key: string, init: KeyboardEventInit = {}, target: Element | Window = window) {
+function press(
+  key: string,
+  init: KeyboardEventInit = {},
+  target: Element | Window = window,
+) {
   fireEvent.keyDown(target, { key, ...init });
 }
 
@@ -79,7 +86,11 @@ describe("useKeyboardShortcuts", () => {
   });
 
   it("calls preventDefault when requested", () => {
-    renderHook(() => useKeyboardShortcuts({ s: { key: "/", handler: () => {}, preventDefault: true } }));
+    renderHook(() =>
+      useKeyboardShortcuts({
+        s: { key: "/", handler: () => {}, preventDefault: true },
+      }),
+    );
     const event = new KeyboardEvent("keydown", { key: "/", cancelable: true });
 
     window.dispatchEvent(event);
@@ -90,9 +101,12 @@ describe("useKeyboardShortcuts", () => {
   it("uses the latest handler without re-registering", () => {
     const first = vi.fn();
     const second = vi.fn();
-    const { rerender } = renderHook(({ handler }) => useKeyboardShortcuts({ k: { key: "k", handler } }), {
-      initialProps: { handler: first },
-    });
+    const { rerender } = renderHook(
+      ({ handler }) => useKeyboardShortcuts({ k: { key: "k", handler } }),
+      {
+        initialProps: { handler: first },
+      },
+    );
 
     rerender({ handler: second });
     press("k");
@@ -112,12 +126,45 @@ describe("useKeyboardShortcuts", () => {
 
   it("removes its listener on unmount", () => {
     const handler = vi.fn();
-    const { unmount } = renderHook(() => useKeyboardShortcuts({ k: { key: "k", handler } }));
+    const { unmount } = renderHook(() =>
+      useKeyboardShortcuts({ k: { key: "k", handler } }),
+    );
 
     unmount();
     press("k");
 
     expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("ignores keyboard events during IME composition and still handles normal events", () => {
+    const handler = vi.fn();
+    renderHook(() => useKeyboardShortcuts({ k: { key: "k", handler } }));
+
+    press("k", { isComposing: true });
+    expect(handler).not.toHaveBeenCalled();
+
+    press("k", { isComposing: false });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores repeated keydown events when allowRepeat is false while preserving repeat by default", () => {
+    const noRepeatHandler = vi.fn();
+    const defaultRepeatHandler = vi.fn();
+    renderHook(() =>
+      useKeyboardShortcuts({
+        toggle: { key: "t", handler: noRepeatHandler, allowRepeat: false },
+        scroll: { key: "j", handler: defaultRepeatHandler },
+      }),
+    );
+
+    press("t", { repeat: false });
+    press("t", { repeat: true });
+    press("t", { repeat: true });
+    expect(noRepeatHandler).toHaveBeenCalledTimes(1);
+
+    press("j", { repeat: false });
+    press("j", { repeat: true });
+    expect(defaultRepeatHandler).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -128,30 +175,46 @@ describe("KeyboardShortcutsHelp", () => {
   ];
 
   it("renders shortcuts grouped under their headings", () => {
-    render(<KeyboardShortcutsHelp isOpen onClose={() => {}} shortcuts={shortcuts} />);
+    render(
+      <KeyboardShortcutsHelp isOpen onClose={() => {}} shortcuts={shortcuts} />,
+    );
 
-    expect(screen.getByRole("dialog", { name: "Keyboard shortcuts" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Actions" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Keyboard shortcuts" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Actions" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Focus search")).toBeInTheDocument();
     expect(screen.getByText("Show help")).toBeInTheDocument();
   });
 
   it("splits combined keys into separate <kbd> elements", () => {
-    render(<KeyboardShortcutsHelp isOpen onClose={() => {}} shortcuts={shortcuts} />);
+    render(
+      <KeyboardShortcutsHelp isOpen onClose={() => {}} shortcuts={shortcuts} />,
+    );
 
     expect(screen.getByText("Shift").tagName).toBe("KBD");
     expect(screen.getByText("?").tagName).toBe("KBD");
   });
 
   it("renders nothing when closed", () => {
-    render(<KeyboardShortcutsHelp isOpen={false} onClose={() => {}} shortcuts={shortcuts} />);
+    render(
+      <KeyboardShortcutsHelp
+        isOpen={false}
+        onClose={() => {}}
+        shortcuts={shortcuts}
+      />,
+    );
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("calls onClose from the close button", () => {
     const onClose = vi.fn();
-    render(<KeyboardShortcutsHelp isOpen onClose={onClose} shortcuts={shortcuts} />);
+    render(
+      <KeyboardShortcutsHelp isOpen onClose={onClose} shortcuts={shortcuts} />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
@@ -160,7 +223,9 @@ describe("KeyboardShortcutsHelp", () => {
 
   it("calls onClose when Escape is pressed", () => {
     const onClose = vi.fn();
-    render(<KeyboardShortcutsHelp isOpen onClose={onClose} shortcuts={shortcuts} />);
+    render(
+      <KeyboardShortcutsHelp isOpen onClose={onClose} shortcuts={shortcuts} />,
+    );
 
     fireEvent.keyDown(document, { key: "Escape" });
 

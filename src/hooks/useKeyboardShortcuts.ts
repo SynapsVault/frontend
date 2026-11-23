@@ -15,6 +15,8 @@ export interface ShortcutDefinition {
   allowInInput?: boolean;
   /** Prevent the default browser behavior when the shortcut fires. */
   preventDefault?: boolean;
+  /** Allow the shortcut to fire on repeated keydown events while held. Defaults to true. */
+  allowRepeat?: boolean;
 }
 
 export type ShortcutMap = Record<string, ShortcutDefinition>;
@@ -68,6 +70,11 @@ export function useKeyboardShortcuts(
   useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Ignore events fired during IME composition (#223)
+    if (event.isComposing || event.keyCode === 229) {
+      return;
+    }
+
     const definitions = Object.values(shortcutsRef.current);
     const eventKey = normalizeKey(event.key);
     const editable = isEditableElement(event.target);
@@ -76,6 +83,10 @@ export function useKeyboardShortcuts(
       const definitionKey = normalizeKey(definition.key);
 
       if (definitionKey !== eventKey) {
+        continue;
+      }
+
+      if (event.repeat && definition.allowRepeat === false) {
         continue;
       }
 
