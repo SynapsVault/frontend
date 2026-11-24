@@ -10,6 +10,7 @@ vi.mock("../api/payments.js", () => ({
 }));
 
 const ADDRESS = "GBUYER234567ABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKL";
+const OTHER_ADDRESS = "GBUYER765432ABCDEFGHIJKLMNOPQRSTUVWXYZ765432ABCDEFGHIJKL";
 
 describe("PurchasesDashboard", () => {
   beforeEach(() => {
@@ -52,5 +53,39 @@ describe("PurchasesDashboard", () => {
       "href",
       "https://api.example.com/payments/pay-1/receipt",
     );
+  });
+
+  it("hides the previous wallet's results when a later lookup fails", async () => {
+    vi.mocked(fetchBuyerPayments).mockResolvedValueOnce([
+      {
+        id: "pay-1",
+        resourceId: "res-1",
+        amount: "1.5",
+        payerAddress: ADDRESS,
+        recipientAddress: "GCREATOR34567ABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJ",
+        paidAt: "2026-06-24T12:00:00.000Z",
+      },
+    ]);
+
+    render(<PurchasesDashboard resourceTitles={{ "res-1": "Premium Dataset" }} />);
+
+    const input = screen.getByLabelText("Wallet address");
+    await userEvent.type(input, ADDRESS);
+    await userEvent.click(screen.getByRole("button", { name: "Look up" }));
+
+    expect(await screen.findByText("Premium Dataset")).toBeInTheDocument();
+    expect(screen.getByText("1 purchase · 1.50 USDC total")).toBeInTheDocument();
+
+    vi.mocked(fetchBuyerPayments).mockRejectedValueOnce(new Error("Network error"));
+
+    await userEvent.clear(input);
+    await userEvent.type(input, OTHER_ADDRESS);
+    await userEvent.click(screen.getByRole("button", { name: "Look up" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Network error/);
+    expect(fetchBuyerPayments).toHaveBeenLastCalledWith(OTHER_ADDRESS);
+    expect(screen.queryByText("Premium Dataset")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 purchase · 1.50 USDC total")).not.toBeInTheDocument();
+    expect(screen.queryByText(/No purchases/i)).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.js";
 import { fetchCatalog, fetchRegistryStatus } from "./api/resources.js";
@@ -127,5 +127,103 @@ describe("App catalog empty states", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/Freighter wallet not found/);
     expect(screen.getByRole("link", { name: /Install Freighter/ })).toHaveAttribute("href", "https://freighter.app");
+  });
+});
+
+describe("App copy confirmation toast timing (#298)", () => {
+  const TOAST_DURATION = 4000;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.mocked(fetchRegistryStatus).mockResolvedValue({ resourceCount: 1 });
+    vi.mocked(fetchCatalog).mockResolvedValue([mockResource]);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function copyResourceUrl() {
+    const copyButton = await screen.findByRole("button", { name: /copy/i });
+    await act(async () => {
+      copyButton.click();
+    });
+    return copyButton;
+  }
+
+  it("restarts the dismissal window for consecutive copies with identical text", async () => {
+    render(<App />);
+
+    await copyResourceUrl();
+    const firstToast = await screen.findByRole("status");
+    expect(firstToast).toHaveTextContent(/copied/i);
+
+    // Advance most of the way through the first toast's window.
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_DURATION - 500);
+    });
+    expect(screen.getByRole("status")).toBeInTheDocument();
+
+    // Second copy with identical confirmation text.
+    await copyResourceUrl();
+    expect(screen.getByRole("status")).toHaveTextContent(/copied/i);
+
+    // The original deadline passes; the second toast must still be visible.
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole("status")).toBeInTheDocument();
+
+    // Only after the full window from the second copy does it dismiss.
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_DURATION - 1000);
+    });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps the timer stable across unrelated parent re-renders", async () => {
+    const { rerender } = render(<App />);
+
+    await copyResourceUrl();
+    expect(await screen.findByRole("status")).toHaveTextContent(/copied/i);
+
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_DURATION / 2);
+    });
+
+    // Unrelated parent re-render must not restart the dismissal window.
+    await act(async () => {
+      rerender(<App />);
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_DURATION / 2);
+    });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("pauses the dismissal window while the window is focused", async () => {
+    render(<App />);
+
+    await copyResourceUrl();
+    expect(await screen.findByRole("status")).toHaveTextContent(/copied/i);
+
+    await act(async () => {
+      window.dispatchEvent(new Event("blur"));
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_DURATION * 2);
+    });
+    expect(screen.getByRole("status")).toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(TOAST_DURATION);
+    });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

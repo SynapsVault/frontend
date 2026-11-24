@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import "../i18n/config.js";
 
 interface ToastProps {
+  /** Unique identity for this notification; a new id restarts the dismissal window. */
+  id: number | string;
   message: string;
   onDismiss: () => void;
   /** Auto-dismiss delay in milliseconds. */
@@ -17,7 +19,7 @@ interface ToastProps {
  * toast stays longer and renders the URL in a selectable input so the user
  * can copy it manually.
  */
-export function Toast({ message, onDismiss, duration = 2500, fallbackUrl }: ToastProps) {
+export function Toast({ id, message, onDismiss, duration = 2500, fallbackUrl }: ToastProps) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,10 +38,10 @@ export function Toast({ message, onDismiss, duration = 2500, fallbackUrl }: Toas
   // Use a longer duration when showing a fallback URL so users have time to copy
   const effectiveDuration = fallbackUrl ? Math.max(duration, 8000) : duration;
 
-  // Reset the remaining time whenever the toast content changes
+  // Reset the remaining time whenever a new notification is shown
   useEffect(() => {
     remainingRef.current = null;
-  }, [message, effectiveDuration]);
+  }, [id]);
 
   // Auto-dismiss timer; paused while focus is inside the toast
   useEffect(() => {
@@ -51,7 +53,7 @@ export function Toast({ message, onDismiss, duration = 2500, fallbackUrl }: Toas
       clearTimeout(timer);
       remainingRef.current = Math.max(0, remaining - (Date.now() - startedAtRef.current));
     };
-  }, [message, effectiveDuration, onDismiss, paused]);
+  }, [id, effectiveDuration, onDismiss, paused]);
 
   const handleFocus = useCallback(() => {
     if (pausedRef.current) return;
