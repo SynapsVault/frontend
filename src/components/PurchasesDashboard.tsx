@@ -44,6 +44,9 @@ export function PurchasesDashboard({ initialWallet = "", connectedWallet = null,
       setInvalid(false);
       setError(null);
       setLoading(true);
+      // Hide the previous wallet's results while this lookup is pending.
+      setPayments([]);
+      setSearched(null);
       try {
         const data = await fetchBuyerPayments(target);
         if (id !== requestId.current) return;
@@ -51,6 +54,9 @@ export function PurchasesDashboard({ initialWallet = "", connectedWallet = null,
         setSearched(target);
       } catch (err) {
         if (id !== requestId.current) return;
+        // A failed lookup must not leave the prior wallet's results visible.
+        setPayments([]);
+        setSearched(null);
         // "" falls back to the translated generic message at render time.
         setError((err instanceof Error && err.message) || "");
       } finally {
@@ -124,7 +130,7 @@ export function PurchasesDashboard({ initialWallet = "", connectedWallet = null,
         )}
       </div>
 
-      {searched === null && !loading && (
+      {searched === null && !loading && !errorMessage && (
         <div className="synapse-empty">
           <div className="synapse-empty__icon" aria-hidden="true">
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round">

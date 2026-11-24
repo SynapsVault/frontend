@@ -148,7 +148,9 @@ function LazyModalFallback() {
 ═══════════════════════════════════════════════════════════════════════════ */
 export default function App() {
   const [activeModal, setActiveModal]   = useState<ActiveModal>(null);
-  const [toast, setToast]               = useState<{ message: string; fallbackUrl?: string } | null>(null);
+  const [toast, setToast]               = useState<{ id: number; message: string; fallbackUrl?: string } | null>(null);
+  /** Monotonic counter so consecutive identical notifications still get a fresh toast identity. */
+  const toastIdRef                     = useRef(0);
   const [filters, setFilters]           = useState<CatalogFilters>(DEFAULT_FILTERS);
   const [overrides, setOverrides]       = useState<Record<string, { source: Resource[] | null; patch: Partial<Resource> }>>({});
   const [tab, setTab]                   = useState<Tab>("catalog");
@@ -230,24 +232,30 @@ export default function App() {
   const dismissToast = useCallback(() => setToast(null), []);
   const closeShortcutsHelp = useCallback(() => setShowShortcutsHelp(false), []);
 
+  /** Show a toast with a fresh identity so its dismissal timer restarts every time. */
+  const showToast = useCallback((message: string, fallbackUrl?: string) => {
+    toastIdRef.current += 1;
+    setToast({ id: toastIdRef.current, message, fallbackUrl });
+  }, []);
+
   const handleCopyUrl = useCallback(async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
-      setToast({ message: t("catalog.url_copied") });
+      showToast(t("catalog.url_copied"));
     } catch {
-      setToast({ message: t("catalog.copy_this_url"), fallbackUrl: url });
+      showToast(t("catalog.copy_this_url"), url);
     }
-  }, [t]);
+  }, [showToast, t]);
 
   const handleCopyAddress = useCallback(async () => {
     if (!wallet.address) return;
     try {
       await navigator.clipboard.writeText(wallet.address);
-      setToast({ message: t("app.address_copied") });
+      showToast(t("app.address_copied"));
     } catch {
-      setToast({ message: t("catalog.copy_this_url"), fallbackUrl: wallet.address });
+      showToast(t("catalog.copy_this_url"), wallet.address);
     }
-  }, [wallet.address, t]);
+  }, [wallet.address, showToast, t]);
 
   const toggleLanguage = useCallback(async () => {
     const next = i18n.language === "en" ? "es" : "en";
@@ -290,13 +298,13 @@ export default function App() {
           : btoa(String.fromCharCode(...result.signedMessage));
       }, sessionApi);
       setSessionToken(session.token);
-      setToast({ message: t("app.signed_in") });
+      showToast(t("app.signed_in"));
     } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : t("app.signin_failed") });
+      showToast(err instanceof Error ? err.message : t("app.signin_failed"));
     } finally {
       setSigningIn(false);
     }
-  }, [signingIn, wallet, t]);
+  }, [signingIn, wallet, showToast, t]);
 
   const signOut = useCallback(() => {
     clearSession();
@@ -723,7 +731,7 @@ export default function App() {
       )}
       <KeyboardShortcutsHelp isOpen={showShortcutsHelp} onClose={closeShortcutsHelp} shortcuts={shortcutHelpItems} />
       {toast && (
-        <Toast message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={dismissToast} />
+        <Toast key={toast.id} identity={toast.id} message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={dismissToast} />
       )}
       <ServiceWorkerUpdatePrompt />
     </div>
