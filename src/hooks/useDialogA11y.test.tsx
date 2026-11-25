@@ -50,7 +50,7 @@ function DialogFixture({
               <div hidden>
                 <button>Hidden control</button>
               </div>
-              <div inert="">
+              <div ref={(element) => element?.setAttribute("inert", "")}>
                 <button>Inert control</button>
               </div>
             </>
@@ -70,7 +70,7 @@ function DialogFixture({
                 <button>Last action</button>
                 {withHiddenAndInertControls && (
                   <>
-                    <div inert="">
+                    <div ref={(element) => element?.setAttribute("inert", "")}>
                       <button>Inert after</button>
                     </div>
                     <input type="hidden" name="trailing-hidden" value="b" />
