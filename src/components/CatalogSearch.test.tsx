@@ -229,7 +229,10 @@ describe("CatalogSearch – keyboard navigation", () => {
     expect(options[0]).toHaveAttribute("aria-selected", "true");
 
     await userEvent.keyboard("{Escape}");
-    expect(options[0]).toHaveAttribute("aria-selected", "false");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(input).not.toHaveAttribute("aria-activedescendant");
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getAllByRole("option")[0]).toHaveAttribute("aria-selected", "true");
   });
 
   it("does not render a listbox when no results prop is given", () => {
