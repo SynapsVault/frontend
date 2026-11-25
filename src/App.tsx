@@ -731,7 +731,7 @@ export default function App() {
       )}
       <KeyboardShortcutsHelp isOpen={showShortcutsHelp} onClose={closeShortcutsHelp} shortcuts={shortcutHelpItems} />
       {toast && (
-        <Toast key={toast.id} identity={toast.id} message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={dismissToast} />
+        <Toast key={toast.id} id={toast.id} message={toast.message} fallbackUrl={toast.fallbackUrl} onDismiss={dismissToast} />
       )}
       <ServiceWorkerUpdatePrompt />
     </div>
