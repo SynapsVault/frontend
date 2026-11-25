@@ -16,7 +16,7 @@ const PRICE_PATTERN = /^\d+(\.\d{1,7})?$/;
 const MAX_STROOPS = 9223372036854775807n;
 const STROOPS_PER_UNIT = BigInt(10000000);
 
-type Translate = (key: string, vars?: Record<string, string | number>) => string;
+type Translate = (key: string) => string;
 
 function validatePrice(value: string, t: Translate): string | null {
   const v = value.trim();
@@ -54,7 +54,7 @@ export function EditPriceModal({ resourceId, currentPrice, apiKey, onClose, onCo
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const problem = validatePrice(price, t);
+    const problem = validatePrice(price, (key) => t(key));
     setPriceError(problem);
     if (problem) return;
     editPrice(price.trim());
