@@ -134,7 +134,6 @@ describe("App copy confirmation toast timing (#298)", () => {
   const TOAST_DURATION = 4000;
 
   beforeEach(() => {
-    vi.useFakeTimers();
     vi.mocked(fetchRegistryStatus).mockResolvedValue({ resourceCount: 1 });
     vi.mocked(fetchCatalog).mockResolvedValue([mockResource]);
   });
@@ -144,7 +143,7 @@ describe("App copy confirmation toast timing (#298)", () => {
   });
 
   async function copyResourceUrl() {
-    const copyButton = await screen.findByRole("button", { name: /copy/i });
+    const copyButton = screen.getByRole("button", { name: /copy/i });
     await act(async () => {
       copyButton.click();
     });
@@ -153,9 +152,11 @@ describe("App copy confirmation toast timing (#298)", () => {
 
   it("restarts the dismissal window for consecutive copies with identical text", async () => {
     render(<App />);
+    await screen.findByRole("button", { name: /copy/i });
+    vi.useFakeTimers();
 
     await copyResourceUrl();
-    const firstToast = await screen.findByRole("status");
+    const firstToast = screen.getByRole("status");
     expect(firstToast).toHaveTextContent(/copied/i);
 
     // Advance most of the way through the first toast's window.
@@ -183,9 +184,11 @@ describe("App copy confirmation toast timing (#298)", () => {
 
   it("keeps the timer stable across unrelated parent re-renders", async () => {
     const { rerender } = render(<App />);
+    await screen.findByRole("button", { name: /copy/i });
+    vi.useFakeTimers();
 
     await copyResourceUrl();
-    expect(await screen.findByRole("status")).toHaveTextContent(/copied/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/copied/i);
 
     await act(async () => {
       vi.advanceTimersByTime(TOAST_DURATION / 2);
@@ -204,9 +207,11 @@ describe("App copy confirmation toast timing (#298)", () => {
 
   it("pauses the dismissal window while the window is focused", async () => {
     render(<App />);
+    await screen.findByRole("button", { name: /copy/i });
+    vi.useFakeTimers();
 
     await copyResourceUrl();
-    expect(await screen.findByRole("status")).toHaveTextContent(/copied/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/copied/i);
 
     await act(async () => {
       window.dispatchEvent(new Event("blur"));
