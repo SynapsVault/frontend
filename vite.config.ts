@@ -20,7 +20,8 @@ export default defineConfig(({ mode }) => {
     // Build configuration
     build: {
       // Target modern browsers (ES2020+)
-      target: "ES2020",
+      target: "es2020",
+      cssTarget: ["chrome87", "firefox78", "safari14"],
       // Warn if chunks exceed 800KB (gzipped)
       chunkSizeWarningLimit: 800,
       // Generate source maps for production debugging
