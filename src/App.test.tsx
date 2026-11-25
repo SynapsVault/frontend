@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App.js";
-import { fetchCatalog, fetchRegistryStatus } from "./api/resources.js";
+import { fetchCatalog, fetchRegistryStatus, fetchResourceMeta } from "./api/resources.js";
 import type { CatalogFilters } from "./api/resources.js";
 
 vi.mock("./hooks/useBuyResource.js", () => ({ useBuyResource: () => ({ status: "idle", result: null, error: null, errorCode: null, buy: vi.fn(), reset: vi.fn() }) }));
@@ -18,6 +18,7 @@ vi.mock("@stellar/freighter-api", () => ({
 
 vi.mock("./api/resources.js", () => ({
   fetchCatalog: vi.fn(),
+  fetchResourceMeta: vi.fn(),
   fetchMyResources: vi.fn(),
   fetchRegistryStatus: vi.fn(),
 }));
@@ -131,19 +132,25 @@ describe("App catalog empty states", () => {
 });
 
 describe("App copy confirmation toast timing (#298)", () => {
-  const TOAST_DURATION = 4000;
+  const TOAST_DURATION = 2500;
+  let clipboard: PropertyDescriptor | undefined;
 
   beforeEach(() => {
+    clipboard = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    vi.mocked(fetchResourceMeta).mockResolvedValue({ ...mockResource, description: "Example", publisherName: "Alice", publisherWallet: "GABC", onchainTxHash: null, createdAt: "2026-01-01T00:00:00Z" });
     vi.mocked(fetchRegistryStatus).mockResolvedValue({ resourceCount: 1 });
     vi.mocked(fetchCatalog).mockResolvedValue([mockResource]);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    if (clipboard) Object.defineProperty(navigator, "clipboard", clipboard);
+    else Reflect.deleteProperty(navigator, "clipboard");
   });
 
   async function copyResourceUrl() {
-    const copyButton = screen.getByRole("button", { name: /copy/i });
+    const copyButton = screen.getByRole("button", { name: /copy access url/i });
     await act(async () => {
       copyButton.click();
     });
@@ -152,7 +159,9 @@ describe("App copy confirmation toast timing (#298)", () => {
 
   it("restarts the dismissal window for consecutive copies with identical text", async () => {
     render(<App />);
-    await screen.findByRole("button", { name: /copy/i });
+    const preview = await screen.findByRole("button", { name: /open preview/i });
+    await act(async () => { preview.click(); });
+    await screen.findByRole("button", { name: /copy access url/i });
     vi.useFakeTimers();
 
     await copyResourceUrl();
@@ -184,7 +193,9 @@ describe("App copy confirmation toast timing (#298)", () => {
 
   it("keeps the timer stable across unrelated parent re-renders", async () => {
     const { rerender } = render(<App />);
-    await screen.findByRole("button", { name: /copy/i });
+    const preview = await screen.findByRole("button", { name: /open preview/i });
+    await act(async () => { preview.click(); });
+    await screen.findByRole("button", { name: /copy access url/i });
     vi.useFakeTimers();
 
     await copyResourceUrl();
@@ -205,16 +216,18 @@ describe("App copy confirmation toast timing (#298)", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("pauses the dismissal window while the window is focused", async () => {
+  it("pauses the dismissal window while focus is inside the toast", async () => {
     render(<App />);
-    await screen.findByRole("button", { name: /copy/i });
+    const preview = await screen.findByRole("button", { name: /open preview/i });
+    await act(async () => { preview.click(); });
+    await screen.findByRole("button", { name: /copy access url/i });
     vi.useFakeTimers();
 
     await copyResourceUrl();
     expect(screen.getByRole("status")).toHaveTextContent(/copied/i);
 
     await act(async () => {
-      window.dispatchEvent(new Event("blur"));
+      screen.getByRole("button", { name: /dismiss/i }).focus();
     });
 
     await act(async () => {
@@ -223,7 +236,7 @@ describe("App copy confirmation toast timing (#298)", () => {
     expect(screen.getByRole("status")).toBeInTheDocument();
 
     await act(async () => {
-      window.dispatchEvent(new Event("focus"));
+      screen.getByRole("button", { name: /copy access url/i }).focus();
     });
 
     await act(async () => {
